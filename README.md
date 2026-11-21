@@ -12,7 +12,7 @@ A lean, D-pad optimized streaming media manager for Android TV with fast focus n
 ## Getting started
 
 ```bash
-git clone <repo-url> ks-streamflix
+git clone --recurse-submodules <repo-url> ks-streamflix
 cd ks-streamflix
 ./gradlew assembleDebug
 ```
