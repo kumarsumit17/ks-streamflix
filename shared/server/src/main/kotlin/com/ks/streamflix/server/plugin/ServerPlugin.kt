@@ -3,6 +3,8 @@ package com.ks.streamflix.server.plugin
 import com.ks.streamflix.api.ServerInfo
 import com.ks.streamflix.server.details.DetailsService
 import com.ks.streamflix.server.details.MetadataProvider
+import com.ks.streamflix.server.domain.AccessPolicy
+import com.ks.streamflix.server.domain.AccessService
 import com.ks.streamflix.server.domain.AuthService
 import com.ks.streamflix.server.domain.LibraryService
 import com.ks.streamflix.server.domain.StreamKeys
@@ -30,6 +32,12 @@ class Core(
     internal val details: DetailsService,
     val info: suspend () -> ServerInfo,
 ) {
+    /** Who may see what. Plugins that serve items check [AccessService.item] for the signed-in user. */
+    val access = AccessService(libraries)
+
+    /** What the metadata plugins know about [item] (merged), for plugins such as `users` (age ratings). */
+    suspend fun itemDetails(item: com.ks.streamflix.api.Item): com.ks.streamflix.api.ItemDetails = details.details(item, libraries.fileOf(item.id))
+
     /** Settings pages that plugins add for the owner: (language-file key of the label, path). The `web` plugin links them. */
     val adminPages: MutableList<Pair<String, String>> = java.util.concurrent.CopyOnWriteArrayList()
 }
@@ -48,6 +56,9 @@ class PluginContext internal constructor(
     fun onStarted(listener: (port: Int) -> Unit) {
         startListeners += listener
     }
+
+    /** Adds a rule about who may see which libraries and items (every rule must allow; the owner sees everything). */
+    fun addAccessPolicy(policy: AccessPolicy) = core.access.add(policy)
 
     /** Adds a settings page for the owner at [path] (a route the plugin adds), labelled by the language-file key [labelKey]. */
     fun addAdminPage(labelKey: String, path: String) {

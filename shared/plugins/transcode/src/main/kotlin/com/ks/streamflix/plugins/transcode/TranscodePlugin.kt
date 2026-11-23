@@ -8,6 +8,7 @@ import com.ks.streamflix.api.TranscodeApi
 import com.ks.streamflix.api.TranscodeStatus
 import com.ks.streamflix.ffmpeg.Ffmpeg
 import com.ks.streamflix.server.domain.DomainException
+import com.ks.streamflix.server.http.visibleItem
 import com.ks.streamflix.server.plugin.PluginContext
 import com.ks.streamflix.server.plugin.SESSION_AUTH
 import com.ks.streamflix.server.plugin.ServerPlugin
@@ -102,7 +103,7 @@ class TranscodePlugin(
                     }
                     post("items/{id}/playback") {
                         val id = call.parameters["id"]?.toLongOrNull() ?: throw DomainException("item.error.notFound", DomainException.Kind.NOT_FOUND)
-                        val item = libraries.item(id)
+                        val item = call.visibleItem(context.core, id)
                         val file = libraries.fileOf(id)
                         val request = call.receive<PlaybackRequest>()
                         val info = ffmpeg.probe(id, file)

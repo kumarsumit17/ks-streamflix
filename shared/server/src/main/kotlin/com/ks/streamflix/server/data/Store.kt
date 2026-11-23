@@ -89,6 +89,21 @@ class Store private constructor(url: String) : AutoCloseable {
         db.userQueries.deleteSession(tokenHash)
     }
 
+    fun users(): List<StoredUser> = db.userQueries.allUsers().executeAsList().map { StoredUser(it.toApi(), it.password_hash) }
+
+    fun userById(id: Long): StoredUser? = db.userQueries.userById(id).executeAsOneOrNull()?.let { StoredUser(it.toApi(), it.password_hash) }
+
+    /** Removes a user who is not the owner, with their sessions (they cascade). */
+    fun removeUser(id: Long) {
+        db.userQueries.deleteUser(id)
+    }
+
+    /** A new password; every session of the user ends. */
+    fun setPassword(id: Long, passwordHash: String) = db.transaction {
+        db.userQueries.updatePassword(passwordHash, id)
+        db.userQueries.deleteSessionsOfUser(id)
+    }
+
     private fun User.toApi() = ApiUser(id, name, is_owner == 1L)
 
     // ---- Libraries -------------------------------------------------------------------------------
@@ -110,6 +125,11 @@ class Store private constructor(url: String) : AutoCloseable {
 
     fun libraryByName(name: String): ApiLibrary? =
         db.libraryQueries.libraryIdByName(name).executeAsOneOrNull()?.let(::library)
+
+    /** Removes a library and its items (they cascade); the files are not touched. */
+    fun removeLibrary(id: Long) {
+        db.libraryQueries.deleteLibrary(id)
+    }
 
     private fun folders(libraryId: Long) = db.libraryQueries.folders(libraryId).executeAsList()
 

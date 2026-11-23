@@ -5,6 +5,7 @@ import com.ks.streamflix.api.SubtitleTrack
 import com.ks.streamflix.api.SubtitlesApi
 import com.ks.streamflix.ffmpeg.Ffmpeg
 import com.ks.streamflix.server.domain.DomainException
+import com.ks.streamflix.server.http.visibleItem
 import com.ks.streamflix.server.plugin.PluginContext
 import com.ks.streamflix.server.plugin.SESSION_AUTH
 import com.ks.streamflix.server.plugin.ServerPlugin
@@ -115,10 +116,12 @@ class SubtitlesPlugin(private val ffmpeg: Ffmpeg = Ffmpeg.locate()) : ServerPlug
                 route(SubtitlesApi.BASE) {
                     get("items/{id}") {
                         val id = call.parameters["id"]?.toLongOrNull() ?: throw DomainException("item.error.notFound", DomainException.Kind.NOT_FOUND)
+                        call.visibleItem(context.core, id)
                         call.respond(SubtitleList(tracks(id, libraries.fileOf(id)).map { it.first }))
                     }
                     get("items/{id}/tracks/{track}.vtt") {
                         val id = call.parameters["id"]?.toLongOrNull() ?: throw DomainException("item.error.notFound", DomainException.Kind.NOT_FOUND)
+                        call.visibleItem(context.core, id)
                         val wanted = call.parameters["track"]
                         val loader = tracks(id, libraries.fileOf(id)).firstOrNull { it.first.id == wanted }?.second
                             ?: throw DomainException("subtitles.error.notFound", DomainException.Kind.NOT_FOUND)

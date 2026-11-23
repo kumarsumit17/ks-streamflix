@@ -10,7 +10,10 @@
   "web.signOut": "Sign out",
   "web.libraries.heading": "Libraries",
   "web.libraries.empty": "No libraries yet. Add a folder of films or series below.",
-  "web.libraries.items": { "one": "{count} video", "other": "{count} videos" },
+  "web.libraries.items": {
+    "one": "{count} video",
+    "other": "{count} videos"
+  },
   "web.library.add": "Add a library",
   "web.library.name": "Library name",
   "web.library.kind": "Kind",
@@ -24,5 +27,6 @@
   "web.library.empty": "No videos found in this library. Add files to its folders and scan again.",
   "web.episode": "S{season} E{episode}",
   "web.watch.unsupported": "This browser can't play this file. Transcoding comes with a later version; try KS JaiPlayer meanwhile.",
-  "web.watch.direct": "Direct link for other players"
+  "web.watch.direct": "Direct link for other players",
+  "web.library.removeConfirm": "Remove the library “{name}”? The files stay on the computer; only the server forgets them."
 }

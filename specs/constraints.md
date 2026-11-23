@@ -22,6 +22,7 @@ status: draft
 - The database schema has a version number and a migration step for every change; a library is never lost on upgrade.
 - Passwords are stored only as PBKDF2 hashes; session tokens come from `SecureRandom`. No telemetry: the server contacts nothing the owner has not switched on.
 - Files are served by item id only, and only files inside a library folder; a path from a request is never opened.
+- Every route that serves an item checks the access rules (libraries per user, age limits); a hidden item answers "not found", as if it did not exist.
 - Without FFmpeg the server still runs and direct play still works; a missing FFmpeg is a clear message, never a crash.
 - An "Open in JaiPlayer" option sends an explicit `ACTION_VIEW` intent to `com.ks.jaiplayer`. It falls back to the built-in ExoPlayer when JaiPlayer isn't installed.
 

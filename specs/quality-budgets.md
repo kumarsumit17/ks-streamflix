@@ -20,6 +20,7 @@ The owner's rule (2026-11-23): stability, app size and speed are variables for a
 | `speed.scan.filesPerSecond` | Scanning a library of new files, at least | server tests |
 | `speed.api.p95Ms` | The 95th percentile of item-list and first-byte stream answers on a local server | server tests |
 | `speed.transcode.firstSegmentMs` | From the playback request to the first HLS segment, for a remux and for a transcode (a 720p test film) | transcode plugin tests, with FFmpeg installed |
+| `speed.folderWatch.detectMs` | From a new file in a library folder to the item in the library | folder-watch plugin tests |
 | `stability.concurrentStreams` | Simultaneous range requests that must all succeed | server tests |
 | `stability.repeatRuns` | Start, scan, stream and stop cycles in a row without an error or a leaked file handle | server tests |
 
@@ -38,6 +39,10 @@ Server 22.7 MB, desktop app 60.8 MB, release APK 1.8 MB: the four new plugins an
 ## Stage 4 measurements (owner's Mac, 2026-11-23)
 
 First segment 177 ms for a remux and 477 ms for a transcode with VideoToolbox (budget 6000 ms). Server 22.8 MB, desktop app 60.9 MB, release APK 1.8 MB (Media3's HLS module included).
+
+## Stage 5 measurements (owner's Mac, 2026-11-23)
+
+A new film appeared 694 ms after it was copied in (budget 15000 ms; the test waits 300 ms for quiet). Server 22.9 MB, desktop app 61.1 MB, release APK 1.8 MB.
 
 ## Rules
 

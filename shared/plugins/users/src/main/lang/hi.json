@@ -1,0 +1,15 @@
+{
+  "users.page.title": "यूज़र",
+  "users.page.owner": "मालिक हर लाइब्रेरी देखता है और सब कुछ बदल सकता है।",
+  "users.page.add": "यूज़र जोड़ें",
+  "users.page.name": "नाम",
+  "users.page.password": "पासवर्ड (कम से कम 8 अक्षर)",
+  "users.page.newPassword": "नया पासवर्ड (पुराना रखने के लिए खाली छोड़ें)",
+  "users.page.libraries": "लाइब्रेरी",
+  "users.page.allLibraries": "सभी लाइब्रेरी",
+  "users.page.maxAge": "उम्र की सीमा",
+  "users.page.noLimit": "कोई सीमा नहीं",
+  "users.page.age": "{age} साल तक",
+  "users.page.blockUnrated": "बिना उम्र प्रमाणन वाले वीडियो छिपाएं",
+  "users.page.ratingsHint": "उम्र प्रमाणन वीडियो के पास रखी .nfo फ़ाइलों (mpaa) से आते हैं।"
+}

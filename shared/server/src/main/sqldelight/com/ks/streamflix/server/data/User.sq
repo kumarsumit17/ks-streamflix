@@ -39,3 +39,18 @@ UPDATE session SET last_used = ? WHERE token_hash = ?;
 
 deleteSession:
 DELETE FROM session WHERE token_hash = ?;
+
+allUsers:
+SELECT * FROM user ORDER BY is_owner DESC, name COLLATE NOCASE;
+
+userById:
+SELECT * FROM user WHERE id = ?;
+
+deleteUser:
+DELETE FROM user WHERE id = ? AND is_owner = 0;
+
+updatePassword:
+UPDATE user SET password_hash = ? WHERE id = ?;
+
+deleteSessionsOfUser:
+DELETE FROM session WHERE user_id = ?;

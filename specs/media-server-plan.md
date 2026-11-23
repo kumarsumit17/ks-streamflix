@@ -12,7 +12,7 @@ KS StreamFlix becomes a home media server in the spirit of [Jellyfin](https://je
 
 Jellyfin's [documentation](https://jellyfin.org/docs/) and download repository ([repo.jellyfin.org](https://repo.jellyfin.org/)) are a **feature reference only**. Jellyfin is GPL-2.0: no Jellyfin code, assets, text, API definitions or FFmpeg builds are copied or bundled. StreamFlix has its own design, its own API and its own words.
 
-> Status: approved by the owner on 2026-11-23, with one APK for Android and Google TV. Stages 1 to 4 are built (see [Stage notes](#stage-notes)).
+> Status: approved by the owner on 2026-11-23, with one APK for Android and Google TV. Stages 1 to 5 are built (see [Stage notes](#stage-notes)).
 
 ## What the server does
 
@@ -35,7 +35,7 @@ Jellyfin's [documentation](https://jellyfin.org/docs/) and download repository (
 
 Every app keeps a bare-minimum core and adds every other feature as a plugin (owner's decision, 2026-11-23), so each app carries only the features it includes and stays small. It is the same model as [JaiPlayer's plugins](https://github.com/kumarsumit17/ks-jaiplayer/blob/main/specs/plugins.md).
 
-- **Server core** (`shared/server`): libraries and their folders, scanning and name parsing, the database, the owner account and sessions, the API (`/api/v1`), direct play with byte ranges, signed stream links, the language files, and two extension points: metadata providers (the core merges their details and resizes and caches their images; it reads no metadata itself) and owner settings pages. Nothing else.
+- **Server core** (`shared/server`): libraries and their folders, scanning and name parsing, the database, the owner account and sessions, the API (`/api/v1`), direct play with byte ranges, signed stream links, the language files, and three extension points: metadata providers (the core merges their details and resizes and caches their images; it reads no metadata itself), access rules (every rule must allow; the owner sees everything; the core and every plugin check them) and owner settings pages. For plugins it also offers user management (add, remove, set a password) and removing a library. Nothing else.
 - **Server plugins** (`shared/plugins/<id>`, one Gradle module each): a `ServerPlugin` has a stable `id` and `install(context)`. The context gives it the core's services (libraries, items, scan, sign-in), the language files and its own data folder, and lets it add HTTP routes and listen for scans. Its own settings and database tables (named `plugin_<id>_…`, with their own migrations) come with the first plugin that needs them. The core never knows which plugins exist: each entry point passes its list, and two plugins with one id are refused.
 - **Client core and plugins** (stage 2): the Android and Google TV app's core is sign-in, browsing and playing; the rest (continue watching, JaiPlayer hand-off, subtitles menu, …) are client plugins with the same shape.
 - Plugins are compiled in (first-party), never downloaded and loaded at run time: that would run code nobody reviewed, and Android forbids it in most cases. Leaving a plugin out of an app's list leaves its code and its dependencies out of that app.
@@ -122,6 +122,11 @@ Each stage is built and tested on `dev` and ends in something that works on its 
   - **Browser pages:** the watch page asks the same question with the browser's `canPlayType` answers and plays the HLS stream natively (Chrome 156 and Safari do; Firefox does not, and says so).
   - The desktop apps keep handing playback to KS JaiPlayer or the browser (decision 5).
   - Name parsing: a title may start with a word that is also a release tag ("DTS Test"); a rescan now also updates items whose parsed name changed.
+- **Stage 5** (2026-11-23): server plugins `users` and `folder-watch`.
+  - **Users:** the owner adds and removes users and chooses, per user, the libraries they see and an age limit; videos above it are hidden, and videos without a certification can be hidden too. Certifications come from `.nfo` (`<mpaa>`, read by `local-metadata`) and are turned into ages for many countries (US, UK, India, Germany). The rules are an access rule, so the core's API, every plugin (watch progress, details, subtitles, transcoding) and the browser pages hide the same items; a hidden item answers "not found". Every user can change their own password, which ends their other sessions. The owner's page is in the browser (Settings → Users).
+  - **Folder watching:** every library folder and the folders inside are watched; a library is rescanned when its files have been quiet for 10 s (a copy changes a file many times), new libraries are picked up within a minute, and everything is rescanned every 6 hours for changes the system does not report (network drives).
+  - **Browser pages:** the owner can remove a library (after a question; the files stay).
+  - The apps needed no change: a user simply sees what they may see.
   - **Open in KS JaiPlayer on Android** needs JaiPlayer's `ACTION_VIEW` filter to accept `http`/`https` stream URLs (today it lists `content` and `file`). Until it does, the button stays hidden, because the app checks that JaiPlayer can open the link. This is a change in ks-jaiplayer.
 
 ## Decisions (approved)

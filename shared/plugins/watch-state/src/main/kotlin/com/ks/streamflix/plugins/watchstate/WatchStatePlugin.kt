@@ -9,6 +9,7 @@ import com.ks.streamflix.api.WatchProgress
 import com.ks.streamflix.api.WatchStateApi
 import com.ks.streamflix.api.WatchedUpdate
 import com.ks.streamflix.server.domain.DomainException
+import com.ks.streamflix.server.http.visibleItem
 import com.ks.streamflix.server.http.SessionPrincipal
 import com.ks.streamflix.server.plugin.PluginContext
 import com.ks.streamflix.server.plugin.SESSION_AUTH
@@ -64,8 +65,9 @@ class WatchStatePlugin(private val clock: () -> Long = System::currentTimeMillis
                     get("progress") {
                         val library = call.request.queryParameters["library"]?.toLongOrNull()
                             ?: throw DomainException("library.error.notFound", DomainException.Kind.NOT_FOUND)
-                        val ids = libraries.items(library).map { it.id }.toSet()
                         val user = call.userId()
+                        val principal = call.principal<SessionPrincipal>()!!.user
+                        val ids = context.core.access.visibleItems(principal, libraries.library(library)).map { it.id }.toSet()
                         call.respond(ProgressList(db { q.forUser(user).executeAsList() }.filter { it.item_id in ids }.map { it.toApi() }))
                     }
                     get("continue") {
@@ -73,14 +75,16 @@ class WatchStatePlugin(private val clock: () -> Long = System::currentTimeMillis
                         val rows = db { q.inProgress(user, 40).executeAsList() }
                         // Items removed by a rescan are skipped (and forgotten).
                         val items = rows.mapNotNull { row ->
-                            runCatching { ContinueItem(libraries.item(row.item_id), row.toApi()) }
+                            val item = runCatching { libraries.item(row.item_id) }
                                 .onFailure { db { q.deleteItem(row.item_id) } }.getOrNull()
+                            // Items this user may no longer see are left out (and kept, in case that changes).
+                            item?.takeIf { context.core.access.allows(call.principal<SessionPrincipal>()!!.user, it) }?.let { ContinueItem(it, row.toApi()) }
                         }.take(20)
                         call.respond(ContinueList(items))
                     }
                     put("items/{id}") {
                         val id = call.itemId()
-                        libraries.item(id)
+                        call.visibleItem(context.core, id)
                         val body = call.receive<ProgressUpdate>()
                         if (body.positionMs < 0 || body.durationMs < 0) throw DomainException("api.error.badRequest", DomainException.Kind.BAD_REQUEST)
                         val watched = body.durationMs > 0 && body.positionMs >= body.durationMs * WatchStateApi.WATCHED_SHARE
@@ -93,7 +97,7 @@ class WatchStatePlugin(private val clock: () -> Long = System::currentTimeMillis
                     }
                     post("items/{id}/watched") {
                         val id = call.itemId()
-                        libraries.item(id)
+                        call.visibleItem(context.core, id)
                         val body = call.receive<WatchedUpdate>()
                         val user = call.userId()
                         val row = db {

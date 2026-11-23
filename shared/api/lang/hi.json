@@ -20,5 +20,9 @@
   "transcode.error.busy": "सर्वर पहले से जितने हो सकते हैं उतने वीडियो बदल रहा है। किसी एक के पूरा होने पर फिर कोशिश करें।",
   "transcode.error.noFfmpeg": "इस वीडियो को बदलना ज़रूरी है, पर सर्वर पर FFmpeg इंस्टॉल नहीं है।",
   "transcode.error.failed": "FFmpeg इस वीडियो को नहीं बदल सका।",
-  "transcode.error.gone": "सर्वर पर यह प्लेबैक खत्म हो गया है। इसे फिर से शुरू करें।"
+  "transcode.error.gone": "सर्वर पर यह प्लेबैक खत्म हो गया है। इसे फिर से शुरू करें।",
+  "users.error.notFound": "यह यूज़र मौजूद नहीं है।",
+  "users.error.exists": "इस नाम का यूज़र पहले से है।",
+  "users.error.owner": "मालिक को हटाया नहीं जा सकता।",
+  "users.error.wrongPassword": "मौजूदा पासवर्ड गलत है।"
 }

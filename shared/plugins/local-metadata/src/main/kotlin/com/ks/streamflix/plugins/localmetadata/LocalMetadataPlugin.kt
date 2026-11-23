@@ -76,7 +76,9 @@ object LocalFiles {
             .flatMap { it.split('/').map(String::trim) }.filter { it.isNotEmpty() }.distinct()
         val rating = text("rating")?.toDoubleOrNull()
             ?: (root.getElementsByTagName("ratings").item(0) as? Element)?.getElementsByTagName("value")?.item(0)?.textContent?.trim()?.toDoubleOrNull()
-        PartialDetails(text("title"), text("plot") ?: text("outline"), genres, rating)
+        // Kodi writes `<mpaa>Rated PG-13</mpaa>` or `<mpaa>IN:UA</mpaa>`; the certification is the last word.
+        val certification = (text("mpaa") ?: text("certification"))?.substringAfterLast(':')?.removePrefix("Rated ")?.trim()?.ifEmpty { null }
+        PartialDetails(text("title"), text("plot") ?: text("outline"), genres, rating, certification)
     }.getOrNull()
 }
 

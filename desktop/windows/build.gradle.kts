@@ -28,6 +28,8 @@ dependencies {
     implementation(project(":shared:plugins:media-info"))
     implementation(project(":shared:plugins:subtitles"))
     implementation(project(":shared:plugins:transcode"))
+    implementation(project(":shared:plugins:users"))
+    implementation(project(":shared:plugins:folder-watch"))
     runtimeOnly(libs.slf4j.simple)
 }
 

@@ -35,3 +35,6 @@ SELECT path FROM library_folder WHERE library_id = ? ORDER BY path;
 
 allFolders:
 SELECT path FROM library_folder;
+
+deleteLibrary:
+DELETE FROM library WHERE id = ?;

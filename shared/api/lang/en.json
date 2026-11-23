@@ -20,5 +20,9 @@
   "transcode.error.busy": "The server is already converting as many videos as it can. Try again when one has finished.",
   "transcode.error.noFfmpeg": "This video needs converting, but FFmpeg isn’t installed on the server.",
   "transcode.error.failed": "FFmpeg couldn’t convert this video.",
-  "transcode.error.gone": "This playback has ended on the server. Start it again."
+  "transcode.error.gone": "This playback has ended on the server. Start it again.",
+  "users.error.notFound": "This user doesn’t exist.",
+  "users.error.exists": "A user with this name already exists.",
+  "users.error.owner": "The owner can’t be removed.",
+  "users.error.wrongPassword": "The current password is wrong."
 }

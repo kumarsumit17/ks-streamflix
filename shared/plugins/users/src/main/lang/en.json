@@ -1,0 +1,15 @@
+{
+  "users.page.title": "Users",
+  "users.page.owner": "The owner sees every library and can change everything.",
+  "users.page.add": "Add a user",
+  "users.page.name": "Name",
+  "users.page.password": "Password (at least 8 characters)",
+  "users.page.newPassword": "New password (leave empty to keep it)",
+  "users.page.libraries": "Libraries",
+  "users.page.allLibraries": "All libraries",
+  "users.page.maxAge": "Age limit",
+  "users.page.noLimit": "No limit",
+  "users.page.age": "Up to {age} years",
+  "users.page.blockUnrated": "Hide videos without an age certification",
+  "users.page.ratingsHint": "Age certifications come from the .nfo files next to the videos (mpaa)."
+}

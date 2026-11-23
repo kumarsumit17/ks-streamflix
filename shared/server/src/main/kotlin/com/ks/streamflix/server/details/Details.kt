@@ -23,6 +23,8 @@ data class PartialDetails(
     val plot: String? = null,
     val genres: List<String> = emptyList(),
     val rating: Double? = null,
+    /** An age certification as the source writes it (`PG-13`, `UA`, `15`). */
+    val certification: String? = null,
 )
 
 /**
@@ -59,6 +61,7 @@ class DetailsService(private val cacheDir: Path) {
             plot = parts.firstNotNullOfOrNull { it.second.plot },
             genres = parts.firstOrNull { it.second.genres.isNotEmpty() }?.second?.genres ?: emptyList(),
             rating = parts.firstNotNullOfOrNull { it.second.rating },
+            certification = parts.firstNotNullOfOrNull { it.second.certification },
             images = images,
             sources = parts.map { it.first }.distinct(),
         )

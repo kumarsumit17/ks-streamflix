@@ -5,6 +5,7 @@ import com.ks.streamflix.api.MediaInfo
 import com.ks.streamflix.api.MediaInfoApi
 import com.ks.streamflix.ffmpeg.Ffmpeg
 import com.ks.streamflix.server.domain.DomainException
+import com.ks.streamflix.server.http.visibleItem
 import com.ks.streamflix.server.plugin.PluginContext
 import com.ks.streamflix.server.plugin.SESSION_AUTH
 import com.ks.streamflix.server.plugin.ServerPlugin
@@ -74,6 +75,7 @@ class MediaInfoPlugin(private val ffmpeg: Ffmpeg = Ffmpeg.locate()) : ServerPlug
                     get("status") { call.respond(ffmpeg.status) }
                     get("items/{id}") {
                         val id = call.parameters["id"]?.toLongOrNull() ?: throw DomainException("item.error.notFound", DomainException.Kind.NOT_FOUND)
+                        call.visibleItem(context.core, id)
                         val file = libraries.fileOf(id)
                         val info = info(id, file) ?: throw DomainException("mediaInfo.error.unavailable", DomainException.Kind.NOT_FOUND)
                         call.respond(info)

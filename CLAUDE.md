@@ -20,7 +20,7 @@ A free, open-source home media server with its own apps: the server on macOS and
 |---|---|---|
 | `:shared:api` | `shared/api` | API wire models (`/api/v1`), Kotlin Multiplatform (JVM, Android), used by every app; `shared/api/lang` holds the API's error texts for the server and the apps |
 | `:shared:server` | `shared/server` | Server core only: libraries, scanner, name parser, database, owner account, HTTP API, direct play, plugin API |
-| `:shared:plugins:<id>` | `shared/plugins/<id>` | One server plugin each: `web` (browser pages), `watch-state` (progress, own database), `discovery` (UDP), `local-metadata` (posters, `.nfo`), `tmdb` (online details, off by default), `media-info` (ffprobe), `subtitles` (WebVTT), `transcode` (direct play / remux / transcode to HLS) |
+| `:shared:plugins:<id>` | `shared/plugins/<id>` | One server plugin each: `web` (browser pages), `watch-state` (progress, own database), `discovery` (UDP), `local-metadata` (posters, `.nfo`), `tmdb` (online details, off by default), `media-info` (ffprobe), `subtitles` (WebVTT), `transcode` (direct play / remux / transcode to HLS), `users` (users, libraries per user, age limits), `folder-watch` (rescan on changes) |
 | `:shared:ffmpeg` | `shared/ffmpeg` | Not a plugin: finds and runs the owner's FFmpeg for the plugins that need it |
 | `:shared:client` | `shared/client` | The apps: API client, `AppViewModel` (StateFlow), client plugins (`watch-state`, `jaiplayer`, `metadata`, `media-info`, `subtitles`, `transcode`), Compose Multiplatform screens, language files; `jvmSharedMain` (HTTP and discovery on java.net), `androidMain` (Media3 player), `desktopMain` |
 | `:shared:desktop` | `shared/desktop` | The macOS and Windows app: the server plus its window |
@@ -44,6 +44,7 @@ A free, open-source home media server with its own apps: the server on macOS and
 - The server's database schema has a version number and a migration step for every change; never lose a library on upgrade.
 - Passwords only as PBKDF2 hashes; session tokens from `SecureRandom`. No telemetry: the server never contacts anything the owner has not switched on.
 - Never follow a file path from a request: files are served by item id only, and only files inside a library folder.
+- Every route that serves an item checks the access rules (`call.visibleItem(core, id)` or `core.access`); a hidden item answers "not found".
 - Desktop needs no FFmpeg until stage 4; show a clear message if it is missing later, never crash.
 - An "Open in JaiPlayer" option sends an explicit `ACTION_VIEW` intent to `com.ks.jaiplayer`. It falls back to the built-in ExoPlayer when JaiPlayer isn't installed.
 

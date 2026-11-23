@@ -35,6 +35,7 @@ import io.ktor.server.request.receive
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
@@ -92,6 +93,12 @@ private fun DomainException.Kind.status() = when (this) {
 
 private fun ApplicationCall.user(): User = principal<SessionPrincipal>()!!.user
 
+/**
+ * The item [id] if the signed-in user may see it, else "not found". For plugins' routes inside
+ * `authenticate(SESSION_AUTH)`, so every plugin keeps the same access rules as the core.
+ */
+suspend fun ApplicationCall.visibleItem(core: Core, id: Long): com.ks.streamflix.api.Item = core.access.item(user(), id)
+
 private fun ApplicationCall.requireOwner() {
     if (!user().owner) throw DomainException("auth.error.ownerOnly", DomainException.Kind.FORBIDDEN)
 }
@@ -122,13 +129,22 @@ private fun Route.apiRoutes(core: Core) {
         }
 
         route(ApiV1.LIBRARIES) {
-            get { call.respond(LibraryList(core.libraries.libraries())) }
+            get { call.respond(LibraryList(core.access.visibleLibraries(call.user()))) }
             post {
                 call.requireOwner()
                 val body = call.receive<NewLibrary>()
                 call.respond(HttpStatusCode.Created, core.libraries.addLibrary(body.name, body.kind, body.folders))
             }
-            get("{id}") { call.respond(core.libraries.library(call.longParam("id"))) }
+            get("{id}") {
+                val library = core.libraries.library(call.longParam("id"))
+                if (!core.access.allows(call.user(), library)) throw DomainException("library.error.notFound", DomainException.Kind.NOT_FOUND)
+                call.respond(library)
+            }
+            delete("{id}") {
+                call.requireOwner()
+                core.libraries.removeLibrary(call.longParam("id"))
+                call.respond(HttpStatusCode.NoContent)
+            }
             post("{id}/scan") {
                 call.requireOwner()
                 call.respond(core.libraries.scan(call.longParam("id")))
@@ -139,26 +155,26 @@ private fun Route.apiRoutes(core: Core) {
             get {
                 val library = call.request.queryParameters["library"]?.toLongOrNull()
                     ?: throw DomainException("library.error.notFound", DomainException.Kind.NOT_FOUND)
-                call.respond(ItemList(core.libraries.items(library)))
+                call.respond(ItemList(core.access.visibleItems(call.user(), core.libraries.library(library))))
             }
-            get("{id}") { call.respond(core.libraries.item(call.longParam("id"))) }
+            get("{id}") { call.respond(call.visibleItem(core, call.longParam("id"))) }
             get("{id}/details") {
                 val id = call.longParam("id")
-                call.respond(core.details.details(core.libraries.item(id), core.libraries.fileOf(id)))
+                call.respond(core.details.details(call.visibleItem(core, id), core.libraries.fileOf(id)))
             }
             get("{id}/image/{kind}") {
                 val id = call.longParam("id")
                 val kind = ImageKind.entries.firstOrNull { it.name.equals(call.parameters["kind"], ignoreCase = true) }
                     ?: throw DomainException("common.error.notFound", DomainException.Kind.NOT_FOUND)
                 val width = call.request.queryParameters["width"]?.toIntOrNull()?.coerceIn(32, 4096) ?: 480
-                val image = core.details.image(core.libraries.item(id), core.libraries.fileOf(id), kind, width)
+                val image = core.details.image(call.visibleItem(core, id), core.libraries.fileOf(id), kind, width)
                     ?: throw DomainException("common.error.notFound", DomainException.Kind.NOT_FOUND)
                 call.response.header(HttpHeaders.CacheControl, "private, max-age=86400")
                 call.respond(LocalPathContent(image, ContentType.Image.JPEG))
             }
             post("{id}/link") {
                 val id = call.longParam("id")
-                core.libraries.item(id)
+                call.visibleItem(core, id)
                 val (key, expires) = core.streamKeys.create(id)
                 call.respond(StreamLink("${ApiV1.stream(id)}?key=$key", expires))
             }
@@ -170,9 +186,12 @@ private fun Route.apiRoutes(core: Core) {
         get("${ApiV1.ITEMS}/{id}/stream") {
             val id = call.longParam("id")
             val key = call.request.queryParameters["key"]
-            if (call.principal<SessionPrincipal>() == null && (key == null || !core.streamKeys.isValid(id, key))) {
+            val principal = call.principal<SessionPrincipal>()
+            if (principal == null && (key == null || !core.streamKeys.isValid(id, key))) {
                 throw DomainException("auth.error.signIn", DomainException.Kind.UNAUTHORIZED)
             }
+            // A link's key was only made for someone allowed; a session is checked now.
+            if (principal != null && (key == null || !core.streamKeys.isValid(id, key))) core.access.item(principal.user, id)
             val file = core.libraries.fileOf(id)
             call.response.header(HttpHeaders.CacheControl, "private, max-age=3600")
             // Byte ranges (seeking) come from the PartialContent plugin.

@@ -10,7 +10,10 @@
   "web.signOut": "लॉग आउट",
   "web.libraries.heading": "लाइब्रेरी",
   "web.libraries.empty": "अभी कोई लाइब्रेरी नहीं है। नीचे फ़िल्मों या सीरीज़ का फ़ोल्डर जोड़ें।",
-  "web.libraries.items": { "one": "{count} वीडियो", "other": "{count} वीडियो" },
+  "web.libraries.items": {
+    "one": "{count} वीडियो",
+    "other": "{count} वीडियो"
+  },
   "web.library.add": "लाइब्रेरी जोड़ें",
   "web.library.name": "लाइब्रेरी का नाम",
   "web.library.kind": "प्रकार",
@@ -24,5 +27,6 @@
   "web.library.empty": "इस लाइब्रेरी में कोई वीडियो नहीं मिला। इसके फ़ोल्डर में फ़ाइलें रखकर फिर से स्कैन करें।",
   "web.episode": "S{season} E{episode}",
   "web.watch.unsupported": "यह ब्राउज़र इस फ़ाइल को नहीं चला सकता। ट्रांसकोडिंग आगे के वर्ज़न में आएगी; तब तक KS JaiPlayer आज़माएं।",
-  "web.watch.direct": "दूसरे प्लेयर के लिए सीधा लिंक"
+  "web.watch.direct": "दूसरे प्लेयर के लिए सीधा लिंक",
+  "web.library.removeConfirm": "लाइब्रेरी “{name}” हटाएं? फ़ाइलें कंप्यूटर पर रहेंगी; सिर्फ़ सर्वर उन्हें भूल जाएगा।"
 }

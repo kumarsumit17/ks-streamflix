@@ -12,6 +12,8 @@ import com.ks.streamflix.plugins.mediainfo.MediaInfoPlugin
 import com.ks.streamflix.plugins.subtitles.SubtitlesPlugin
 import com.ks.streamflix.plugins.tmdb.TmdbPlugin
 import com.ks.streamflix.plugins.transcode.TranscodePlugin
+import com.ks.streamflix.plugins.users.UsersPlugin
+import com.ks.streamflix.plugins.folderwatch.FolderWatchPlugin
 import com.ks.streamflix.plugins.watchstate.WatchStatePlugin
 import com.ks.streamflix.plugins.web.WebPlugin
 import java.nio.file.Paths
@@ -23,6 +25,7 @@ fun main(args: Array<String>) = runDesktopApp(
     serverPlugins = listOf(
         WebPlugin(), WatchStatePlugin(), DiscoveryPlugin(),
         LocalMetadataPlugin(), TmdbPlugin(), MediaInfoPlugin(), SubtitlesPlugin(), TranscodePlugin(),
+        UsersPlugin(), FolderWatchPlugin(),
     ),
     clientPlugins = listOf(
         WatchStateClient(), MetadataClient(), MediaInfoClient(),

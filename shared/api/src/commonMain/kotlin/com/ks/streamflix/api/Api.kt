@@ -128,6 +128,8 @@ data class ItemDetails(
     val plot: String? = null,
     val genres: List<String> = emptyList(),
     val rating: Double? = null,
+    /** An age certification as the source writes it (`PG-13`, `UA`, `15`). */
+    val certification: String? = null,
     /** The image kinds that exist for this item. */
     val images: List<ImageKind> = emptyList(),
     /** Where the data came from (plugin ids), for the attribution some sources need. */

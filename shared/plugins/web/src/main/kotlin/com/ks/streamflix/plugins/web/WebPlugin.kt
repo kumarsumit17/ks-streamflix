@@ -124,12 +124,24 @@ private class Pages(private val core: Core, private val strings: Strings) {
             }
         }
 
+        post("/libraries/{id}/remove") {
+            val user = call.signedIn() ?: return@post
+            call.form() ?: return@post
+            try {
+                if (!user.owner) throw DomainException("auth.error.ownerOnly", DomainException.Kind.FORBIDDEN)
+                core.libraries.removeLibrary(call.parameters["id"]?.toLongOrNull() ?: -1)
+                call.respondRedirect("/")
+            } catch (e: DomainException) {
+                call.home(e.code, null)
+            }
+        }
+
         get("/library/{id}") {
             call.signedIn() ?: return@get
             val id = call.parameters["id"]?.toLongOrNull()
             try {
                 val library = core.libraries.library(id ?: -1)
-                val items = core.libraries.items(library.id)
+                val items = core.access.visibleItems(call.user()!!, library)
                 val lang = call.lang()
                 call.page(library.name) {
                     append("<p><a href=\"/\">← ").esc(t(lang, "web.libraries.heading")).append("</a></p>")
@@ -155,7 +167,7 @@ private class Pages(private val core: Core, private val strings: Strings) {
         get("/watch/{id}") {
             call.signedIn() ?: return@get
             try {
-                val item = core.libraries.item(call.parameters["id"]?.toLongOrNull() ?: -1)
+                val item = core.access.item(call.user()!!, call.parameters["id"]?.toLongOrNull() ?: -1)
                 val lang = call.lang()
                 val src = ApiV1.stream(item.id)
                 call.page(displayTitle(lang, item)) {
@@ -197,7 +209,7 @@ private class Pages(private val core: Core, private val strings: Strings) {
     private suspend fun ApplicationCall.home(error: String?, notice: String?) {
         val user = user() ?: return respondRedirect("/login")
         val lang = lang()
-        val libraries = core.libraries.libraries()
+        val libraries = core.access.visibleLibraries(user)
         page(t(lang, "web.libraries.heading")) {
             append("<h1>").esc(t(lang, "web.libraries.heading")).append("</h1>")
             error?.let { append("<p class=error role=alert>").esc(t(lang, it)).append("</p>") }
@@ -211,6 +223,10 @@ private class Pages(private val core: Core, private val strings: Strings) {
                 if (user.owner) {
                     append("<form method=post action=\"/libraries/${library.id}/scan\"><button class=secondary>")
                         .esc(t(lang, "web.library.scan")).append("</button></form>")
+                    // Removing asks first; the files on disk are never touched.
+                    val confirm = ApiV1.json.encodeToString(kotlinx.serialization.serializer<String>(), t(lang, "web.library.removeConfirm", mapOf("name" to library.name)))
+                    append("<form method=post action=\"/libraries/${library.id}/remove\" onsubmit=\"return confirm(").esc(confirm).append(")\"><button class=ghost>")
+                        .esc(t(lang, "common.remove")).append("</button></form>")
                 }
                 append("</li>")
             }

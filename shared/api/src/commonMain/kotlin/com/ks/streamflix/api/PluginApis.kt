@@ -162,3 +162,35 @@ data class PlaybackDecision(
 
 @Serializable
 data class TranscodeStatus(val ffmpeg: Boolean, val encoder: String, val running: Int, val maxRunning: Int)
+
+/** Plugin `users`: more users, the libraries each one sees, an age limit (owner only, except changing one's own password). */
+object UsersApi {
+    const val BASE = "${ApiV1.BASE}/plugins/users"
+    const val ME_PASSWORD = "$BASE/me/password"
+    fun user(id: Long) = "$BASE/$id"
+}
+
+@Serializable
+data class UserSettings(
+    val id: Long,
+    val name: String,
+    val owner: Boolean,
+    /** The libraries this user sees; null for all. */
+    val libraries: List<Long>? = null,
+    /** The highest age certification this user sees (for example 12); null for no limit. */
+    val maxAge: Int? = null,
+    /** With an age limit: hide items that have no certification. */
+    val blockUnrated: Boolean = false,
+)
+
+@Serializable
+data class UserList(val users: List<UserSettings>)
+
+@Serializable
+data class NewUser(val name: String, val password: String, val libraries: List<Long>? = null, val maxAge: Int? = null, val blockUnrated: Boolean = false)
+
+@Serializable
+data class UserUpdate(val libraries: List<Long>? = null, val maxAge: Int? = null, val blockUnrated: Boolean = false, val password: String? = null)
+
+@Serializable
+data class PasswordChange(val current: String, val new: String)

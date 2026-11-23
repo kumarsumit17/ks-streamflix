@@ -81,6 +81,43 @@ class AuthService(
 
     suspend fun signOut(token: String) = store.run { removeSession(Passwords.tokenHash(token)) }
 
+    // ---- For plugins that manage users (the core itself has only the owner) ----------------------
+
+    suspend fun users(): List<User> = store.run { users().map { it.user } }
+
+    suspend fun user(id: Long): User = store.run { userById(id)?.user } ?: throw DomainException("users.error.notFound", DomainException.Kind.NOT_FOUND)
+
+    /** Adds a user who is not the owner. */
+    suspend fun addUser(name: String, password: String): User {
+        val clean = name.trim()
+        if (clean.isEmpty() || clean.length > 64) throw DomainException("auth.error.name", DomainException.Kind.BAD_REQUEST)
+        if (password.length < 8) throw DomainException("auth.error.passwordShort", DomainException.Kind.BAD_REQUEST)
+        val hash = cpu { Passwords.hash(password, iterations) }
+        return store.run {
+            if (userByName(clean) != null) throw DomainException("users.error.exists", DomainException.Kind.CONFLICT)
+            addUser(clean, hash, owner = false)
+        }
+    }
+
+    /** Removes a user; the owner cannot be removed. */
+    suspend fun removeUser(id: Long) {
+        if (user(id).owner) throw DomainException("users.error.owner", DomainException.Kind.BAD_REQUEST)
+        store.run { removeUser(id) }
+    }
+
+    /** Sets a new password and ends the user's sessions. */
+    suspend fun setPassword(id: Long, password: String) {
+        if (password.length < 8) throw DomainException("auth.error.passwordShort", DomainException.Kind.BAD_REQUEST)
+        user(id)
+        val hash = cpu { Passwords.hash(password, iterations) }
+        store.run { setPassword(id, hash) }
+    }
+
+    suspend fun checkPassword(id: Long, password: String): Boolean {
+        val stored = store.run { userById(id) } ?: return false
+        return cpu { Passwords.verify(password, stored.passwordHash) }
+    }
+
     private val dummyHash by lazy { Passwords.hash("not a password", iterations) }
 }
 
@@ -112,6 +149,12 @@ class LibraryService(private val store: Store) {
             if (libraryByName(clean) != null) throw DomainException("library.error.exists", DomainException.Kind.CONFLICT)
             addLibrary(clean, kind, paths)
         }
+    }
+
+    /** Removes a library and what the server knows about its items; the files stay where they are. */
+    suspend fun removeLibrary(id: Long) {
+        library(id)
+        store.run { removeLibrary(id) }
     }
 
     suspend fun items(libraryId: Long): List<Item> {
