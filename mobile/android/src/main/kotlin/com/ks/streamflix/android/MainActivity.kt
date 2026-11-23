@@ -18,6 +18,7 @@ import com.ks.streamflix.client.plugin.JaiPlayerPlugin
 import com.ks.streamflix.client.plugin.MediaInfoPlugin
 import com.ks.streamflix.client.plugin.MetadataPlugin
 import com.ks.streamflix.client.plugin.SubtitlesPlugin
+import com.ks.streamflix.client.plugin.TranscodePlugin
 import com.ks.streamflix.client.plugin.WatchStatePlugin
 import com.ks.streamflix.client.ui.AppViewModel
 import com.ks.streamflix.client.ui.StreamflixApp
@@ -36,7 +37,9 @@ class MainActivity : ComponentActivity() {
                     AndroidHost(app, isTelevision(app), version),
                     // The plugins this app includes (specs/media-server-plan.md).
                     listOf(
-                        WatchStatePlugin(), MetadataPlugin(), MediaInfoPlugin(), SubtitlesPlugin(),
+                        WatchStatePlugin(), MetadataPlugin(), MediaInfoPlugin(),
+                        // Subtitles first: the transcode plugin needs the subtitle choice (burn-in).
+                        SubtitlesPlugin(), TranscodePlugin(),
                         JaiPlayerPlugin({ AndroidJaiPlayer.canOpen(app) }) { url, title -> AndroidJaiPlayer.open(app, url, title) },
                     ),
                 )

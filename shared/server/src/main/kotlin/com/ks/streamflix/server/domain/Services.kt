@@ -191,7 +191,8 @@ class LibraryService(private val store: Store) {
                 val old = existing[f.path]
                 when {
                     old == null -> { insertItem(library.id, f.path, f.size, f.modified, f.name); added++ }
-                    old.item.size != f.size || old.modified != f.modified -> {
+                    // Changed files, and items whose name a newer version of the parser reads differently.
+                    old.item.size != f.size || old.modified != f.modified || !sameName(old.item, f.name) -> {
                         updateItem(old.item.id, f.size, f.modified, f.name); updated++
                     }
                 }
@@ -204,6 +205,10 @@ class LibraryService(private val store: Store) {
         return ScanResult(added, updated, removed, missing)
     }
 }
+
+private fun sameName(item: Item, name: ParsedName) =
+    item.kind == name.kind && item.title == name.title && item.year == name.year &&
+        item.series == name.series && item.season == name.season && item.episode == name.episode
 
 private suspend fun <T> io(block: () -> T): T = withContext(Dispatchers.IO) { block() }
 

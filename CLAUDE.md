@@ -20,9 +20,9 @@ A free, open-source home media server with its own apps: the server on macOS and
 |---|---|---|
 | `:shared:api` | `shared/api` | API wire models (`/api/v1`), Kotlin Multiplatform (JVM, Android), used by every app; `shared/api/lang` holds the API's error texts for the server and the apps |
 | `:shared:server` | `shared/server` | Server core only: libraries, scanner, name parser, database, owner account, HTTP API, direct play, plugin API |
-| `:shared:plugins:<id>` | `shared/plugins/<id>` | One server plugin each: `web` (browser pages), `watch-state` (progress, own database), `discovery` (UDP), `local-metadata` (posters, `.nfo`), `tmdb` (online details, off by default), `media-info` (ffprobe), `subtitles` (WebVTT) |
+| `:shared:plugins:<id>` | `shared/plugins/<id>` | One server plugin each: `web` (browser pages), `watch-state` (progress, own database), `discovery` (UDP), `local-metadata` (posters, `.nfo`), `tmdb` (online details, off by default), `media-info` (ffprobe), `subtitles` (WebVTT), `transcode` (direct play / remux / transcode to HLS) |
 | `:shared:ffmpeg` | `shared/ffmpeg` | Not a plugin: finds and runs the owner's FFmpeg for the plugins that need it |
-| `:shared:client` | `shared/client` | The apps: API client, `AppViewModel` (StateFlow), client plugins (`watch-state`, `jaiplayer`, `metadata`, `media-info`, `subtitles`), Compose Multiplatform screens, language files; `jvmSharedMain` (HTTP and discovery on java.net), `androidMain` (Media3 player), `desktopMain` |
+| `:shared:client` | `shared/client` | The apps: API client, `AppViewModel` (StateFlow), client plugins (`watch-state`, `jaiplayer`, `metadata`, `media-info`, `subtitles`, `transcode`), Compose Multiplatform screens, language files; `jvmSharedMain` (HTTP and discovery on java.net), `androidMain` (Media3 player), `desktopMain` |
 | `:shared:desktop` | `shared/desktop` | The macOS and Windows app: the server plus its window |
 | `:desktop:mac` | `desktop/mac` | macOS entry point: picks the plugins |
 | `:desktop:windows` | `desktop/windows` | Windows entry point: picks the plugins |

@@ -4,6 +4,9 @@ import com.ks.streamflix.api.ApiError
 import com.ks.streamflix.api.ApiV1
 import com.ks.streamflix.api.ContinueList
 import com.ks.streamflix.api.Credentials
+import com.ks.streamflix.api.PlaybackDecision
+import com.ks.streamflix.api.PlaybackRequest
+import com.ks.streamflix.api.TranscodeApi
 import com.ks.streamflix.api.DetailsApi
 import com.ks.streamflix.api.ImageKind
 import com.ks.streamflix.api.ItemDetails
@@ -85,6 +88,11 @@ class StreamflixClient(private val transport: HttpTransport, val server: String,
     suspend fun mediaInfo(id: Long): MediaInfo = get(MediaInfoApi.item(id))
     suspend fun subtitles(id: Long): List<SubtitleTrack> = get<SubtitleList>(SubtitlesApi.list(id)).tracks
     fun url(path: String) = server + path
+
+    // Plugin `transcode` on the server.
+    suspend fun playback(id: Long, request: PlaybackRequest): PlaybackDecision =
+        send("POST", TranscodeApi.playback(id), ApiV1.json.encodeToString(request))
+    suspend fun stopSession(sessionId: String) { runCatching { raw("DELETE", TranscodeApi.session(sessionId), null) } }
 
     private suspend inline fun <reified T> get(path: String): T = send("GET", path, null)
 

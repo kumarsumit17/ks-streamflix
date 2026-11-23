@@ -94,9 +94,15 @@ class SubtitlesPlugin(private val ffmpeg: Ffmpeg = Ffmpeg.locate()) : ServerPlug
                     }
                 }
             }
-            ffmpeg.probe(itemId, file)?.subtitles?.filter { it.codec in Ffmpeg.TEXT_SUBTITLES }?.forEach { s ->
+            val streams = ffmpeg.probe(itemId, file)?.subtitles.orEmpty()
+            // Picture tracks are listed for burning in (by the transcode plugin); they have no WebVTT.
+            streams.filter { it.codec in Ffmpeg.IMAGE_SUBTITLES }.forEach { s ->
+                val label = SubtitleFiles.label(s.language, s.title, s.forced, "Track ${s.index}")
+                result += SubtitleTrack("stream-${s.index}", s.language, label, s.forced, s.default, "", burnIn = true, streamIndex = s.index) to suspend { null }
+            }
+            streams.filter { it.codec in Ffmpeg.TEXT_SUBTITLES }.forEach { s ->
                 val id = "stream-${s.index}"
-                val track = SubtitleTrack(id, s.language, SubtitleFiles.label(s.language, s.title, s.forced, "Track ${s.index}"), s.forced, s.default, SubtitlesApi.track(itemId, id))
+                val track = SubtitleTrack(id, s.language, SubtitleFiles.label(s.language, s.title, s.forced, "Track ${s.index}"), s.forced, s.default, SubtitlesApi.track(itemId, id), streamIndex = s.index)
                 result += track to suspend {
                     cached(cache, file, id) { ffmpeg.ffmpegOutput(listOf("-i", file.toString(), "-map", "0:${s.index}", "-f", "webvtt", "-")) }
                 }

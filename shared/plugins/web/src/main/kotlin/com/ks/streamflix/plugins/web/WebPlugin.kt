@@ -161,13 +161,27 @@ private class Pages(private val core: Core, private val strings: Strings) {
                 call.page(displayTitle(lang, item)) {
                     append("<p><a href=\"/library/${item.libraryId}\">← ").esc(t(lang, "web.libraries.heading")).append("</a></p>")
                     append("<h1>").esc(displayTitle(lang, item)).append("</h1>")
-                    append("<video controls autoplay preload=metadata src=\"$src\" ")
+                    // The source is chosen by the script below: the file, or the server's HLS conversion.
+                    append("<video controls autoplay preload=metadata data-src=\"$src\" ")
                     append("onerror=\"document.getElementById('unsupported').hidden=false\"></video>")
                     append("<p id=unsupported class=error hidden>").esc(t(lang, "web.watch.unsupported")).append("</p>")
                     append("<p class=muted><a href=\"$src\">").esc(t(lang, "web.watch.direct")).append("</a></p>")
                     append("<p id=plot></p>")
                     // Details and subtitles come from their plugins' APIs, when the server has them.
                     append("<script>(async()=>{const id=${item.id},v=document.querySelector('video');")
+                    // What this browser plays, for the transcode plugin's decision; without the plugin, the file as it is.
+                    append("const c=t=>v.canPlayType(t)!=='';const p={containers:['mp4','m4v'].concat(c('video/webm')?['webm']:[]),")
+                    append("videoCodecs:[['h264','video/mp4; codecs=\"avc1.640028\"'],['hevc','video/mp4; codecs=\"hvc1.1.6.L93.B0\"'],['vp9','video/webm; codecs=\"vp9\"'],['av1','video/mp4; codecs=\"av01.0.05M.08\"']].filter(x=>c(x[1])).map(x=>x[0]),")
+                    append("audioCodecs:[['aac','audio/mp4; codecs=\"mp4a.40.2\"'],['mp3','audio/mpeg'],['opus','audio/webm; codecs=\"opus\"'],['flac','audio/flac'],['ac3','audio/mp4; codecs=\"ac-3\"'],['eac3','audio/mp4; codecs=\"ec-3\"']].filter(x=>c(x[1])).map(x=>x[0]),")
+                    append("maxHeight:Math.round(screen.height*devicePixelRatio)};let sid=null;")
+                    // The server's refusals, in the page's language.
+                    val msgs = listOf("transcode.error.busy", "transcode.error.noFfmpeg", "transcode.error.failed")
+                        .joinToString(",", "{", "}") { "'$it':" + ApiV1.json.encodeToString(kotlinx.serialization.serializer<String>(), t(lang, it)) }
+                    append("const msgs=").append(msgs.replace("</", "<\\/")).append(";")
+                    append("try{const r=await fetch('/api/v1/plugins/transcode/items/'+id+'/playback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profile:p})});")
+                    append("if(r.ok){const d=await r.json();if(d.method!=='direct'&&!c('application/vnd.apple.mpegurl')){document.getElementById('unsupported').hidden=false}else{v.src=d.path;sid=d.sessionId;if(d.method!=='direct'&&d.startMs)v.addEventListener('loadedmetadata',()=>{v.currentTime=d.startMs/1000},{once:true})}}")
+                    append("else if(r.status===404){v.src=v.dataset.src}else{const e=await r.json().catch(()=>({}));const u=document.getElementById('unsupported');u.textContent=(msgs[e.code]||u.textContent);u.hidden=false}}catch(e){v.src=v.dataset.src}")
+                    append("addEventListener('pagehide',()=>{if(sid)fetch('/api/v1/plugins/transcode/sessions/'+sid,{method:'DELETE',keepalive:true})});")
                     append("try{const d=await (await fetch('/api/v1/items/'+id+'/details')).json();if(d.plot)document.getElementById('plot').textContent=d.plot}catch(e){}")
                     append("try{const r=await fetch('/api/v1/plugins/subtitles/items/'+id);if(r.ok){(await r.json()).tracks.forEach((t,i)=>{const e=document.createElement('track');")
                     append("e.kind='subtitles';e.label=t.label;if(t.language)e.srclang=t.language;e.src=t.path;if(t.default)e.default=true;v.appendChild(e)})}}catch(e){}})()</script>")

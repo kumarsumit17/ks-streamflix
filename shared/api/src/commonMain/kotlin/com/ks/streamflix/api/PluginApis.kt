@@ -1,5 +1,6 @@
 package com.ks.streamflix.api
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /** Plugin `watch-state`: progress, watched, continue watching (per user). */
@@ -87,8 +88,12 @@ data class SubtitleTrack(
     val label: String,
     val forced: Boolean = false,
     val default: Boolean = false,
-    /** Path of the WebVTT, relative to the server. */
+    /** Path of the WebVTT, relative to the server; empty for a picture track, which is burned in instead. */
     val path: String,
+    /** A picture track (PGS, DVD): shown by transcoding with it burned into the video. */
+    val burnIn: Boolean = false,
+    /** The ffprobe index of an embedded track. */
+    val streamIndex: Int? = null,
 )
 
 @Serializable
@@ -105,3 +110,55 @@ data class TmdbSettings(val enabled: Boolean, val hasKey: Boolean, val language:
 
 @Serializable
 data class TmdbSettingsUpdate(val enabled: Boolean, val apiKey: String? = null, val language: String? = null)
+
+/** Plugin `transcode`: direct play, remux or transcode, decided from what the client can play. */
+object TranscodeApi {
+    const val BASE = "${ApiV1.BASE}/plugins/transcode"
+    const val STATUS = "$BASE/status"
+    fun playback(id: Long) = "$BASE/items/$id/playback"
+    fun session(sessionId: String) = "$BASE/sessions/$sessionId"
+}
+
+/**
+ * What a client can play. Containers are file extensions (`mp4`, `mkv`); codecs are ffprobe's
+ * names (`h264`, `hevc`, `aac`, `eac3`).
+ */
+@Serializable
+data class DeviceProfile(
+    val containers: List<String>,
+    val videoCodecs: List<String>,
+    val audioCodecs: List<String>,
+    val maxHeight: Int = 2160,
+    val maxBitrate: Long = 120_000_000,
+)
+
+@Serializable
+data class PlaybackRequest(
+    val profile: DeviceProfile,
+    val startMs: Long = 0,
+    /** An image subtitle stream (ffprobe index) to burn into the video; forces transcoding. */
+    val burnSubtitleIndex: Int? = null,
+)
+
+@Serializable
+enum class PlayMethod {
+    @SerialName("direct") DIRECT,
+    @SerialName("remux") REMUX,
+    @SerialName("transcode") TRANSCODE,
+}
+
+@Serializable
+data class PlaybackDecision(
+    val method: PlayMethod,
+    /** Path to play, relative to the server: the file itself for DIRECT, an HLS playlist otherwise. */
+    val path: String,
+    val sessionId: String? = null,
+    /** Where the stream starts in the item (ms); positions in the HLS stream count from here. */
+    val startMs: Long = 0,
+    val durationMs: Long? = null,
+    /** Why it was not direct play: `container`, `video`, `audio`, `height`, `bitrate`, `subtitles`. */
+    val reasons: List<String> = emptyList(),
+)
+
+@Serializable
+data class TranscodeStatus(val ffmpeg: Boolean, val encoder: String, val running: Int, val maxRunning: Int)

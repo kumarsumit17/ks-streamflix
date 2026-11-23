@@ -67,20 +67,22 @@ private const val CONTROLS_HIDE_MS = 4_000L
 @Composable
 fun Media3Player(request: PlayRequest, isTv: Boolean, onProgress: (Long, Long) -> Unit, onExit: (Long, Long) -> Unit) {
     val context = LocalContext.current
+    fun mediaItem(r: PlayRequest) = MediaItem.Builder().setUri(r.url).apply {
+        // The server's conversion: an HLS playlist with the item's whole length.
+        if (r.hls) setMimeType(MimeTypes.APPLICATION_M3U8)
+        r.subtitle?.let { sub ->
+            setSubtitleConfigurations(listOf(
+                MediaItem.SubtitleConfiguration.Builder(android.net.Uri.parse(sub.url))
+                    .setMimeType(MimeTypes.TEXT_VTT).setLanguage(sub.language).setLabel(sub.label)
+                    .setSelectionFlags(C.SELECTION_FLAG_DEFAULT).build(),
+            ))
+        }
+    }.build()
     val player = remember {
         val http = DefaultHttpDataSource.Factory().setDefaultRequestProperties(request.headers)
         ExoPlayer.Builder(context).setMediaSourceFactory(DefaultMediaSourceFactory(http)).build().apply {
-            val item = MediaItem.Builder().setUri(request.url).apply {
-                // The chosen subtitles (WebVTT from the server), fetched with the same sign-in header.
-                request.subtitle?.let { sub ->
-                    setSubtitleConfigurations(listOf(
-                        MediaItem.SubtitleConfiguration.Builder(android.net.Uri.parse(sub.url))
-                            .setMimeType(MimeTypes.TEXT_VTT).setLanguage(sub.language).setLabel(sub.label)
-                            .setSelectionFlags(C.SELECTION_FLAG_DEFAULT).build(),
-                    ))
-                }
-            }.build()
-            setMediaItem(item, request.startMs)
+            // The chosen subtitles (WebVTT from the server) are fetched with the same sign-in header.
+            setMediaItem(mediaItem(request), request.startMs)
             if (request.subtitle == null) trackSelectionParameters = trackSelectionParameters.buildUpon().setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true).build()
             prepare()
             playWhenReady = true
@@ -135,6 +137,7 @@ fun Media3Player(request: PlayRequest, isTv: Boolean, onProgress: (Long, Long) -
     fun showControls() { controlsShownAt = System.currentTimeMillis() }
     fun togglePlay() { if (player.isPlaying) player.pause() else player.play(); showControls() }
     fun seek(by: Long) { player.seekTo((player.currentPosition + by).coerceIn(0, player.duration.coerceAtLeast(0))); showControls() }
+
 
     Box(
         Modifier.fillMaxSize().background(Color.Black)

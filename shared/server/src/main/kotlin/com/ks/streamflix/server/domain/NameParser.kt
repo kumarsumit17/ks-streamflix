@@ -75,7 +75,7 @@ object NameParser {
         val season = match.groupValues[1].toInt()
         val episode = match.groupValues[2].toInt()
         val before = clean(stem.substring(0, match.range.first))
-        val after = clean(stem.substring(match.range.last + 1)).let(::cutAtTags)
+        val after = cutAtTags(clean(stem.substring(match.range.last + 1)), title = false)
         val folders = segments.dropLast(1).filterNot { seasonFolderRegex.matches(it.trim()) }
         val series = folders.firstOrNull()?.let { titleAndYear(it).first }?.takeIf { it.isNotEmpty() }
             ?: before.let(::cutAtTags).takeIf { it.isNotEmpty() }
@@ -102,9 +102,13 @@ object NameParser {
         return spaced.replace(Regex("""\s+"""), " ").trim(' ', '-', '.')
     }
 
-    private fun cutAtTags(text: String): String {
+    /**
+     * The text before the first release tag. A film or series title never starts with release
+     * details, so its first word ("DTS", "4K") is kept ([title]); after an episode number it is not.
+     */
+    private fun cutAtTags(text: String, title: Boolean = true): String {
         val words = text.split(' ')
-        val end = words.indexOfFirst { it.lowercase().trim('[', ']', '(', ')') in tags }
+        val end = words.withIndex().indexOfFirst { (i, w) -> (i > 0 || !title) && w.lowercase().trim('[', ']', '(', ')') in tags }
         val kept = if (end < 0) words else words.take(end)
         return kept.joinToString(" ").trim(' ', '-', '(', '[')
     }

@@ -25,6 +25,9 @@ class NameParserTest {
     @Test fun titleThatIsAYearKeepsIt() =
         assertEquals(ParsedName(ItemKind.MOVIE, "2001 A Space Trip", 1968), movie("2001 A Space Trip (1968).mkv"))
 
+    @Test fun titleStartingWithATagWord() =
+        assertEquals(ParsedName(ItemKind.MOVIE, "DTS Test", 2025), movie("DTS Test (2025)", "DTS Test (2025).mkv"))
+
     @Test fun filmWithoutYear() =
         assertEquals(ParsedName(ItemKind.MOVIE, "Home Video"), movie("Home_Video.mp4"))
 

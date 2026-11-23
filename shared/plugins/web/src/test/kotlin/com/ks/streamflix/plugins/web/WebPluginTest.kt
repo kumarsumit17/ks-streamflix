@@ -66,7 +66,7 @@ class WebPluginTest {
         val list = get("/library/$library")
         assertContains(list.body(), "The Long Road (2019)")
         val item = Regex("""href="/watch/(\d+)"""").find(list.body())!!.groupValues[1]
-        assertContains(get("/watch/$item").body(), """src="/api/v1/items/$item/stream"""")
+        assertContains(get("/watch/$item").body(), """data-src="/api/v1/items/$item/stream"""")
 
         val hindi = get("/lang?set=hi&back=/library/$library")
         assertEquals("/library/$library", hindi.location())

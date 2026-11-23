@@ -210,9 +210,10 @@ class AppViewModel(val host: PlatformHost, plugins: List<ClientPlugin>) : ViewMo
     fun play(item: Item, startMs: Long = 0) {
         val c = client ?: return
         if (host.hasPlayer) {
-            viewModelScope.launch {
+            work {
                 var request = PlayRequest(c.streamUrl(item.id), c.authHeaders, item.title, startMs)
-                plugins.playDecorators.forEach { d -> request = runCatching { d(c, item, request) }.getOrDefault(request) }
+                // A decorator may refuse with a reason the user should see (the server is busy, no FFmpeg).
+                plugins.playDecorators.forEach { d -> request = d(c, item, request) }
                 show(Screen.Playing(item, request))
             }
         } else {

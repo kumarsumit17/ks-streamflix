@@ -12,7 +12,7 @@ KS StreamFlix becomes a home media server in the spirit of [Jellyfin](https://je
 
 Jellyfin's [documentation](https://jellyfin.org/docs/) and download repository ([repo.jellyfin.org](https://repo.jellyfin.org/)) are a **feature reference only**. Jellyfin is GPL-2.0: no Jellyfin code, assets, text, API definitions or FFmpeg builds are copied or bundled. StreamFlix has its own design, its own API and its own words.
 
-> Status: approved by the owner on 2026-11-23, with one APK for Android and Google TV. Stages 1 to 3 are built (see [Stage notes](#stage-notes)).
+> Status: approved by the owner on 2026-11-23, with one APK for Android and Google TV. Stages 1 to 4 are built (see [Stage notes](#stage-notes)).
 
 ## What the server does
 
@@ -113,6 +113,15 @@ Each stage is built and tested on `dev` and ends in something that works on its 
 - **Stage 3** (2026-11-23): `shared/ffmpeg` (a helper library, not a plugin: finds the owner's FFmpeg in `STREAMFLIX_FFMPEG_DIR`, `PATH` or the usual places, and runs it with at most 4 processes at a time); server plugins `local-metadata` (posters and backdrops next to the files, Kodi `.nfo` with external entities refused), `tmdb` (off by default; the owner's key on its own settings page; only titles and years are sent; answers and images cached; TMDB's notice shown), `media-info` and `subtitles` (side-car SRT/VTT need nothing, ASS and embedded text tracks need FFmpeg; image subtitles wait for stage 4). App plugins `metadata` (posters at the card's size, kept in a cache of 60 images; plot, genres, rating), `media-info` (one line of details) and `subtitles` (a choice on the item's page; a default or forced track is chosen first; the TV player draws the lines). The browser pages show posters, the plot and subtitles through the same APIs.
   - Choice buttons (subtitles, language) keep the D-pad focus when chosen: one button whose colours change, not two kinds of button.
   - FFmpeg on the owner's Mac comes from Homebrew (a GPL build); StreamFlix only runs it as a separate program.
+- **Stage 4** (2026-11-23): server plugin `transcode` and app plugin `transcode`.
+  - **Decision:** each app sends what it plays (containers, codecs, largest height, bitrate; Android reads its decoders and display). Direct play when everything fits; **remux** (streams copied into HLS) when only the container does not fit; **transcode** to H.264/AAC when the video codec, height or bitrate does not, or to burn in a picture subtitle. Audio the client cannot play becomes AAC in both cases.
+  - **HLS, as a normal video:** the server writes the whole playlist at once (VOD, segments of about 4 s, fMP4), so every player sees the length and can seek anywhere. FFmpeg makes the segments in order; a request far ahead of it, or behind where it started, restarts FFmpeg at that segment with the item's own timestamps. A transcode cuts every 4 s (a keyframe forced there); a remux cuts at the file's keyframes, read from its packets beforehand. Subtitles keep the item's timeline.
+  - **Encoders:** the first hardware H.264 encoder that works (VideoToolbox on macOS; NVENC, Quick Sync or AMF on Windows), tested on a few frames, else `libx264`. On the owner's Mac: VideoToolbox.
+  - **Limits:** two sessions at once by default (`transcode.error.busy` beyond; a session quiet for a minute gives way), a session idle for 10 minutes is stopped, the app stops its session when playback stops, the browser page when it is closed, and every session's files are deleted when it stops and when the server starts.
+  - **Session files** are reached by the session id alone (128 random bits), as a stream link is.
+  - **Browser pages:** the watch page asks the same question with the browser's `canPlayType` answers and plays the HLS stream natively (Chrome 156 and Safari do; Firefox does not, and says so).
+  - The desktop apps keep handing playback to KS JaiPlayer or the browser (decision 5).
+  - Name parsing: a title may start with a word that is also a release tag ("DTS Test"); a rescan now also updates items whose parsed name changed.
   - **Open in KS JaiPlayer on Android** needs JaiPlayer's `ACTION_VIEW` filter to accept `http`/`https` stream URLs (today it lists `content` and `file`). Until it does, the button stays hidden, because the app checks that JaiPlayer can open the link. This is a change in ks-jaiplayer.
 
 ## Decisions (approved)

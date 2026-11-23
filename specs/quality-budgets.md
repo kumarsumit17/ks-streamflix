@@ -19,6 +19,7 @@ The owner's rule (2026-11-23): stability, app size and speed are variables for a
 | `speed.server.startMs` | From start to the first answer of `/api/v1/info` | server tests (in-process); the cold start of the installed app was 752 ms on the owner's Mac on 2026-11-23, checked by hand |
 | `speed.scan.filesPerSecond` | Scanning a library of new files, at least | server tests |
 | `speed.api.p95Ms` | The 95th percentile of item-list and first-byte stream answers on a local server | server tests |
+| `speed.transcode.firstSegmentMs` | From the playback request to the first HLS segment, for a remux and for a transcode (a 720p test film) | transcode plugin tests, with FFmpeg installed |
 | `stability.concurrentStreams` | Simultaneous range requests that must all succeed | server tests |
 | `stability.repeatRuns` | Start, scan, stream and stop cycles in a row without an error or a leaked file handle | server tests |
 
@@ -33,6 +34,10 @@ Server 22.4 MB (budget 24); desktop app 60.5 MB (new budget 62: Compose's native
 ## Stage 3 measurements (owner's Mac, 2026-11-23)
 
 Server 22.7 MB, desktop app 60.8 MB, release APK 1.8 MB: the four new plugins and the FFmpeg helper add about 0.3 MB, with no new library (images, XML and HTTP come from the JDK; images in the apps from Compose).
+
+## Stage 4 measurements (owner's Mac, 2026-11-23)
+
+First segment 177 ms for a remux and 477 ms for a transcode with VideoToolbox (budget 6000 ms). Server 22.8 MB, desktop app 60.9 MB, release APK 1.8 MB (Media3's HLS module included).
 
 ## Rules
 

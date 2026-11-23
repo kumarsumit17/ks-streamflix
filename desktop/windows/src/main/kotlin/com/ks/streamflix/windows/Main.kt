@@ -11,6 +11,7 @@ import com.ks.streamflix.plugins.localmetadata.LocalMetadataPlugin
 import com.ks.streamflix.plugins.mediainfo.MediaInfoPlugin
 import com.ks.streamflix.plugins.subtitles.SubtitlesPlugin
 import com.ks.streamflix.plugins.tmdb.TmdbPlugin
+import com.ks.streamflix.plugins.transcode.TranscodePlugin
 import com.ks.streamflix.plugins.watchstate.WatchStatePlugin
 import com.ks.streamflix.plugins.web.WebPlugin
 import java.nio.file.Paths
@@ -21,7 +22,7 @@ fun main(args: Array<String>) = runDesktopApp(
     dataDir = Paths.get(System.getenv("APPDATA") ?: Paths.get(System.getProperty("user.home"), "AppData", "Roaming").toString(), "KS StreamFlix"),
     serverPlugins = listOf(
         WebPlugin(), WatchStatePlugin(), DiscoveryPlugin(),
-        LocalMetadataPlugin(), TmdbPlugin(), MediaInfoPlugin(), SubtitlesPlugin(),
+        LocalMetadataPlugin(), TmdbPlugin(), MediaInfoPlugin(), SubtitlesPlugin(), TranscodePlugin(),
     ),
     clientPlugins = listOf(
         WatchStateClient(), MetadataClient(), MediaInfoClient(),

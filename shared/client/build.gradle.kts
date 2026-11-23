@@ -53,11 +53,15 @@ kotlin {
                 implementation(project(":shared:plugins:watch-state"))
                 implementation(project(":shared:plugins:local-metadata"))
                 implementation(project(":shared:plugins:subtitles"))
+                implementation(project(":shared:plugins:transcode"))
+                implementation(project(":shared:ffmpeg"))
             }
         }
         androidMain.get().dependsOn(jvmSharedMain)
         androidMain.dependencies {
             implementation(libs.media3.exoplayer)
+            // The server's remux and transcode streams (plugin `transcode`).
+            implementation(libs.media3.exoplayer.hls)
             implementation(libs.media3.ui.compose)
             implementation(libs.androidx.activity.compose)
             implementation(libs.kotlinx.coroutines.android)

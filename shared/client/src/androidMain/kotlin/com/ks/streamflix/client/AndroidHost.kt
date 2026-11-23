@@ -11,6 +11,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
+import android.media.MediaCodecList
+import android.media.MediaFormat
+import android.view.WindowManager
+import com.ks.streamflix.api.DeviceProfile
 import com.ks.streamflix.client.net.HttpTransport
 import com.ks.streamflix.client.settings.SettingsStore
 import java.util.Locale
@@ -73,4 +77,34 @@ class AndroidHost(private val context: Context, override val isTv: Boolean, over
         Media3Player(request, isTv, onProgress, onExit)
 
     override fun openExternally(url: String): Boolean = AndroidJaiPlayer.open(context, url, "")
+
+    /** What this device decodes (its codecs) and shows (its display), for the server's decision. */
+    override val deviceProfile: DeviceProfile by lazy { androidProfile(context) }
+}
+
+/** The containers Media3 opens, and the codecs this device has decoders for. */
+fun androidProfile(context: Context): DeviceProfile {
+    val decoders = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.filter { !it.isEncoder }.flatMap { it.supportedTypes.toList() }.map { it.lowercase() }.toSet()
+    fun has(mime: String) = mime in decoders
+    val video = buildList {
+        if (has(MediaFormat.MIMETYPE_VIDEO_AVC)) add("h264")
+        if (has(MediaFormat.MIMETYPE_VIDEO_HEVC)) add("hevc")
+        if (has(MediaFormat.MIMETYPE_VIDEO_VP9)) add("vp9")
+        if (has(MediaFormat.MIMETYPE_VIDEO_AV1)) add("av1")
+        if (has(MediaFormat.MIMETYPE_VIDEO_MPEG4)) add("mpeg4")
+        if (has(MediaFormat.MIMETYPE_VIDEO_MPEG2)) add("mpeg2video")
+    }
+    val audio = buildList {
+        add("aac"); add("mp3"); add("opus"); add("vorbis"); add("flac") // Media3 and Android always decode these
+        if (has(MediaFormat.MIMETYPE_AUDIO_AC3)) add("ac3")
+        if (has(MediaFormat.MIMETYPE_AUDIO_EAC3)) add("eac3")
+    }
+    @Suppress("DEPRECATION")
+    val display = context.getSystemService(WindowManager::class.java)?.defaultDisplay
+    val height = display?.supportedModes?.maxOfOrNull { minOf(it.physicalWidth, it.physicalHeight) } ?: 1080
+    return DeviceProfile(
+        containers = listOf("mp4", "m4v", "mkv", "webm", "mov", "ts", "m2ts", "3gp"),
+        videoCodecs = video, audioCodecs = audio,
+        maxHeight = height.coerceAtLeast(720), maxBitrate = 80_000_000,
+    )
 }

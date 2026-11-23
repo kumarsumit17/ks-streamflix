@@ -16,5 +16,9 @@
   "item.error.missing": "The video file is missing. Scan the library again.",
   "mediaInfo.error.unavailable": "Media details aren’t available: FFmpeg isn’t installed on the server, or it couldn’t read this file.",
   "subtitles.error.notFound": "This subtitle track doesn’t exist.",
-  "details.attribution.tmdb": "This product uses the TMDB API but is not endorsed or certified by TMDB."
+  "details.attribution.tmdb": "This product uses the TMDB API but is not endorsed or certified by TMDB.",
+  "transcode.error.busy": "The server is already converting as many videos as it can. Try again when one has finished.",
+  "transcode.error.noFfmpeg": "This video needs converting, but FFmpeg isn’t installed on the server.",
+  "transcode.error.failed": "FFmpeg couldn’t convert this video.",
+  "transcode.error.gone": "This playback has ended on the server. Start it again."
 }

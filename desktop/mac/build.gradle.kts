@@ -27,6 +27,7 @@ dependencies {
     implementation(project(":shared:plugins:tmdb"))
     implementation(project(":shared:plugins:media-info"))
     implementation(project(":shared:plugins:subtitles"))
+    implementation(project(":shared:plugins:transcode"))
     runtimeOnly(libs.slf4j.simple)
 }
 

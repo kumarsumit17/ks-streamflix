@@ -40,6 +40,20 @@ class Ffmpeg(val ffprobe: File?, val ffmpeg: File?) {
         return runCatching { parseProbe(itemId, json) }.getOrNull()
     }
 
+    /** The times (s) of [file]'s video keyframes, read from the packets without decoding; null on failure. */
+    suspend fun keyframes(file: Path): List<Double>? {
+        val probe = ffprobe ?: return null
+        val out = slots.withPermit {
+            withContext(Dispatchers.IO) {
+                run(listOf(probe.path, "-v", "error", "-select_streams", "v:0", "-show_entries", "packet=pts_time,flags", "-of", "csv=p=0", file.toString()), 120)
+            }
+        } ?: return null
+        return out.lineSequence().mapNotNull { line ->
+            val parts = line.split(',')
+            if (parts.size >= 2 && parts[1].startsWith("K")) parts[0].toDoubleOrNull() else null
+        }.sorted().toList()
+    }
+
     /** Runs ffmpeg with [args] and returns its standard output, or null on failure. */
     suspend fun ffmpegOutput(args: List<String>, timeoutSeconds: Long = 120): ByteArray? {
         val exe = ffmpeg ?: return null
@@ -53,6 +67,31 @@ class Ffmpeg(val ffprobe: File?, val ffmpeg: File?) {
                 }.getOrNull()
             }
         }
+    }
+
+    /** Starts a long-running ffmpeg (a transcode) with [args]; its log goes to [log]. Null without FFmpeg. */
+    fun start(args: List<String>, log: File): Process? {
+        val exe = ffmpeg ?: return null
+        return runCatching {
+            ProcessBuilder(listOf(exe.path, "-nostdin", "-hide_banner", "-v", "error") + args)
+                .redirectOutput(ProcessBuilder.Redirect.DISCARD).redirectError(log).start()
+        }.getOrNull()
+    }
+
+    /**
+     * The H.264 encoder to use: the first hardware encoder that works on this computer (VideoToolbox
+     * on macOS; NVENC, Quick Sync or AMF on Windows and Linux), else `libx264`. Each candidate is
+     * tried on one small frame, because FFmpeg lists encoders the hardware may not have.
+     */
+    val h264Encoder: String by lazy {
+        val exe = ffmpeg ?: return@lazy "libx264"
+        val listed = run(listOf(exe.path, "-hide_banner", "-encoders"), 20).orEmpty()
+        val mac = System.getProperty("os.name").startsWith("Mac")
+        val candidates = if (mac) listOf("h264_videotoolbox") else listOf("h264_nvenc", "h264_qsv", "h264_amf")
+        candidates.firstOrNull { enc ->
+            enc in listed && run(listOf(exe.path, "-hide_banner", "-v", "error", "-f", "lavfi", "-i", "color=c=black:s=256x144:r=25",
+                "-frames:v", "5", "-c:v", enc, "-f", "null", "-"), 20) != null
+        } ?: "libx264"
     }
 
     companion object {
@@ -116,6 +155,9 @@ class Ffmpeg(val ffprobe: File?, val ffmpeg: File?) {
                 },
             )
         }
+
+        /** Subtitle codecs that are pictures: shown by burning them into the video (transcoding). */
+        val IMAGE_SUBTITLES = setOf("hdmv_pgs_subtitle", "pgssub", "dvd_subtitle", "dvdsub", "dvb_subtitle", "dvbsub", "xsub")
 
         /** Subtitle codecs that are text, so they can be turned into WebVTT (image subtitles need burning in, stage 4). */
         val TEXT_SUBTITLES = setOf("subrip", "srt", "ass", "ssa", "webvtt", "mov_text", "text")

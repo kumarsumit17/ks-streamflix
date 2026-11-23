@@ -1,6 +1,7 @@
 package com.ks.streamflix.client
 
 import androidx.compose.runtime.Composable
+import com.ks.streamflix.api.DeviceProfile
 import com.ks.streamflix.client.net.HttpTransport
 import com.ks.streamflix.client.settings.SettingsStore
 
@@ -10,13 +11,19 @@ data class FoundServer(val name: String, val address: String)
 /** A subtitle file for the built-in player (WebVTT, fetched with the same headers as the video). */
 data class PlaySubtitle(val url: String, val language: String?, val label: String)
 
-/** What the built-in player is asked to play. [subtitle] is the one to show, or null for none. */
+/**
+ * What the built-in player is asked to play. [subtitle] is the one to show, or null for none.
+ * A server-side conversion is an HLS stream ([hls]) with the item's whole length and timeline.
+ */
 data class PlayRequest(
     val url: String,
     val headers: Map<String, String>,
     val title: String,
     val startMs: Long,
     val subtitle: PlaySubtitle? = null,
+    /** A picture subtitle (ffprobe index) to burn in on the server. */
+    val burnSubtitleIndex: Int? = null,
+    val hls: Boolean = false,
 )
 
 /** What each platform gives the shared app. */
@@ -31,6 +38,9 @@ interface PlatformHost {
 
     /** Servers answering on the home network within a moment. */
     suspend fun discover(): List<FoundServer>
+
+    /** What the built-in player plays, for the server's direct play / remux / transcode decision; null without a built-in player. */
+    val deviceProfile: DeviceProfile? get() = null
 
     /** True when the app has its own player screen (Android); otherwise [openExternally] plays. */
     val hasPlayer: Boolean

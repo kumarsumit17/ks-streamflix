@@ -151,7 +151,9 @@ class SubtitlesPlugin : ClientPlugin {
         })
         context.addPlayDecorator { client, item, request ->
             val track = tracks.takeIf { forItem == item.id }?.firstOrNull { it.id == chosen } ?: return@addPlayDecorator request
-            request.copy(subtitle = PlaySubtitle(client.url(track.path), track.language, track.label))
+            // A picture track is burned in by the server's transcode plugin; a text track is drawn by the player.
+            if (track.burnIn) request.copy(burnSubtitleIndex = track.streamIndex)
+            else request.copy(subtitle = PlaySubtitle(client.url(track.path), track.language, track.label))
         }
     }
 }
