@@ -31,6 +31,30 @@ Jellyfin's [documentation](https://jellyfin.org/docs/) and download repository (
 | **Admin pages** | Setup, libraries, users, scan status and server settings, as pages served by the server, in English and Hindi. | 1 (setup, libraries), 5 (the rest) |
 | **Later, not planned yet** | Music, photos, live TV and recording, DLNA, Chromecast, synced group watching, plugins, remote access outside the home. Each needs its own plan. | — |
 
+## A minimal core, plugins for the rest
+
+Every app keeps a bare-minimum core and adds every other feature as a plugin (owner's decision, 2026-11-23), so each app carries only the features it includes and stays small. It is the same model as [JaiPlayer's plugins](https://github.com/kumarsumit17/ks-jaiplayer/blob/main/specs/plugins.md).
+
+- **Server core** (`shared/server`): libraries and their folders, scanning and name parsing, the database, the owner account and sessions, the API (`/api/v1`), direct play with byte ranges, the language files. Nothing else.
+- **Server plugins** (`shared/plugins/<id>`, one Gradle module each): a `ServerPlugin` has a stable `id` and `install(context)`. The context gives it the core's services (libraries, items, scan, sign-in), the language files and its own data folder, and lets it add HTTP routes and listen for scans. Its own settings and database tables (named `plugin_<id>_…`, with their own migrations) come with the first plugin that needs them. The core never knows which plugins exist: each entry point passes its list, and two plugins with one id are refused.
+- **Client core and plugins** (stage 2): the Android and Google TV app's core is sign-in, browsing and playing; the rest (continue watching, JaiPlayer hand-off, subtitles menu, …) are client plugins with the same shape.
+- Plugins are compiled in (first-party), never downloaded and loaded at run time: that would run code nobody reviewed, and Android forbids it in most cases. Leaving a plugin out of an app's list leaves its code and its dependencies out of that app.
+
+| Plugin | id | Adds | Stage |
+|---|---|---|---|
+| Browser pages | `web` | Setup, sign-in, libraries, browsing and playing in a browser | 1 |
+| Discovery | `discovery` | Clients find the server on the home network | 2 |
+| Watch state | `watch-state` | Progress, watched, resume, continue watching, next up | 2 |
+| Local metadata | `local-metadata` | Posters, backdrops and `.nfo` next to the files; resized images | 3 |
+| Media details | `media-info` | ffprobe details (duration, codecs, tracks) | 3 |
+| Subtitles | `subtitles` | Side-car and embedded text subtitles as WebVTT | 3 |
+| TMDB | `tmdb` | Online metadata with the owner's own key | 3 |
+| Transcoding | `transcode` | Remux and FFmpeg HLS transcoding, hardware encoding | 4 |
+| Users | `users` | More users, per-library access, parental ratings | 5 |
+| Folder watching | `folder-watch` | Rescan when files change | 5 |
+
+The "What the server does" table above says what each feature does; the stage column there and here agree.
+
 ## Platforms: server and clients
 
 | Platform folder | Role | Notes |
@@ -39,7 +63,7 @@ Jellyfin's [documentation](https://jellyfin.org/docs/) and download repository (
 | `desktop/windows/` | **Server + desktop app** | The same for Windows (tray item), `.msi`, built and tested on CI ([Testing](https://github.com/kumarsumit17/KS-Suite/blob/main/specs/testing.md)). |
 | `mobile/android/` | **Client** | Android phone and tablet app: touch layout, Media3 ExoPlayer, "Open in JaiPlayer". |
 | `tv/google-tv/` | **Client** | Google TV app: Compose for TV, Media3 ExoPlayer, D-pad first, "Open in JaiPlayer". The skeleton in `app/` moves here when its build is created. |
-| `shared/` | Code used by several apps | Written once: `shared/api` (the wire models and an API client, used by all four apps), `shared/server` (scanner, database, HTTP, transcoding; used by macOS and Windows), and the client screens and state that the Android and Google TV apps share. |
+| `shared/` | Code used by several apps | Written once: `shared/api` (Kotlin Multiplatform: the wire models, used by all four apps), `shared/server` (the server core, used by macOS and Windows), `shared/plugins/<id>` (server plugins), and from stage 2 `shared/client` (Kotlin Multiplatform + Compose Multiplatform: the API client, state and screens of all four apps). |
 | browser | **Client** | Simple pages served by the server, with the browser's own video player. Written in Kotlin on the server (HTML text), no JavaScript framework. |
 | `mobile/ios/` | not a target | Stays empty (`.gitkeep`). |
 
@@ -53,24 +77,27 @@ Only what each stage needs, each justified when it is added ([Dependencies](depe
 
 | Piece | Used for | Licence | Stage |
 |---|---|---|---|
-| Kotlin standard library, JDK 17 | Everything; the JDK's own HTTP server (`jdk.httpserver`), PBKDF2 and `SecureRandom` | Apache-2.0; JDK GPL-2.0 with Classpath Exception | 1 |
-| [`sqlite-jdbc`](https://github.com/xerial/sqlite-jdbc) (SQLite inside) | The library database on the server | Apache-2.0 (SQLite: public domain) | 1 |
+| Kotlin standard library, coroutines, JDK 17 | Everything; PBKDF2 and `SecureRandom` from the JDK | Apache-2.0; JDK GPL-2.0 with Classpath Exception | 1 |
+| [Ktor](https://ktor.io/) server, CIO engine | The HTTP server: routing, JSON, byte ranges, sign-in, error pages; each plugin adds its own routes | Apache-2.0 | 1 |
+| [SQLDelight](https://github.com/sqldelight/sqldelight) on SQLite (`sqlite-jdbc`) | The library database: type-safe Kotlin from `.sq` files, migration files checked in the build | Apache-2.0 (SQLite: public domain) | 1 |
 | [`kotlinx.serialization`](https://github.com/Kotlin/kotlinx.serialization) JSON | The API's request and response bodies, on server and client | Apache-2.0 | 1 |
+| SLF4J simple logger (desktop apps only) | Ktor's log output | MIT | 1 |
 | `ks-utility` | Language files (English and Hindi), app updates | MIT, first-party | 1 |
 | FFmpeg and ffprobe, **installed by the owner** | Media details, remuxing, transcoding | LGPL-2.1+, or GPL if the build has GPL parts | 3, 4 |
-| Compose Multiplatform (desktop) | The macOS and Windows window | Apache-2.0 | 2 |
-| Compose (Material 3 on phone, Compose for TV on TV), Media3 ExoPlayer (+ HLS) | The Android and Google TV apps | Apache-2.0 | 2 |
+| Compose Multiplatform, lifecycle ViewModel | The screens and state of all four apps (`shared/client`) | Apache-2.0 | 2 |
+| Media3 ExoPlayer (+ HLS), Compose for TV | Playback and TV focus on Android and Google TV | Apache-2.0 | 2 |
 | TMDB API (a web service, no library) | Online metadata, owner's own key, off by default | TMDB terms of use; the attribution notice is shown | 3 |
 
 - **FFmpeg is never bundled.** It runs as a separate program that the owner installs (Homebrew on macOS, a download or `winget` on Windows), the way JaiPlayer needs VLC. The server looks for it on `PATH` and in the usual places, lets the owner set its path, and shows a clear message when it is missing: direct play keeps working without it. Running a separate program keeps StreamFlix MIT whatever licence the owner's FFmpeg build has.
-- **No web framework** (Ktor, Spring) at first: the JDK's HTTP server is enough for a home network and adds nothing. If it falls short (HTTP/2, many clients), Ktor (Apache-2.0) is the fallback, by a new decision.
+- **Architecture** (owner: "latest modern architecture"): coroutines throughout; the server in layers (`domain` services, `data` on SQLDelight, `http` routes on Ktor); the apps in one Kotlin Multiplatform module with one-way data flow (ViewModel + `StateFlow`, Compose Multiplatform screens), platform folders holding only entry points and packaging.
+- **Size, speed and stability** are budgets checked by the build ([Quality budgets](quality-budgets.md)).
 - **No Jellyfin API compatibility.** Jellyfin's own clients will not connect to StreamFlix. Copying its API would tie StreamFlix to a large GPL project's design; StreamFlix's API stays small and its own.
 
 ## Roadmap
 
 Each stage is built and tested on `dev` and ends in something that works on its own. A release (dev → main → tag) happens only with the owner's OK.
 
-1. **Server core (first version).** Gradle build (`shared/api`, `shared/server`, `desktop/mac`, `desktop/windows`). Libraries, scanning and name parsing, SQLite, the owner account, the API (`/api/v1`: server info, sign-in, libraries, items, rescan, stream with byte ranges), and browser pages for setup, sign-in, browsing and playing. Run with `./gradlew :desktop:mac:run`. Tests: name parser, scanner on a temporary folder, byte ranges, password hashing, the API end to end against a server on a free port. Done when: on the Mac, a folder of films is added, scanned, listed in the browser and plays with seeking; English and Hindi pages pass the language-file check.
+1. **Server core (first version).** Gradle build (`shared/api`, `shared/server`, `shared/plugins/web`, `desktop/mac`, `desktop/windows`). The core: libraries, scanning and name parsing, SQLite, the owner account, the API (`/api/v1`: server info, sign-in, libraries, items, rescan, stream with byte ranges) and the plugin API. The first plugin, `web`: browser pages for setup, sign-in, browsing and playing. Run with `./gradlew :desktop:mac:run`. Tests: name parser, scanner on a temporary folder, byte ranges, password hashing, the API end to end against a server on a free port. Done when: on the Mac, a folder of films is added, scanned, listed in the browser and plays with seeking; English and Hindi pages pass the language-file check.
 2. **The four apps.** macOS and Windows: the desktop window around the server (start/stop, address, libraries, browse, play through JaiPlayer or the browser). Android and Google TV: find or type the server, sign in, rows per library and "continue watching", detail page, playback with ExoPlayer (direct play), watch progress back to the server, "Open in JaiPlayer" with the stream URL. Tested on the phone and TV emulators and Windows CI ([Testing](https://github.com/kumarsumit17/KS-Suite/blob/main/specs/testing.md)). The APK stays under 15 MB.
 3. **Media details and metadata.** ffprobe details, local posters and `.nfo`, resized images, subtitles, optional TMDB.
 4. **Transcoding.** Decide direct play, remux or transcode from what the client says it can play; FFmpeg to HLS with hardware encoding; clean up old segments; limit how many run at once.
@@ -81,6 +108,8 @@ Each stage is built and tested on `dev` and ends in something that works on its 
 
 1. **Four apps:** macOS and Windows are the server with a desktop window; Android and Google TV are clients. Kotlin/JVM server (code in `shared/`); the jar also runs on Linux unofficially.
 2. **Android and Google TV: one APK** that switches its layout on a TV (as JaiPlayer does). Two APKs would keep the TV app leaner, at the cost of a second build and release.
-3. **HTTP and storage:** the JDK's built-in HTTP server, SQLite through `sqlite-jdbc`, JSON with `kotlinx.serialization` (two new dependencies).
+3. **Modern architecture** (changed by the owner the same day): Ktor with coroutines for the server, SQLDelight on SQLite for the database, `kotlinx.serialization` for JSON, and one Kotlin Multiplatform + Compose Multiplatform client module for the four apps.
 4. **Transcoding engine:** FFmpeg installed by the owner and run as a separate program, never bundled; from stage 4.
 5. **Desktop playback:** the macOS and Windows apps hand playback to JaiPlayer (or the browser) instead of having their own player, which keeps them small.
+6. **A minimal core with plugins:** every feature outside the core is a compiled-in plugin, so each app includes only what it lists.
+7. **Budgets:** stability, app size and speed are numbers in one file that the build checks ([Quality budgets](quality-budgets.md)).

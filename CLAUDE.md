@@ -9,18 +9,23 @@ A free, open-source home media server with its own apps: the server on macOS and
 - Link between specs with relative markdown links (`[Dependencies](dependencies.md)`), so they also work on GitHub.
 
 ## Stack
-- Server: Kotlin/JVM 17, the JDK's HTTP server (`com.sun.net.httpserver`), SQLite through `sqlite-jdbc`, JSON with `kotlinx.serialization`. FFmpeg (stage 4) is installed by the owner and run as a separate program, never bundled.
-- Clients (stage 2): one APK for Android phone and Google TV, Compose (Compose for TV on a TV), Media3/ExoPlayer. Desktop window: Compose Multiplatform.
+- Server: Kotlin/JVM 17 with coroutines, Ktor (CIO engine), SQLDelight on SQLite, JSON with `kotlinx.serialization`; layers `domain` / `data` / `http`. FFmpeg (stage 4) is installed by the owner and run as a separate program, never bundled.
+- Apps (stage 2): one Kotlin Multiplatform + Compose Multiplatform module `shared/client` (API client, ViewModel + StateFlow, screens) for all four apps; one APK for Android phone and Google TV with Media3/ExoPlayer.
+- **Budgets:** stability, app size and speed are numbers in `quality-budgets.properties`, checked by `./gradlew check` and `checkSize` (`specs/quality-budgets.md`). Never raise one without the owner's OK.
 - Package: `com.ks.streamflix`. minSdk 26 · targetSdk latest stable
 
 ## Module layout
 | Gradle project | Folder | Purpose |
 |---|---|---|
-| `:shared:api` | `shared/api` | API wire models (`/api/v1`), used by every app |
-| `:shared:server` | `shared/server` | Server core: scanner, name parser, database, users, HTTP API, browser pages, language files |
+| `:shared:api` | `shared/api` | API wire models (`/api/v1`), Kotlin Multiplatform, used by every app |
+| `:shared:server` | `shared/server` | Server core only: libraries, scanner, name parser, database, owner account, HTTP API, direct play, plugin API |
+| `:shared:plugins:<id>` | `shared/plugins/<id>` | One server plugin each (stage 1: `web`, the browser pages) |
 | `:desktop:mac` | `desktop/mac` | macOS entry point (stage 1: runs the server) |
 | `:desktop:windows` | `desktop/windows` | Windows entry point (stage 1: runs the server) |
 | (stage 2) | `mobile/android`, `tv/google-tv` | The Android and Google TV app |
+
+## Core and plugins
+- **Keep the core bare minimum** (owner's rule): every feature outside the core is a plugin in its own module, compiled in and listed by each app's entry point, so an app carries only what it lists. See `specs/media-server-plan.md`. Never add a feature to the core when it can be a plugin.
 
 ## Platform constraints (Android and Google TV apps)
 - **D-pad first.** Every screen must be usable with the remote's arrow, select, and back keys. Restore focus to the last item when returning to a screen. Back from the player returns to the exact row and item.

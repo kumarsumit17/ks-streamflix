@@ -14,4 +14,5 @@ okf_version: "0.2"
 # Policies
 
 * [Constraints](constraints.md) - The platform constraints every change to KS StreamFlix must keep.
+* [Quality budgets](quality-budgets.md) - Stability, app size and speed as numbers in one file that the build and tests check automatically, so a change that makes an app bigger, slower or less stable fails.
 * [Dependencies](dependencies.md) - Third-party dependencies are kept to the minimum; the order of preference and what must be reported for each new one.
