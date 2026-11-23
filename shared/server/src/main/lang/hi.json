@@ -1,0 +1,17 @@
+{
+  "api.error.badRequest": "अनुरोध पढ़ा नहीं जा सका।",
+  "auth.error.name": "1 से 64 अक्षरों का नाम दर्ज करें।",
+  "auth.error.passwordShort": "पासवर्ड में कम से कम 8 अक्षर होने चाहिए।",
+  "auth.error.setupDone": "मालिक का अकाउंट पहले से बना है। लॉगिन करें।",
+  "auth.error.tooMany": "बहुत ज़्यादा कोशिशें। एक मिनट रुककर फिर कोशिश करें।",
+  "auth.error.wrong": "नाम या पासवर्ड गलत है।",
+  "auth.error.ownerOnly": "यह सिर्फ़ मालिक कर सकता है।",
+  "auth.error.signIn": "पहले लॉगिन करें।",
+  "library.error.notFound": "यह लाइब्रेरी मौजूद नहीं है।",
+  "library.error.name": "1 से 100 अक्षरों का लाइब्रेरी नाम दर्ज करें।",
+  "library.error.noFolder": "कम से कम एक फ़ोल्डर चुनें।",
+  "library.error.folder": "यह फ़ोल्डर सर्वर पर मौजूद नहीं है।",
+  "library.error.exists": "इस नाम की लाइब्रेरी पहले से है।",
+  "item.error.notFound": "यह वीडियो मौजूद नहीं है।",
+  "item.error.missing": "वीडियो फ़ाइल नहीं मिली। लाइब्रेरी फिर से स्कैन करें।"
+}

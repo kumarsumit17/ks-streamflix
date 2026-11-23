@@ -1,0 +1,41 @@
+CREATE TABLE user (
+    id INTEGER NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    password_hash TEXT NOT NULL,
+    is_owner INTEGER NOT NULL,
+    created_at INTEGER NOT NULL
+);
+
+CREATE TABLE session (
+    token_hash TEXT NOT NULL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+    created_at INTEGER NOT NULL,
+    last_used INTEGER NOT NULL
+);
+
+countUsers:
+SELECT COUNT(*) FROM user;
+
+insertUser:
+INSERT INTO user(name, password_hash, is_owner, created_at) VALUES (?, ?, ?, ?);
+
+lastId:
+SELECT last_insert_rowid();
+
+userByName:
+SELECT * FROM user WHERE name = ?;
+
+insertSession:
+INSERT INTO session(token_hash, user_id, created_at, last_used) VALUES (?, ?, ?, ?);
+
+deleteIdleSessions:
+DELETE FROM session WHERE last_used < ?;
+
+userBySession:
+SELECT user.* FROM session JOIN user ON user.id = session.user_id WHERE session.token_hash = ?;
+
+touchSession:
+UPDATE session SET last_used = ? WHERE token_hash = ?;
+
+deleteSession:
+DELETE FROM session WHERE token_hash = ?;

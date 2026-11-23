@@ -1,0 +1,34 @@
+CREATE TABLE item (
+    id INTEGER NOT NULL PRIMARY KEY,
+    library_id INTEGER NOT NULL REFERENCES library(id) ON DELETE CASCADE,
+    path TEXT NOT NULL UNIQUE,
+    size INTEGER NOT NULL,
+    modified INTEGER NOT NULL,
+    kind TEXT NOT NULL,
+    title TEXT NOT NULL,
+    year INTEGER,
+    series TEXT,
+    season INTEGER,
+    episode INTEGER,
+    added_at INTEGER NOT NULL
+);
+
+CREATE INDEX item_library ON item(library_id);
+
+itemsInLibrary:
+SELECT * FROM item WHERE library_id = ?
+ORDER BY COALESCE(series, title) COLLATE NOCASE, season, episode, title COLLATE NOCASE, year;
+
+itemById:
+SELECT * FROM item WHERE id = ?;
+
+insertItem:
+INSERT INTO item(library_id, path, size, modified, kind, title, year, series, season, episode, added_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateItem:
+UPDATE item SET size = ?, modified = ?, kind = ?, title = ?, year = ?, series = ?, season = ?, episode = ?
+WHERE id = ?;
+
+deleteItem:
+DELETE FROM item WHERE id = ?;
