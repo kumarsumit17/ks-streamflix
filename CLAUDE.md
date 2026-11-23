@@ -33,6 +33,13 @@ Lean, D-pad optimized streaming media manager for Android TV.
 ```
 Test on the Android TV emulator (1080p, API 34).
 
+Emulators (from the KS-Suite workspace; suite spec `specs/testing.md`): `../scripts/emulators.sh create` once, then `../scripts/emulators.sh start tv` boots the Android TV AVD (`ks-tv-36`, API 36). Then:
+```bash
+export ANDROID_SERIAL=$(../scripts/emulators.sh serial tv)
+./gradlew installDebug connectedDebugAndroidTest
+adb shell monkey -p com.ks.streamflix -c android.intent.category.LEANBACK_LAUNCHER 1   # open it (use the debug package if it has a suffix)
+```
+
 ## Platform folders
 - Every KS-Suite app repo has the same top-level platform folders: `tv/google-tv/`, `desktop/mac/`, `desktop/windows/`, `mobile/android/` and `mobile/ios/`. All five exist in every app repo, whether or not the app supports that platform yet.
 - This app targets `tv/google-tv`. The other folders are empty on purpose (a `.gitkeep` only): they mark where that platform's code would go, not missing work. Do not add code for a platform that is not a target without the owner asking.
