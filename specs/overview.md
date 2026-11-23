@@ -8,17 +8,14 @@ status: draft
 
 # Overview
 
-A lean, D-pad optimized streaming media manager for Android TV with fast focus navigation and minimal overhead.
+A free, open-source home media server: it scans the owner's video folders and streams them to its own apps on the home network. The full plan and roadmap: [Media server plan](media-server-plan.md).
 
 | | |
 |---|---|
-| **Platform** | Android TV |
-| **Tech stack** | Kotlin, Jetpack Compose for TV, Media3/ExoPlayer, Room, Hilt |
+| **Server** | macOS and Windows (`desktop/mac`, `desktop/windows`); core in `shared/server` |
+| **Clients** | Android phone and Google TV (one APK, stage 2), and browser pages served by the server |
+| **Server stack** | Kotlin/JVM 17, the JDK's HTTP server, SQLite (`sqlite-jdbc`), `kotlinx.serialization`; FFmpeg from stage 4, installed by the owner |
+| **Client stack** | Kotlin, Compose (Compose for TV on a TV), Media3/ExoPlayer |
 
-## Stack
-
-- Kotlin, Jetpack Compose for TV (`androidx.tv:tv-material`), Media3/ExoPlayer, Room, Hilt
-- Package: `com.ks.streamflix`. Features: `ui/`, `player/`, `library/`
-- minSdk 26 · targetSdk latest stable
-
-The app is planned: this repository holds the project structure and its rules, with app code still to come.
+- Package: `com.ks.streamflix`. Android minSdk 26 · targetSdk latest stable.
+- Stage 1 (the server core with browser pages) is built; the apps follow stage by stage.

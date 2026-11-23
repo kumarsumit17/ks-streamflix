@@ -1,6 +1,6 @@
 # ks-streamflix
 
-Lean, D-pad optimized streaming media manager for Android TV.
+A free, open-source home media server with its own apps: the server on macOS and Windows, clients on Android and Google TV, and simple pages in a browser. Plan: `specs/media-server-plan.md`. Jellyfin (GPL-2.0) is a feature reference only: never copy its code, assets, text or API.
 
 ## Specs
 - All specs for this project live in `specs/` in the repository root, as an Open Knowledge Format (OKF) v0.2 bundle. Never create spec files anywhere else. Start at `specs/index.md`.
@@ -9,29 +9,42 @@ Lean, D-pad optimized streaming media manager for Android TV.
 - Link between specs with relative markdown links (`[Dependencies](dependencies.md)`), so they also work on GitHub.
 
 ## Stack
-- Kotlin, Jetpack Compose for TV (`androidx.tv:tv-material`), Media3/ExoPlayer, Room, Hilt
-- Package: `com.ks.streamflix`. Features: `ui/`, `player/`, `library/`
-- minSdk 26 · targetSdk latest stable
+- Server: Kotlin/JVM 17, the JDK's HTTP server (`com.sun.net.httpserver`), SQLite through `sqlite-jdbc`, JSON with `kotlinx.serialization`. FFmpeg (stage 4) is installed by the owner and run as a separate program, never bundled.
+- Clients (stage 2): one APK for Android phone and Google TV, Compose (Compose for TV on a TV), Media3/ExoPlayer. Desktop window: Compose Multiplatform.
+- Package: `com.ks.streamflix`. minSdk 26 · targetSdk latest stable
 
-## Platform constraints
+## Module layout
+| Gradle project | Folder | Purpose |
+|---|---|---|
+| `:shared:api` | `shared/api` | API wire models (`/api/v1`), used by every app |
+| `:shared:server` | `shared/server` | Server core: scanner, name parser, database, users, HTTP API, browser pages, language files |
+| `:desktop:mac` | `desktop/mac` | macOS entry point (stage 1: runs the server) |
+| `:desktop:windows` | `desktop/windows` | Windows entry point (stage 1: runs the server) |
+| (stage 2) | `mobile/android`, `tv/google-tv` | The Android and Google TV app |
+
+## Platform constraints (Android and Google TV apps)
 - **D-pad first.** Every screen must be usable with the remote's arrow, select, and back keys. Restore focus to the last item when returning to a screen. Back from the player returns to the exact row and item.
 - **Lean means lean.** Keep the release APK under 15 MB. Ask before adding a dependency. Prefer what's already in Media3, Compose, and Room.
 - **Low-RAM TVs.** Load images at their display size. Never keep a full-resolution bitmap in a row. Cap the decoded-image cache.
 - **10-foot UI.** Overscan-safe margins are 48dp horizontal, 27dp vertical.
-- Declare `android.software.leanback` as required and `android.hardware.touchscreen` as not required. Provide a banner (320×180) for the TV home row.
-- The library (watch progress, favorites) lives in Room. Database schema changes need a Room `Migration` plus an exported schema in `app/schemas/`.
+- **One APK for phone and TV.** Declare `android.software.leanback` and `android.hardware.touchscreen` with `required="false"`; the TV layout switches at runtime. Provide a banner (320×180) for the TV home row.
+- Watch progress and favourites live on the server, per user. Any local database in the apps needs a `Migration` plus an exported schema for every schema change.
+
+## Server constraints
+- The server's database schema has a version number and a migration step for every change; never lose a library on upgrade.
+- Passwords only as PBKDF2 hashes; session tokens from `SecureRandom`. No telemetry: the server never contacts anything the owner has not switched on.
+- Never follow a file path from a request: files are served by item id only, and only files inside a library folder.
+- Desktop needs no FFmpeg until stage 4; show a clear message if it is missing later, never crash.
 - An "Open in JaiPlayer" option sends an explicit `ACTION_VIEW` intent to `com.ks.jaiplayer`. It falls back to the built-in ExoPlayer when JaiPlayer isn't installed.
 
 ## Commands
 ```bash
-./gradlew assembleDebug
-./gradlew installDebug
-./gradlew testDebugUnitTest
-./gradlew connectedDebugAndroidTest
-./gradlew lintDebug
-./gradlew :app:assembleRelease && ls -lh app/build/outputs/apk/release/   # check APK size
+./gradlew check                                   # tests and the language-file check (needs Node 23.6+)
+./gradlew :desktop:mac:run --args="--library Films=movies:$HOME/Movies"   # run the server on macOS
 ```
-Test on the Android TV emulator (1080p, API 34).
+The server listens on port 8742 (`--port` to change) and keeps its data in `~/Library/Application Support/KS StreamFlix` (macOS) or `%APPDATA%\KS StreamFlix` (Windows); `--data <dir>` to change. Open `http://localhost:8742/` for the browser pages.
+
+Android and Google TV (stage 2, once their build exists): `assembleDebug`, `installDebug`, `testDebugUnitTest`, `connectedDebugAndroidTest`, `lintDebug`; check the release APK size.
 
 Emulators (from the KS-Suite workspace; suite spec `specs/testing.md`): `../scripts/emulators.sh create` once, then `../scripts/emulators.sh start tv` boots the Android TV AVD (`ks-tv-36`, API 36). Then:
 ```bash
@@ -42,16 +55,16 @@ adb shell monkey -p com.ks.streamflix -c android.intent.category.LEANBACK_LAUNCH
 
 ## Platform folders
 - Every KS-Suite app repo has the same top-level platform folders: `tv/google-tv/`, `desktop/mac/`, `desktop/windows/`, `mobile/android/` and `mobile/ios/`. All five exist in every app repo, whether or not the app supports that platform yet.
-- This app targets `tv/google-tv`. The other folders are empty on purpose (a `.gitkeep` only): they mark where that platform's code would go, not missing work. Do not add code for a platform that is not a target without the owner asking.
-- Three layers, narrowest first: a platform folder holds code for one platform of this app; `shared/` in the repository root holds code used by two or more platforms of this app, written once and never copied between platform folders; `ks-utility` holds generic code used by several apps. This app has one target, so it has no `shared/` folder.
-- The skeleton still has `app/` in the repository root. When the Gradle build is created, the app module goes in `tv/google-tv/`.
+- This app targets `desktop/mac`, `desktop/windows` (the server), `mobile/android` and `tv/google-tv` (one APK). `mobile/ios` is empty on purpose (a `.gitkeep` only). Do not add code for a platform that is not a target without the owner asking.
+- Three layers, narrowest first: a platform folder holds code for one platform of this app; `shared/` in the repository root holds code used by two or more platforms of this app, written once and never copied between platform folders; `ks-utility` holds generic code used by several apps. Here `shared/` holds the API models and the server core.
+- The skeleton still has `app/` in the repository root. When the Android build is created (stage 2), the app goes in `mobile/android/` and `tv/google-tv/`, and `app/` is removed.
 - Never rename, merge or remove these folders, and never add another top-level platform folder; the layout is a suite-wide rule.
 
 ## Shared code (`ks-utility`)
 - Generic utility code shared across the KS-Suite apps lives in the `ks-utility` repository. It is a dependency of this app: a git submodule at `ks-utility/`, pinned to a commit. After cloning, run `git submodule update --init`.
 - Before writing a generic helper (one that knows nothing about this app), look in `ks-utility/kotlin` and use it from there. If it is missing and another app would need it too, add it in the `ks-utility` repository, not here. Application-specific logic stays in this repo.
 - Never edit files under `ks-utility/` from this repo. Change them in the `ks-utility` repository, then move the pin: `git -C ks-utility fetch && git -C ks-utility checkout <commit>`, and commit the changed `ks-utility` entry.
-- Gradle wiring, to add when this repo's Gradle build is created: `includeBuild("ks-utility/kotlin")` in `settings.gradle.kts`, `ks-utility = { module = "com.ks:utility" }` in `gradle/libs.versions.toml`, and `implementation(libs.ks.utility)` in the module that uses it. It is a plain Kotlin/JVM library with no Android SDK.
+- Gradle wiring: `includeBuild("ks-utility/kotlin")` in `settings.gradle.kts`, `ks-utility = { module = "com.ks:utility" }` in `gradle/libs.versions.toml`, and `implementation(libs.ks.utility)` in the module that uses it. It is a plain Kotlin/JVM library with no Android SDK.
 - CI checks out with `submodules: true` (`.github/workflows/release.yml`).
 
 ## Working efficiently (keep token use low)
