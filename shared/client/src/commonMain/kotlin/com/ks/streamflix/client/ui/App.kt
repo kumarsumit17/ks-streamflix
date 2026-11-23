@@ -323,6 +323,7 @@ private fun SettingsScreen(vm: AppViewModel, state: UiState) {
             OutlinedButton(onClick = vm::changeServer, modifier = Modifier.focusRing()) { Text(stringResource(Res.string.client_settings_change_server)) }
         }
         Muted(stringResource(Res.string.client_settings_version, vm.host.appVersion))
+        vm.plugins.settingsSections.forEach { it() }
     }
     LaunchedEffect(Unit) { if (vm.host.isTv) runCatching { first.requestFocus() } }
 }

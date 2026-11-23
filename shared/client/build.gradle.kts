@@ -42,7 +42,11 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
         }
         // JVM code shared by desktop and Android: HTTP and discovery on java.net (no HTTP library).
-        val jvmSharedMain by creating { dependsOn(commonMain.get()) }
+        val jvmSharedMain by creating {
+            dependsOn(commonMain.get())
+            // ks-utility's app-update rules (JVM only, so not in commonMain).
+            dependencies { implementation(libs.ks.utility) }
+        }
         val desktopMain by getting {
             dependsOn(jvmSharedMain)
             dependencies { implementation(libs.kotlinx.coroutines.swing) }

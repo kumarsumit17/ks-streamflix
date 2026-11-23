@@ -105,7 +105,12 @@ class ServerApiTest {
         s.setupOwner()
         val outside = mediaFolder("secret.mkv" to 100)
         val media = mediaFolder("Film (2020).mkv" to 100)
-        Files.createSymbolicLink(media.resolve("Linked (2021).mkv"), outside.resolve("secret.mkv"))
+        // Windows allows links only with extra rights; there the test has nothing to check.
+        try {
+            Files.createSymbolicLink(media.resolve("Linked (2021).mkv"), outside.resolve("secret.mkv"))
+        } catch (e: Exception) {
+            if (System.getProperty("os.name").startsWith("Windows")) return@use else throw e
+        }
         val library = kotlinx.coroutines.runBlocking { s.server.ensureLibrary("Films", LibraryKind.MOVIES, media.toString()) }
         assertEquals(1, s.send(ApiV1.libraryScan(library.id), "POST").body().decode<ScanResult>().added, "links are not followed")
     }

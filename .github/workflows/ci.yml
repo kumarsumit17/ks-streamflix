@@ -1,0 +1,123 @@
+name: CI
+
+# Checks every push and pull request, and a manual run (Actions > CI > Run workflow):
+#   linux    every test, lint, the language files and the size budgets (./gradlew check), with
+#            FFmpeg installed so the transcoding tests run for real; the debug APK as an artifact.
+#   windows  the server and app tests on Windows, the .msi built, installed silently, started
+#            (the server must answer), and uninstalled; the unsigned .msi as an artifact.
+#   macos    the .dmg built and checked against its size budget, the packaged server started;
+#            the unsigned .dmg as an artifact.
+# Runner images are named versions (never -latest); GitHub's own actions only, pinned to a full
+# commit SHA (the same ones as ks-utility's shared release workflow).
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: true
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - name: FFmpeg, for the real transcoding tests
+        run: sudo apt-get update -q && sudo apt-get install -y -q ffmpeg
+      - name: Every check
+        run: ./gradlew --no-daemon check
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: android-debug-apk
+          path: mobile/android/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  windows:
+    runs-on: windows-2025
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: true
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - name: Server and app tests, and the .msi
+        run: ./gradlew --no-daemon :shared:server:test :shared:client:desktopTest :shared:plugins:folder-watch:test :desktop:windows:packageReleaseMsi
+      - name: Install, start, stop and uninstall
+        shell: pwsh
+        run: |
+          $msi = Get-ChildItem -Recurse desktop/windows/build/compose/binaries -Filter *.msi | Select-Object -First 1
+          $p = Start-Process msiexec -ArgumentList "/i `"$($msi.FullName)`" /qn /l*v install.log" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content install.log -Tail 40; exit 1 }
+          $exe = Get-ChildItem -Recurse "$env:ProgramFiles\KS StreamFlix" -Filter "KS StreamFlix.exe" | Select-Object -First 1
+          $app = Start-Process $exe.FullName -ArgumentList "--headless --bind 127.0.0.1 --port 8742 --data `"$env:RUNNER_TEMP\sfdata`"" -PassThru
+          $ok = $false
+          for ($i = 0; $i -lt 60 -and -not $ok; $i++) {
+            Start-Sleep -Seconds 1
+            try { $r = Invoke-RestMethod http://127.0.0.1:8742/api/v1/info; $ok = $r.setupNeeded } catch {}
+          }
+          Stop-Process -Id $app.Id -Force
+          if (-not $ok) { Write-Error "The installed server did not answer"; exit 1 }
+          $p = Start-Process msiexec -ArgumentList "/x `"$($msi.FullName)`" /qn" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { exit 1 }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-msi-unsigned
+          path: desktop/windows/build/compose/binaries/**/*.msi
+          if-no-files-found: error
+          retention-days: 14
+
+  macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: true
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - name: The .dmg and its size budget
+        run: ./gradlew --no-daemon :desktop:mac:packageReleaseDmg checkInstallerSize
+      - name: Start the packaged server
+        run: |
+          app="$(find desktop/mac/build/compose/binaries -maxdepth 4 -name '*.app' | head -1)"
+          "$app/Contents/MacOS/KS StreamFlix" --headless --bind 127.0.0.1 --port 8742 --data "$RUNNER_TEMP/sfdata" &
+          pid=$!
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8742/api/v1/info && break; sleep 1; done
+          curl -sf http://127.0.0.1:8742/api/v1/info | grep -q '"setupNeeded":true'
+          kill $pid
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: macos-dmg-unsigned
+          path: desktop/mac/build/compose/binaries/**/*.dmg
+          if-no-files-found: error
+          retention-days: 14

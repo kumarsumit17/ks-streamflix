@@ -15,6 +15,7 @@ The owner's rule (2026-11-23): stability, app size and speed are variables for a
 |---|---|---|
 | `size.server.maxMb` | The server alone: every jar of the core and the server plugins, as `--headless` runs it, in MB | `./gradlew checkSize` |
 | `size.desktop.maxMb` | The whole macOS app: every jar it runs (server, window, Compose for this OS), in MB; the Java runtime the installer bundles is measured in stage 6 | `checkSize` |
+| `size.installer.macMb` | The macOS `.dmg`, with its own Java runtime, in MB | `./gradlew checkInstallerSize` after `:desktop:mac:packageReleaseDmg` (CI's macOS job) |
 | `size.apk.maxMb` | The release APK, shrunk by R8, in MB; 15 MB from [Constraints](constraints.md) | `checkSize` |
 | `speed.server.startMs` | From start to the first answer of `/api/v1/info` | server tests (in-process); the cold start of the installed app was 752 ms on the owner's Mac on 2026-11-23, checked by hand |
 | `speed.scan.filesPerSecond` | Scanning a library of new files, at least | server tests |
@@ -43,6 +44,10 @@ First segment 177 ms for a remux and 477 ms for a transcode with VideoToolbox (b
 ## Stage 5 measurements (owner's Mac, 2026-11-23)
 
 A new film appeared 694 ms after it was copied in (budget 15000 ms; the test waits 300 ms for quiet). Server 22.9 MB, desktop app 61.1 MB, release APK 1.8 MB.
+
+## Stage 6 measurements (owner's Mac, 2026-11-24)
+
+With SQLite's natives for one OS only: server 12.9 MB (budget lowered from 24 to 14), macOS app 51.2 MB (budget lowered from 62 to 53), `.dmg` 72.8 MB (new budget 80), release APK 1.9 MB.
 
 ## Rules
 

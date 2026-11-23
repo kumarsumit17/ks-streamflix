@@ -54,10 +54,11 @@ A free, open-source home media server with its own apps: the server on macOS and
 ./gradlew :desktop:mac:run --args="--library Films=movies:$HOME/Movies"   # the macOS app: server and window
 ./gradlew :desktop:mac:run --args="--headless"    # the server alone
 ./gradlew :mobile:android:installDebug            # Android / Google TV (one APK); an emulator reaches the Mac at 10.0.2.2:8742
+./gradlew -Pcompose.desktop.packaging.checkJdkVendor=false :desktop:mac:packageReleaseDmg checkInstallerSize   # .dmg on the owner's Mac (Homebrew JDK)
 ```
 The server listens on port 8742 (`--port` to change) and keeps its data in `~/Library/Application Support/KS StreamFlix` (macOS) or `%APPDATA%\KS StreamFlix` (Windows); `--data <dir>` to change. Open `http://localhost:8742/` for the browser pages.
 
-Compose's packaging (`createDistributable`, dmg) refuses Homebrew's JDK; installers come in stage 6. FFmpeg (Homebrew's on the owner's Mac) is found in `STREAMFLIX_FFMPEG_DIR`, `PATH` or the usual places; tests that need it skip without it.
+Compose's packaging refuses Homebrew's JDK unless `-Pcompose.desktop.packaging.checkJdkVendor=false` is passed (only on the command line; CI uses Temurin). The `.msi` builds only on Windows: CI (`.github/workflows/ci.yml`) builds, installs, starts and uninstalls it. FFmpeg (Homebrew's on the owner's Mac) is found in `STREAMFLIX_FFMPEG_DIR`, `PATH` or the usual places; tests that need it skip without it.
 
 Emulators (from the KS-Suite workspace; suite spec `specs/testing.md`): `../scripts/emulators.sh create` once, then `../scripts/emulators.sh start tv` boots the Android TV AVD (`ks-tv-36`, API 36). Then:
 ```bash

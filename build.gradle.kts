@@ -11,6 +11,56 @@ plugins {
     alias(libs.plugins.kotlin.serialization) apply false
 }
 
+// ---- SQLite's native libraries: only the ones for the OS an app is built for ---------------------
+// sqlite-jdbc carries its native library for every OS (about 11 MB). An artifact transform copies
+// the jar without the others for the macOS and Windows apps (and for measuring their size).
+abstract class KeepSqliteNatives : TransformAction<KeepSqliteNatives.Params> {
+    interface Params : TransformParameters {
+        @get:Input val keep: ListProperty<String>
+    }
+
+    @get:InputArtifact abstract val input: Provider<FileSystemLocation>
+
+    override fun transform(outputs: TransformOutputs) {
+        val file = input.get().asFile
+        if (!file.name.startsWith("sqlite-jdbc")) {
+            outputs.file(input)
+            return
+        }
+        val keep = parameters.keep.get().map { "org/sqlite/native/$it/" }
+        val out = outputs.file(file.nameWithoutExtension + "-" + parameters.keep.get().joinToString("-") { it.replace('/', '_') } + ".jar")
+        java.util.zip.ZipFile(file).use { zip ->
+            java.util.zip.ZipOutputStream(out.outputStream()).use { zos ->
+                zip.entries().asSequence()
+                    .filter { e -> !e.name.startsWith("org/sqlite/native/") || keep.any { e.name.startsWith(it) || it.startsWith(e.name) } }
+                    .forEach { e ->
+                        zos.putNextEntry(java.util.zip.ZipEntry(e.name))
+                        if (!e.isDirectory) zip.getInputStream(e).use { it.copyTo(zos) }
+                        zos.closeEntry()
+                    }
+            }
+        }
+    }
+}
+
+val sqliteTrimmed: Attribute<Boolean> = Attribute.of("ks.sqliteTrimmed", Boolean::class.javaObjectType)
+
+/** Resolves [configuration] of [project] with SQLite's natives for [keep] (`Mac/aarch64`) only. */
+fun trimSqlite(project: Project, configuration: String, keep: List<String>) = with(project) {
+    dependencies.attributesSchema { attribute(sqliteTrimmed) }
+    dependencies.artifactTypes.maybeCreate("jar").attributes.attribute(sqliteTrimmed, false)
+    dependencies.registerTransform(KeepSqliteNatives::class) {
+        from.attribute(sqliteTrimmed, false).attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, "jar")
+        to.attribute(sqliteTrimmed, true).attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, "jar")
+        parameters.keep.set(keep)
+    }
+    configurations.matching { it.name == configuration }.configureEach { attributes.attribute(sqliteTrimmed, true) }
+}
+val macNatives = listOf("Mac/aarch64", "Mac/x86_64")
+val windowsNatives = listOf("Windows/x86_64", "Windows/aarch64")
+project(":desktop:mac") { pluginManager.withPlugin("org.jetbrains.kotlin.jvm") { trimSqlite(this@project, "runtimeClasspath", macNatives) } }
+project(":desktop:windows") { pluginManager.withPlugin("org.jetbrains.kotlin.jvm") { trimSqlite(this@project, "runtimeClasspath", windowsNatives) } }
+
 // ---- Versioning (never hardcoded) ----------------------------------------------------------------
 // Priority: -PversionName / -PversionCode (the release workflow passes them from the tag), then the
 // latest git tag, then a development fallback. The modules read these two extras.
@@ -55,6 +105,8 @@ fun Configuration.jvmRuntime() {
 }
 val serverRuntime: Configuration by configurations.creating { jvmRuntime() }
 val desktopRuntime: Configuration by configurations.creating { jvmRuntime() }
+trimSqlite(project, "desktopRuntime", macNatives)
+trimSqlite(project, "serverRuntime", macNatives)
 dependencies {
     desktopRuntime(project(":desktop:mac"))
     listOf(":shared:server", ":shared:plugins:web", ":shared:plugins:watch-state", ":shared:plugins:discovery", ":shared:plugins:media-info", ":shared:plugins:subtitles", ":shared:plugins:local-metadata", ":shared:plugins:tmdb", ":shared:plugins:transcode", ":shared:plugins:users", ":shared:plugins:folder-watch").forEach {
@@ -91,6 +143,23 @@ val checkSize by tasks.registering {
         check("size.apk.maxMb", apk.length())
     }
 }
+// The macOS installer's size, after `:desktop:mac:packageReleaseDmg` (not part of `check`: packaging
+// needs a non-Homebrew JDK, or -Pcompose.desktop.packaging.checkJdkVendor=false on the owner's Mac).
+tasks.register("checkInstallerSize") {
+    group = "verification"
+    description = "Fails when the macOS installer is bigger than size.installer.macMb."
+    val budgetFile = layout.projectDirectory.file("quality-budgets.properties")
+    val dmgDir = layout.projectDirectory.dir("desktop/mac/build/compose/binaries")
+    doLast {
+        val budgets = java.util.Properties().apply { budgetFile.asFile.inputStream().use(::load) }
+        val dmg = dmgDir.asFile.walkTopDown().firstOrNull { it.extension == "dmg" } ?: error("No dmg: run :desktop:mac:packageReleaseDmg first")
+        val mb = dmg.length() / 1_048_576.0
+        val max = budgets.getProperty("size.installer.macMb").toDouble()
+        println("budget size.installer.macMb: %.1f MB of %.0f MB".format(mb, max))
+        check(mb <= max) { "The dmg is %.1f MB, over its budget of %.0f MB".format(mb, max) }
+    }
+}
+
 tasks.register("check") {
     group = "verification"
     description = "Runs every module's checks and the size budget."

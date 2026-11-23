@@ -54,6 +54,7 @@ class ClientPluginContext internal constructor(val host: PlatformHost) {
     internal val cardImages = mutableListOf<suspend (StreamflixClient, Item, Int) -> ImageBitmap?>()
     internal val detailSections = mutableListOf<DetailSection>()
     internal val playDecorators = mutableListOf<suspend (StreamflixClient, Item, PlayRequest) -> PlayRequest>()
+    internal val settingsSections = mutableListOf<@Composable () -> Unit>()
 
     fun addHomeSection(section: HomeSection) { homeSections += section }
     fun addItemAction(action: ItemAction) { itemActions += action }
@@ -66,6 +67,9 @@ class ClientPluginContext internal constructor(val host: PlatformHost) {
     fun addCardImage(provider: suspend (client: StreamflixClient, item: Item, width: Int) -> ImageBitmap?) { cardImages += provider }
 
     fun addDetailSection(section: DetailSection) { detailSections += section }
+
+    /** A section of the Settings screen (app updates, for example). */
+    fun addSettingsSection(content: @Composable () -> Unit) { settingsSections += content }
 
     /** Changes what the built-in player is asked to play (for example adds the chosen subtitles). */
     fun addPlayDecorator(decorator: suspend (StreamflixClient, Item, PlayRequest) -> PlayRequest) { playDecorators += decorator }
@@ -80,6 +84,7 @@ class InstalledPlugins(
     val cardImages: List<suspend (StreamflixClient, Item, Int) -> ImageBitmap?> = emptyList(),
     val detailSections: List<DetailSection> = emptyList(),
     val playDecorators: List<suspend (StreamflixClient, Item, PlayRequest) -> PlayRequest> = emptyList(),
+    val settingsSections: List<@Composable () -> Unit> = emptyList(),
 ) {
     companion object {
         fun install(plugins: List<ClientPlugin>, host: PlatformHost): InstalledPlugins {
@@ -89,7 +94,7 @@ class InstalledPlugins(
             plugins.forEach { it.install(context) }
             return InstalledPlugins(
                 context.homeSections, context.itemActions, context.playbackListeners, context.resumeProviders,
-                context.cardImages, context.detailSections, context.playDecorators,
+                context.cardImages, context.detailSections, context.playDecorators, context.settingsSections,
             )
         }
     }

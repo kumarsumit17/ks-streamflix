@@ -1,3 +1,7 @@
+# 2026-11-24
+
+* **Update**: Stage 6 built ([Media server plan](media-server-plan.md), "Stage notes"): `.dmg` and `.msi` with icons and SQLite trimmed to one OS; release workflow with the desktop modules; CI on Linux, Windows (install, start, uninstall) and macOS; [App updates](app-updates.md) built in all four apps (`app-update` plugin; Android checks package and signer); [Quality budgets](quality-budgets.md): budgets lowered, new `size.installer.macMb`. No new library.
+
 # 2026-11-23
 
 * **Update**: Stage 5 built ([Media server plan](media-server-plan.md), "Stage notes"): core access rules (checked by the API, every plugin and the browser pages), user management and library removal for plugins; server plugins `users` (users, libraries per user, age limits from `.nfo` certifications, own password change, owner page) and `folder-watch`; [Constraints](constraints.md) gained the access rule; new budget `speed.folderWatch.detectMs` in [Quality budgets](quality-budgets.md). No new library.

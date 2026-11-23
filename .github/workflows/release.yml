@@ -4,8 +4,9 @@ name: Release
 # (https://github.com/kumarsumit17/ks-utility/blob/main/specs/release-workflow.md).
 # This file only names KS StreamFlix's platforms.
 #
-#   Tag push vMAJOR.MINOR.PATCH   Builds and verifies the signed APK and AAB, then publishes the
-#                                 GitHub Release (full release, latest).
+#   Tag push vMAJOR.MINOR.PATCH   Builds and verifies the signed APK and AAB (Android and Google TV),
+#                                 the macOS .dmg and the Windows .msi, then publishes the GitHub
+#                                 Release (full release, latest).
 #   Manual run (rehearsal)        Builds and checks everything for the version given; never publishes.
 
 on:
@@ -37,5 +38,9 @@ jobs:
       app-name: ks-streamflix
       display-name: KS StreamFlix
       android-module: ":mobile:android"
-      # The macOS and Windows installers (mac-module, windows-module) are added in stage 6.
+      mac-module: ":desktop:mac"
+      windows-module: ":desktop:windows"
+      # Every test, lint, the language files and the size budgets, before the Android build.
+      test-tasks: "check"
+      desktop-test-tasks: ":shared:server:test :shared:client:desktopTest"
     secrets: inherit

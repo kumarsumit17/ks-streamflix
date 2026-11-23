@@ -14,6 +14,10 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ks.streamflix.client.AndroidHost
 import com.ks.streamflix.client.AndroidJaiPlayer
+import com.ks.streamflix.client.AndroidSettings
+import com.ks.streamflix.client.GitHubUpdater
+import com.ks.streamflix.client.androidUpdater
+import com.ks.streamflix.client.plugin.AppUpdatePlugin
 import com.ks.streamflix.client.plugin.JaiPlayerPlugin
 import com.ks.streamflix.client.plugin.MediaInfoPlugin
 import com.ks.streamflix.client.plugin.MetadataPlugin
@@ -26,6 +30,13 @@ import com.ks.streamflix.tv.isTelevision
 
 /** The one activity for phone and TV; the layout follows the device (UiModeManager). */
 class MainActivity : ComponentActivity() {
+    private var updater: GitHubUpdater? = null
+
+    override fun onResume() {
+        super.onResume()
+        updater?.onForeground()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -33,6 +44,7 @@ class MainActivity : ComponentActivity() {
         val vm = ViewModelProvider(this, viewModelFactory {
             initializer {
                 val version = packageManager.getPackageInfo(packageName, 0).versionName ?: "0.0.0"
+                val updates = androidUpdater(app, AndroidSettings(app), version).also { updater = it }
                 AppViewModel(
                     AndroidHost(app, isTelevision(app), version),
                     // The plugins this app includes (specs/media-server-plan.md).
@@ -41,6 +53,7 @@ class MainActivity : ComponentActivity() {
                         // Subtitles first: the transcode plugin needs the subtitle choice (burn-in).
                         SubtitlesPlugin(), TranscodePlugin(),
                         JaiPlayerPlugin({ AndroidJaiPlayer.canOpen(app) }) { url, title -> AndroidJaiPlayer.open(app, url, title) },
+                        AppUpdatePlugin(updates),
                     ),
                 )
             }

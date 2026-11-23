@@ -12,7 +12,7 @@ KS StreamFlix becomes a home media server in the spirit of [Jellyfin](https://je
 
 Jellyfin's [documentation](https://jellyfin.org/docs/) and download repository ([repo.jellyfin.org](https://repo.jellyfin.org/)) are a **feature reference only**. Jellyfin is GPL-2.0: no Jellyfin code, assets, text, API definitions or FFmpeg builds are copied or bundled. StreamFlix has its own design, its own API and its own words.
 
-> Status: approved by the owner on 2026-11-23, with one APK for Android and Google TV. Stages 1 to 5 are built (see [Stage notes](#stage-notes)).
+> Status: approved by the owner on 2026-11-23, with one APK for Android and Google TV. Stages 1 to 6 are built (see [Stage notes](#stage-notes)); the first release waits for the owner's OK.
 
 ## What the server does
 
@@ -127,6 +127,12 @@ Each stage is built and tested on `dev` and ends in something that works on its 
   - **Folder watching:** every library folder and the folders inside are watched; a library is rescanned when its files have been quiet for 10 s (a copy changes a file many times), new libraries are picked up within a minute, and everything is rescanned every 6 hours for changes the system does not report (network drives).
   - **Browser pages:** the owner can remove a library (after a question; the files stay).
   - The apps needed no change: a user simply sees what they may see.
+- **Stage 6** (2026-11-24): installers, app updates and CI.
+  - **Installers:** macOS `.dmg` (Apple silicon) and Windows `.msi` from Compose Desktop, with an app icon, only the Java modules the app uses, and SQLite's native library for that OS only (an artifact transform; the macOS app went from 61 to 51 MB). The `.dmg` is 72.8 MB with its own Java runtime. The packaged app was started on the owner's Mac: it scans, finds FFmpeg and uses VideoToolbox.
+  - **Android and Google TV:** the signed APK (R8, 1.9 MB) and AAB from `:mobile:android`, signed from the repository's secrets (never committed).
+  - **Release workflow:** ks-utility's shared `kotlin-app-release.yml` with `mac-module`, `windows-module`, `test-tasks: check`; file names follow the app-update rules (`ks-streamflix-v<version>.apk`, `-macos-arm64.dmg`, `-windows-x64.msi`).
+  - **CI** (`.github/workflows/ci.yml`): Linux runs every check with FFmpeg; Windows runs the tests, builds the `.msi`, installs it silently, starts the installed server, checks it answers, and uninstalls it; macOS builds the `.dmg`, checks its size and starts the packaged server. Each keeps its unsigned file for 14 days.
+  - **App updates** ([App updates](app-updates.md)): plugin `app-update` in all four apps.
   - **Open in KS JaiPlayer on Android** needs JaiPlayer's `ACTION_VIEW` filter to accept `http`/`https` stream URLs (today it lists `content` and `file`). Until it does, the button stays hidden, because the app checks that JaiPlayer can open the link. This is a change in ks-jaiplayer.
 
 ## Decisions (approved)

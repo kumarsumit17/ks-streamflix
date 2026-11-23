@@ -1,3 +1,5 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+
 // Windows entry point: the server with its window (shared/desktop). The installer comes in stage 6.
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -6,6 +8,8 @@ plugins {
 }
 
 kotlin { jvmToolchain(17) }
+
+val desktopModules = listOf("java.desktop", "java.instrument", "java.management", "java.net.http", "java.prefs", "java.sql", "java.xml", "jdk.unsupported", "jdk.crypto.ec")
 
 // The same exclusions as shared/server (see there).
 configurations.matching { it.name in setOf("compileClasspath", "runtimeClasspath", "testCompileClasspath", "testRuntimeClasspath") }.configureEach {
@@ -33,9 +37,32 @@ dependencies {
     runtimeOnly(libs.slf4j.simple)
 }
 
+// The MSI version needs MAJOR >= 1; untagged development builds package as 1.0.0.
+val versionName = (rootProject.extra["appVersionName"] as String).substringBefore('-')
+val installerVersion = versionName.takeIf { (it.substringBefore('.').toIntOrNull() ?: 0) >= 1 } ?: "1.0.0"
+
 compose.desktop {
     application {
         mainClass = "com.ks.streamflix.windows.MainKt"
         jvmArgs += listOf("-Dstreamflix.version=${rootProject.extra["appVersionName"]}")
+        nativeDistributions {
+            targetFormats(TargetFormat.Msi)
+            packageName = "KS StreamFlix"
+            packageVersion = installerVersion
+            description = "KS StreamFlix, a home media server"
+            vendor = "KS-Suite"
+            // The Java modules the server and its window use (checked with suggestRuntimeModules).
+            modules(*desktopModules.toTypedArray())
+            windows {
+                menu = true
+                menuGroup = "KS-Suite"
+                shortcut = true
+                dirChooser = true
+                iconFile.set(project.file("packaging/icon.ico"))
+                // Fixed for the life of the app, so new versions upgrade the installed one.
+                upgradeUuid = "b7e3c2d1-5a64-4f0e-9d8b-3c2a1f6e4b57"
+            }
+        }
+        buildTypes.release.proguard { isEnabled.set(false) }
     }
 }

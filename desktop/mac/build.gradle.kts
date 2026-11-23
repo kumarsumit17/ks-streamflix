@@ -1,3 +1,5 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+
 // macOS entry point: the server with its window (shared/desktop). The installer comes in stage 6.
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -6,6 +8,8 @@ plugins {
 }
 
 kotlin { jvmToolchain(17) }
+
+val desktopModules = listOf("java.desktop", "java.instrument", "java.management", "java.net.http", "java.prefs", "java.sql", "java.xml", "jdk.unsupported", "jdk.crypto.ec")
 
 // The same exclusions as shared/server (see there).
 configurations.matching { it.name in setOf("compileClasspath", "runtimeClasspath", "testCompileClasspath", "testRuntimeClasspath") }.configureEach {
@@ -33,9 +37,28 @@ dependencies {
     runtimeOnly(libs.slf4j.simple)
 }
 
+// jpackage needs MAJOR >= 1; untagged development builds package as 1.0.0.
+val versionName = (rootProject.extra["appVersionName"] as String).substringBefore('-')
+val installerVersion = versionName.takeIf { (it.substringBefore('.').toIntOrNull() ?: 0) >= 1 } ?: "1.0.0"
+
 compose.desktop {
     application {
         mainClass = "com.ks.streamflix.mac.MainKt"
-        jvmArgs += listOf("-Dstreamflix.version=${rootProject.extra["appVersionName"]}")
+        jvmArgs += listOf("-Dstreamflix.version=${rootProject.extra["appVersionName"]}", "-Dapple.awt.application.appearance=system")
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg)
+            packageName = "KS StreamFlix"
+            packageVersion = installerVersion
+            description = "KS StreamFlix, a home media server"
+            vendor = "KS-Suite"
+            // The Java modules the server and its window use (checked with suggestRuntimeModules).
+            modules(*desktopModules.toTypedArray())
+            macOS {
+                bundleID = "com.ks.streamflix"
+                appCategory = "public.app-category.video"
+                iconFile.set(project.file("packaging/icon.icns"))
+            }
+        }
+        buildTypes.release.proguard { isEnabled.set(false) }
     }
 }
