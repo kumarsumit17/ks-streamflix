@@ -12,7 +12,7 @@ KS StreamFlix becomes a home media server in the spirit of [Jellyfin](https://je
 
 Jellyfin's [documentation](https://jellyfin.org/docs/) and download repository ([repo.jellyfin.org](https://repo.jellyfin.org/)) are a **feature reference only**. Jellyfin is GPL-2.0: no Jellyfin code, assets, text, API definitions or FFmpeg builds are copied or bundled. StreamFlix has its own design, its own API and its own words.
 
-> Status: approved by the owner on 2026-11-23, with one APK for Android and Google TV. Stages 1 and 2 are built (see [Stage notes](#stage-notes)).
+> Status: approved by the owner on 2026-11-23, with one APK for Android and Google TV. Stages 1 to 3 are built (see [Stage notes](#stage-notes)).
 
 ## What the server does
 
@@ -35,7 +35,7 @@ Jellyfin's [documentation](https://jellyfin.org/docs/) and download repository (
 
 Every app keeps a bare-minimum core and adds every other feature as a plugin (owner's decision, 2026-11-23), so each app carries only the features it includes and stays small. It is the same model as [JaiPlayer's plugins](https://github.com/kumarsumit17/ks-jaiplayer/blob/main/specs/plugins.md).
 
-- **Server core** (`shared/server`): libraries and their folders, scanning and name parsing, the database, the owner account and sessions, the API (`/api/v1`), direct play with byte ranges, the language files. Nothing else.
+- **Server core** (`shared/server`): libraries and their folders, scanning and name parsing, the database, the owner account and sessions, the API (`/api/v1`), direct play with byte ranges, signed stream links, the language files, and two extension points: metadata providers (the core merges their details and resizes and caches their images; it reads no metadata itself) and owner settings pages. Nothing else.
 - **Server plugins** (`shared/plugins/<id>`, one Gradle module each): a `ServerPlugin` has a stable `id` and `install(context)`. The context gives it the core's services (libraries, items, scan, sign-in), the language files and its own data folder, and lets it add HTTP routes and listen for scans. Its own settings and database tables (named `plugin_<id>_…`, with their own migrations) come with the first plugin that needs them. The core never knows which plugins exist: each entry point passes its list, and two plugins with one id are refused.
 - **Client core and plugins** (stage 2): the Android and Google TV app's core is sign-in, browsing and playing; the rest (continue watching, JaiPlayer hand-off, subtitles menu, …) are client plugins with the same shape.
 - Plugins are compiled in (first-party), never downloaded and loaded at run time: that would run code nobody reviewed, and Android forbids it in most cases. Leaving a plugin out of an app's list leaves its code and its dependencies out of that app.
@@ -46,7 +46,7 @@ Every app keeps a bare-minimum core and adds every other feature as a plugin (ow
 | Discovery | `discovery` | Clients find the server on the home network | 2 |
 | Watch state | `watch-state` | Progress, watched, resume, continue watching, next up | 2 |
 | Local metadata | `local-metadata` | Posters, backdrops and `.nfo` next to the files; resized images | 3 |
-| Media details | `media-info` | ffprobe details (duration, codecs, tracks) | 3 |
+| Media details | `media-info` | ffprobe details (duration, codecs, tracks), read after every scan | 3 |
 | Subtitles | `subtitles` | Side-car and embedded text subtitles as WebVTT | 3 |
 | TMDB | `tmdb` | Online metadata with the owner's own key | 3 |
 | Transcoding | `transcode` | Remux and FFmpeg HLS transcoding, hardware encoding | 4 |
@@ -110,6 +110,9 @@ Each stage is built and tested on `dev` and ends in something that works on its 
 - **Stage 2** (2026-11-23): server plugins `watch-state` (its own SQLite file in its data folder) and `discovery`; signed stream links in the core (`POST /api/v1/items/{id}/link`, 6 hours, one item) for players that cannot send the sign-in header; `shared/client` (one Kotlin Multiplatform + Compose Multiplatform module for the four apps) with client plugins `watch-state` (continue watching, resume, progress) and `jaiplayer` (Open in KS JaiPlayer); `shared/desktop` (the server and its window); the one APK in `mobile/android` + `tv/google-tv`.
   - TV focus uses Compose Multiplatform's own focus handling (focus rings, starting focus, focus restored on Back), not `androidx.tv:tv-material`, which is Android-only and could not be shared with the desktop apps. The player takes OK, left and right, and Back from the remote.
   - The macOS and Windows apps have no player of their own (decision 5): Play opens a stream link in KS JaiPlayer when it is installed, else in the browser.
+- **Stage 3** (2026-11-23): `shared/ffmpeg` (a helper library, not a plugin: finds the owner's FFmpeg in `STREAMFLIX_FFMPEG_DIR`, `PATH` or the usual places, and runs it with at most 4 processes at a time); server plugins `local-metadata` (posters and backdrops next to the files, Kodi `.nfo` with external entities refused), `tmdb` (off by default; the owner's key on its own settings page; only titles and years are sent; answers and images cached; TMDB's notice shown), `media-info` and `subtitles` (side-car SRT/VTT need nothing, ASS and embedded text tracks need FFmpeg; image subtitles wait for stage 4). App plugins `metadata` (posters at the card's size, kept in a cache of 60 images; plot, genres, rating), `media-info` (one line of details) and `subtitles` (a choice on the item's page; a default or forced track is chosen first; the TV player draws the lines). The browser pages show posters, the plot and subtitles through the same APIs.
+  - Choice buttons (subtitles, language) keep the D-pad focus when chosen: one button whose colours change, not two kinds of button.
+  - FFmpeg on the owner's Mac comes from Homebrew (a GPL build); StreamFlix only runs it as a separate program.
   - **Open in KS JaiPlayer on Android** needs JaiPlayer's `ACTION_VIEW` filter to accept `http`/`https` stream URLs (today it lists `content` and `file`). Until it does, the button stays hidden, because the app checks that JaiPlayer can open the link. This is a change in ks-jaiplayer.
 
 ## Decisions (approved)

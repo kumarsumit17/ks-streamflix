@@ -1,0 +1,8 @@
+{
+  "tmdb.page.title": "ऑनलाइन जानकारी (TMDB)",
+  "tmdb.page.intro": "जिन वीडियो के पास पोस्टर और विवरण नहीं हैं, उनके लिए The Movie Database से। TMDB को सिर्फ़ टाइटल और साल भेजे जाते हैं। themoviedb.org पर मुफ़्त API की लें।",
+  "tmdb.page.enabled": "TMDB इस्तेमाल करें",
+  "tmdb.page.key": "API की या रीड एक्सेस टोकन",
+  "tmdb.page.keySaved": "सेव है; इसे रखने के लिए खाली छोड़ें",
+  "tmdb.page.language": "जानकारी की भाषा, जैसे en-US या hi-IN"
+}

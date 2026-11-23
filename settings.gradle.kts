@@ -20,7 +20,9 @@ rootProject.name = "ks-streamflix"
 includeBuild("ks-utility/kotlin")
 
 include(":shared:api", ":shared:server")
+include(":shared:ffmpeg")
 include(":shared:plugins:web", ":shared:plugins:watch-state", ":shared:plugins:discovery")
+include(":shared:plugins:media-info", ":shared:plugins:subtitles", ":shared:plugins:local-metadata", ":shared:plugins:tmdb")
 include(":shared:client", ":shared:desktop")
 include(":desktop:mac", ":desktop:windows")
 include(":mobile:android", ":tv:google-tv")

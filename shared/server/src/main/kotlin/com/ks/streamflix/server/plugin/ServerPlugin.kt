@@ -1,6 +1,8 @@
 package com.ks.streamflix.server.plugin
 
 import com.ks.streamflix.api.ServerInfo
+import com.ks.streamflix.server.details.DetailsService
+import com.ks.streamflix.server.details.MetadataProvider
 import com.ks.streamflix.server.domain.AuthService
 import com.ks.streamflix.server.domain.LibraryService
 import com.ks.streamflix.server.domain.StreamKeys
@@ -25,8 +27,12 @@ class Core(
     val auth: AuthService,
     val libraries: LibraryService,
     val streamKeys: StreamKeys,
+    internal val details: DetailsService,
     val info: suspend () -> ServerInfo,
-)
+) {
+    /** Settings pages that plugins add for the owner: (language-file key of the label, path). The `web` plugin links them. */
+    val adminPages: MutableList<Pair<String, String>> = java.util.concurrent.CopyOnWriteArrayList()
+}
 
 class PluginContext internal constructor(
     val core: Core,
@@ -42,6 +48,14 @@ class PluginContext internal constructor(
     fun onStarted(listener: (port: Int) -> Unit) {
         startListeners += listener
     }
+
+    /** Adds a settings page for the owner at [path] (a route the plugin adds), labelled by the language-file key [labelKey]. */
+    fun addAdminPage(labelKey: String, path: String) {
+        core.adminPages += labelKey to path
+    }
+
+    /** Adds a source of item details and images (merged by the core, served at `/api/v1/items/{id}/details` and `/image/…`). */
+    fun addMetadataProvider(provider: MetadataProvider) = core.details.add(provider)
 
     /** Called when the server stops; close what the plugin opened. */
     fun onStopped(listener: () -> Unit) {
@@ -62,3 +76,6 @@ const val SESSION_AUTH = "session"
 
 /** The cookie the browser pages keep the session token in. */
 const val SESSION_COOKIE = "sf_session"
+
+/** The cookie the browser pages keep the language choice in (empty or missing: follow the browser). */
+const val LANG_COOKIE = "sf_lang"

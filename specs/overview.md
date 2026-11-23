@@ -18,4 +18,4 @@ A free, open-source home media server: it scans the owner's video folders and st
 | **Client stack** | Kotlin, Compose (Compose for TV on a TV), Media3/ExoPlayer |
 
 - Package: `com.ks.streamflix`. Android minSdk 26 · targetSdk latest stable.
-- Stages 1 and 2 are built: the server with browser pages, and the four apps (macOS and Windows: server with a window; Android and Google TV: one APK).
+- Stages 1 to 3 are built (stage 3: posters, details, media details and subtitles): the server with browser pages, and the four apps (macOS and Windows: server with a window; Android and Google TV: one APK).

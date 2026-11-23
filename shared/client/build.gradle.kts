@@ -51,6 +51,8 @@ kotlin {
             dependencies {
                 implementation(libs.kotlinx.coroutines.test)
                 implementation(project(":shared:plugins:watch-state"))
+                implementation(project(":shared:plugins:local-metadata"))
+                implementation(project(":shared:plugins:subtitles"))
             }
         }
         androidMain.get().dependsOn(jvmSharedMain)
@@ -66,6 +68,8 @@ kotlin {
 dependencies {
     // The client is tested against the real server (TestServer).
     "desktopTestImplementation"(testFixtures(project(":shared:server")))
+    // Decoding images on desktop needs Compose's native graphics for this OS (the apps have it already).
+    "desktopTestImplementation"(compose.desktop.currentOs)
 }
 
 // Tests run the real server; it leaves out the same unused parts as the apps.

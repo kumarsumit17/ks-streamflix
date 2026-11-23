@@ -34,5 +34,15 @@
   "client.desktop.server": "This computer’s server",
   "client.desktop.addresses": "Other devices connect to: {addresses}",
   "client.desktop.openBrowser": "Open in browser",
-  "client.desktop.serverFailed": "The server could not start: {reason}"
+  "client.desktop.serverFailed": "The server could not start: {reason}",
+  "client.media.audio": {
+    "one": "{count} audio track",
+    "other": "{count} audio tracks"
+  },
+  "client.media.subtitles": {
+    "one": "{count} subtitle track",
+    "other": "{count} subtitle tracks"
+  },
+  "client.subtitles.heading": "Subtitles",
+  "client.subtitles.off": "Off"
 }

@@ -30,6 +30,10 @@ Server runtime 22.3 MB (budget 24), cold start 752 ms, scan about 26,000 files/s
 
 Server 22.4 MB (budget 24); desktop app 60.5 MB (new budget 62: Compose's native graphics 17.5 MB and SQLite's natives for every OS 11.4 MB are the largest; Material 2, Ktor's client and Kotlin reflection are left out; trimming SQLite to one OS in stage 6 lowers it by about 10 MB, and the budget with it); release APK 1.7 MB (budget 15). The release APK was installed and used on the 55-inch TV emulator and the phone emulator.
 
+## Stage 3 measurements (owner's Mac, 2026-11-23)
+
+Server 22.7 MB, desktop app 60.8 MB, release APK 1.8 MB: the four new plugins and the FFmpeg helper add about 0.3 MB, with no new library (images, XML and HTTP come from the JDK; images in the apps from Compose).
+
 ## Rules
 
 - `./gradlew check` runs every check that applies on the machine (the size check needs the built files, so it depends on them).

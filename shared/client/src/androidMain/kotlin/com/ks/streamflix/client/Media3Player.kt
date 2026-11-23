@@ -38,7 +38,10 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
+import androidx.media3.common.text.CueGroup
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
@@ -67,7 +70,18 @@ fun Media3Player(request: PlayRequest, isTv: Boolean, onProgress: (Long, Long) -
     val player = remember {
         val http = DefaultHttpDataSource.Factory().setDefaultRequestProperties(request.headers)
         ExoPlayer.Builder(context).setMediaSourceFactory(DefaultMediaSourceFactory(http)).build().apply {
-            setMediaItem(MediaItem.fromUri(request.url), request.startMs)
+            val item = MediaItem.Builder().setUri(request.url).apply {
+                // The chosen subtitles (WebVTT from the server), fetched with the same sign-in header.
+                request.subtitle?.let { sub ->
+                    setSubtitleConfigurations(listOf(
+                        MediaItem.SubtitleConfiguration.Builder(android.net.Uri.parse(sub.url))
+                            .setMimeType(MimeTypes.TEXT_VTT).setLanguage(sub.language).setLabel(sub.label)
+                            .setSelectionFlags(C.SELECTION_FLAG_DEFAULT).build(),
+                    ))
+                }
+            }.build()
+            setMediaItem(item, request.startMs)
+            if (request.subtitle == null) trackSelectionParameters = trackSelectionParameters.buildUpon().setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true).build()
             prepare()
             playWhenReady = true
         }
@@ -79,6 +93,7 @@ fun Media3Player(request: PlayRequest, isTv: Boolean, onProgress: (Long, Long) -
     var duration by remember { mutableLongStateOf(0L) }
     var controlsShownAt by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var tick by remember { mutableIntStateOf(0) }
+    var cues by remember { mutableStateOf("") }
 
     fun exit() {
         val p = player.currentPosition
@@ -95,6 +110,7 @@ fun Media3Player(request: PlayRequest, isTv: Boolean, onProgress: (Long, Long) -
             override fun onIsPlayingChanged(isPlaying: Boolean) { playing = isPlaying }
             override fun onPlayerError(error: PlaybackException) { failed = true }
             override fun onPlaybackStateChanged(state: Int) { if (state == Player.STATE_ENDED) exit() }
+            override fun onCues(cueGroup: CueGroup) { cues = cueGroup.cues.mapNotNull { it.text?.toString() }.joinToString("\n") }
         }
         player.addListener(listener)
         onDispose { player.removeListener(listener) }
@@ -141,6 +157,13 @@ fun Media3Player(request: PlayRequest, isTv: Boolean, onProgress: (Long, Long) -
     ) {
         PlayerSurface(player = player, surfaceType = SURFACE_TYPE_SURFACE_VIEW, modifier = if (aspect > 0f) Modifier.aspectRatio(aspect) else Modifier)
         if (failed) Text(stringResource(Res.string.client_player_error), color = Color.White)
+        if (cues.isNotEmpty()) {
+            Text(
+                cues, color = Color.White, style = MaterialTheme.typography.headlineSmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = if (isTv) 96.dp else 72.dp, start = 48.dp, end = 48.dp)
+                    .background(Color.Black.copy(alpha = 0.55f)).padding(horizontal = 12.dp, vertical = 4.dp),
+            )
+        }
         val visible = !playing || System.currentTimeMillis() - controlsShownAt < CONTROLS_HIDE_MS || tick < 0
         if (visible && !failed) {
             Column(

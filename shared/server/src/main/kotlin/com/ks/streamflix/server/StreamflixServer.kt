@@ -7,6 +7,7 @@ import com.ks.streamflix.server.domain.AuthService
 import com.ks.streamflix.server.domain.LibraryService
 import com.ks.streamflix.server.domain.Passwords
 import com.ks.streamflix.server.domain.StreamKeys
+import com.ks.streamflix.server.details.DetailsService
 import com.ks.streamflix.server.http.coreModule
 import com.ks.streamflix.server.lang.Strings
 import com.ks.streamflix.server.plugin.Core
@@ -54,7 +55,7 @@ class StreamflixServer(private val config: ServerConfig, plugins: List<ServerPlu
         auth = AuthService(store, config.passwordIterations)
         libraries = LibraryService(store)
         strings = Strings(listOf("common", "core") + ids)
-        val core = Core(auth, libraries, StreamKeys(config.dataDir.resolve("stream-key"))) { ServerInfo(config.name, config.version, setupNeeded = auth.setupNeeded()) }
+        val core = Core(auth, libraries, StreamKeys(config.dataDir.resolve("stream-key")), DetailsService(config.dataDir.resolve("cache/images"))) { ServerInfo(config.name, config.version, setupNeeded = auth.setupNeeded()) }
         contexts = plugins.map { plugin ->
             PluginContext(core, strings, config.dataDir.resolve("plugins").resolve(plugin.id)).also(plugin::install)
         }

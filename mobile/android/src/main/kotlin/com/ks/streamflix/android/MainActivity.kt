@@ -15,6 +15,9 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ks.streamflix.client.AndroidHost
 import com.ks.streamflix.client.AndroidJaiPlayer
 import com.ks.streamflix.client.plugin.JaiPlayerPlugin
+import com.ks.streamflix.client.plugin.MediaInfoPlugin
+import com.ks.streamflix.client.plugin.MetadataPlugin
+import com.ks.streamflix.client.plugin.SubtitlesPlugin
 import com.ks.streamflix.client.plugin.WatchStatePlugin
 import com.ks.streamflix.client.ui.AppViewModel
 import com.ks.streamflix.client.ui.StreamflixApp
@@ -33,7 +36,7 @@ class MainActivity : ComponentActivity() {
                     AndroidHost(app, isTelevision(app), version),
                     // The plugins this app includes (specs/media-server-plan.md).
                     listOf(
-                        WatchStatePlugin(),
+                        WatchStatePlugin(), MetadataPlugin(), MediaInfoPlugin(), SubtitlesPlugin(),
                         JaiPlayerPlugin({ AndroidJaiPlayer.canOpen(app) }) { url, title -> AndroidJaiPlayer.open(app, url, title) },
                     ),
                 )

@@ -104,3 +104,32 @@ data class StreamLink(val path: String, val expiresAt: Long)
 /** The body of every error response. [code] is a key of the server's language files. */
 @Serializable
 data class ApiError(val code: String)
+
+// ---- Details and images (core extension point; the data comes from metadata plugins) -------------
+
+object DetailsApi {
+    fun details(id: Long) = "${ApiV1.ITEMS}/$id/details"
+
+    /** A [kind] image resized on the server to [width] pixels (rounded up to a fixed step). */
+    fun image(id: Long, kind: ImageKind, width: Int) = "${ApiV1.ITEMS}/$id/image/${kind.name.lowercase()}?width=$width"
+}
+
+@Serializable
+enum class ImageKind {
+    @SerialName("poster") POSTER,
+    @SerialName("backdrop") BACKDROP,
+}
+
+/** What metadata plugins know about an item, merged by the core (the first plugin with a value wins). */
+@Serializable
+data class ItemDetails(
+    val itemId: Long,
+    val title: String? = null,
+    val plot: String? = null,
+    val genres: List<String> = emptyList(),
+    val rating: Double? = null,
+    /** The image kinds that exist for this item. */
+    val images: List<ImageKind> = emptyList(),
+    /** Where the data came from (plugin ids), for the attribution some sources need. */
+    val sources: List<String> = emptyList(),
+)

@@ -34,7 +34,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -92,12 +100,20 @@ import com.ks.streamflix.client.settings.LanguageChoice
 import com.ks.streamflix.client.settings.resolveLanguage
 import org.jetbrains.compose.resources.stringResource
 
+/** Loads the picture for an item's card at a width in pixels (from the plugins); null shows the initial. */
+val LocalCardImage = staticCompositionLocalOf<suspend (Item, Int) -> ImageBitmap?> { { _, _ -> null } }
+
 /** The whole app, for every platform. [header] is shown above the screens (the desktop's server card). */
 @Composable
 fun StreamflixApp(vm: AppViewModel, header: @Composable () -> Unit = {}) {
     val state by vm.state.collectAsState()
     val host = vm.host
     ProvideLanguage(resolveLanguage(state.language, host.preferredLanguages)) {
+        val cardImage: suspend (Item, Int) -> ImageBitmap? = { item, width ->
+            val c = vm.client
+            if (c == null) null else vm.plugins.cardImages.firstNotNullOfOrNull { runCatching { it(c, item, width) }.getOrNull() }
+        }
+        CompositionLocalProvider(LocalCardImage provides cardImage) {
         StreamflixTheme(host.isTv) {
             Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                 val screen = state.screen
@@ -125,6 +141,7 @@ fun StreamflixApp(vm: AppViewModel, header: @Composable () -> Unit = {}) {
                     }
                 }
             }
+        }
         }
     }
 }
@@ -263,6 +280,7 @@ private fun DetailScreen(vm: AppViewModel, state: UiState, item: Item) {
             item.year != null -> Muted(item.year.toString())
         }
         Muted("${item.container.uppercase()} · ${formatSize(item.size)}")
+        vm.plugins.detailSections.forEach { it.Content(item) }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             val resume = state.resumeMs
             if (resume != null) {
@@ -292,10 +310,9 @@ private fun SettingsScreen(vm: AppViewModel, state: UiState) {
                 LanguageChoice.English to Res.string.common_language_english,
                 LanguageChoice.Hindi to Res.string.common_language_hindi,
             ).forEachIndexed { i, (choice, label) ->
-                val selected = state.language == choice
-                val mod = Modifier.focusRing().then(if (i == 0) Modifier.focusRequester(first) else Modifier)
-                if (selected) Button(onClick = {}, modifier = mod) { Text(stringResource(label)) }
-                else OutlinedButton(onClick = { vm.chooseLanguage(choice) }, modifier = mod) { Text(stringResource(label)) }
+                ChoiceButton(stringResource(label), state.language == choice, if (i == 0) Modifier.focusRequester(first) else Modifier) {
+                    vm.chooseLanguage(choice)
+                }
             }
         }
         Spacer(Modifier.height(8.dp))
@@ -312,6 +329,21 @@ private fun SettingsScreen(vm: AppViewModel, state: UiState) {
 
 // ---- Parts --------------------------------------------------------------------------------------
 
+/**
+ * One of several choices (language, subtitles). The same button whether chosen or not, only its
+ * colours change, so the D-pad focus stays on it when it is chosen.
+ */
+@Composable
+fun ChoiceButton(label: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val colors = if (selected) ButtonDefaults.buttonColors() else ButtonDefaults.buttonColors(
+        containerColor = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground,
+    )
+    Button(
+        onClick = onClick, colors = colors, modifier = modifier.focusRing(),
+        border = if (selected) null else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+    ) { Text(label) }
+}
+
 @Composable
 fun ItemCard(item: Item, modifier: Modifier = Modifier, focus: Boolean = false, onClick: () -> Unit) {
     val requester = remember { FocusRequester() }
@@ -326,9 +358,14 @@ fun ItemCard(item: Item, modifier: Modifier = Modifier, focus: Boolean = false, 
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        // A poster comes with the local-metadata plugin (stage 3); until then, the initial.
-        Box(Modifier.fillMaxWidth().height(96.dp).background(MaterialTheme.colorScheme.secondary, CardShape), contentAlignment = Alignment.Center) {
-            Text((item.series ?: item.title).take(1).uppercase(), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        // The poster from the metadata plugins, loaded at the card's size; the initial until then, or without one.
+        val load = LocalCardImage.current
+        val widthPx = with(LocalDensity.current) { 156.dp.roundToPx() }
+        val poster by produceState<ImageBitmap?>(null, item.id) { value = load(item, widthPx) }
+        Box(Modifier.fillMaxWidth().height(if (poster != null) 234.dp else 96.dp).clip(CardShape).background(MaterialTheme.colorScheme.secondary), contentAlignment = Alignment.Center) {
+            val image = poster
+            if (image != null) Image(image, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            else Text((item.series ?: item.title).take(1).uppercase(), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Text(displayTitle(item), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Text(subtitle(item), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)

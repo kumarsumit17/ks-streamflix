@@ -4,6 +4,14 @@ import com.ks.streamflix.api.ApiError
 import com.ks.streamflix.api.ApiV1
 import com.ks.streamflix.api.ContinueList
 import com.ks.streamflix.api.Credentials
+import com.ks.streamflix.api.DetailsApi
+import com.ks.streamflix.api.ImageKind
+import com.ks.streamflix.api.ItemDetails
+import com.ks.streamflix.api.MediaInfo
+import com.ks.streamflix.api.MediaInfoApi
+import com.ks.streamflix.api.SubtitleList
+import com.ks.streamflix.api.SubtitleTrack
+import com.ks.streamflix.api.SubtitlesApi
 import com.ks.streamflix.api.DiscoveryApi
 import com.ks.streamflix.api.Item
 import com.ks.streamflix.api.ItemList
@@ -20,7 +28,9 @@ import com.ks.streamflix.api.WatchedUpdate
 import kotlinx.serialization.encodeToString
 
 /** One HTTP exchange; each platform provides it ([HttpTransport]). */
-class HttpResponse(val status: Int, val body: String)
+class HttpResponse(val status: Int, val bytes: ByteArray) {
+    val body: String get() = bytes.decodeToString()
+}
 
 /** The platform's HTTP, as small as the client needs. Blocking calls are moved off the main thread by the implementation. */
 interface HttpTransport {
@@ -65,16 +75,28 @@ class StreamflixClient(private val transport: HttpTransport, val server: String,
     suspend fun setWatched(id: Long, watched: Boolean): WatchProgress =
         send("POST", WatchStateApi.watched(id), ApiV1.json.encodeToString(WatchedUpdate(watched)))
 
+    // Details and images (the core merges what metadata plugins know).
+    suspend fun details(id: Long): ItemDetails = get(DetailsApi.details(id))
+    /** The image bytes, or null when the item has none. */
+    suspend fun image(id: Long, kind: ImageKind, width: Int): ByteArray? =
+        runCatching { bytes("GET", DetailsApi.image(id, kind, width)) }.getOrNull()
+
+    // Plugins `media-info` and `subtitles` on the server.
+    suspend fun mediaInfo(id: Long): MediaInfo = get(MediaInfoApi.item(id))
+    suspend fun subtitles(id: Long): List<SubtitleTrack> = get<SubtitleList>(SubtitlesApi.list(id)).tracks
+    fun url(path: String) = server + path
+
     private suspend inline fun <reified T> get(path: String): T = send("GET", path, null)
 
     private suspend inline fun <reified T> send(method: String, path: String, body: String?): T =
         ApiV1.json.decodeFromString(raw(method, path, body))
 
-    private suspend fun raw(method: String, path: String, body: String?): String {
+    private suspend fun raw(method: String, path: String, body: String?): String = bytes(method, path, body).decodeToString()
+
+    private suspend fun bytes(method: String, path: String, body: String? = null): ByteArray {
         val headers = buildMap {
             putAll(authHeaders)
             if (body != null) put("Content-Type", "application/json")
-            put("Accept", "application/json")
         }
         val response = try {
             transport.request(method, server + path, headers, body)
@@ -85,6 +107,6 @@ class StreamflixClient(private val transport: HttpTransport, val server: String,
             val code = runCatching { ApiV1.json.decodeFromString<ApiError>(response.body).code }.getOrNull() ?: "common.error.generic"
             throw ApiException(response.status, code)
         }
-        return response.body
+        return response.bytes
     }
 }

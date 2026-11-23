@@ -1,0 +1,8 @@
+{
+  "tmdb.page.title": "Online details (TMDB)",
+  "tmdb.page.intro": "Posters and descriptions from The Movie Database for videos that have none next to them. Only titles and years are sent to TMDB. Get a free API key at themoviedb.org.",
+  "tmdb.page.enabled": "Use TMDB",
+  "tmdb.page.key": "API key or read access token",
+  "tmdb.page.keySaved": "Saved; leave empty to keep it",
+  "tmdb.page.language": "Language of the details, for example en-US or hi-IN"
+}

@@ -7,8 +7,17 @@ import com.ks.streamflix.client.settings.SettingsStore
 /** A server found on the home network. */
 data class FoundServer(val name: String, val address: String)
 
-/** What the built-in player is asked to play. */
-class PlayRequest(val url: String, val headers: Map<String, String>, val title: String, val startMs: Long)
+/** A subtitle file for the built-in player (WebVTT, fetched with the same headers as the video). */
+data class PlaySubtitle(val url: String, val language: String?, val label: String)
+
+/** What the built-in player is asked to play. [subtitle] is the one to show, or null for none. */
+data class PlayRequest(
+    val url: String,
+    val headers: Map<String, String>,
+    val title: String,
+    val startMs: Long,
+    val subtitle: PlaySubtitle? = null,
+)
 
 /** What each platform gives the shared app. */
 interface PlatformHost {

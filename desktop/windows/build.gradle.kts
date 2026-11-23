@@ -23,6 +23,10 @@ dependencies {
     implementation(project(":shared:plugins:web"))
     implementation(project(":shared:plugins:watch-state"))
     implementation(project(":shared:plugins:discovery"))
+    implementation(project(":shared:plugins:local-metadata"))
+    implementation(project(":shared:plugins:tmdb"))
+    implementation(project(":shared:plugins:media-info"))
+    implementation(project(":shared:plugins:subtitles"))
     runtimeOnly(libs.slf4j.simple)
 }
 

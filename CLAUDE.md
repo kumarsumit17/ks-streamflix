@@ -20,8 +20,9 @@ A free, open-source home media server with its own apps: the server on macOS and
 |---|---|---|
 | `:shared:api` | `shared/api` | API wire models (`/api/v1`), Kotlin Multiplatform (JVM, Android), used by every app; `shared/api/lang` holds the API's error texts for the server and the apps |
 | `:shared:server` | `shared/server` | Server core only: libraries, scanner, name parser, database, owner account, HTTP API, direct play, plugin API |
-| `:shared:plugins:<id>` | `shared/plugins/<id>` | One server plugin each: `web` (browser pages), `watch-state` (progress, own database), `discovery` (UDP) |
-| `:shared:client` | `shared/client` | The apps: API client, `AppViewModel` (StateFlow), client plugins (`watch-state`, `jaiplayer`), Compose Multiplatform screens, language files; `jvmSharedMain` (HTTP and discovery on java.net), `androidMain` (Media3 player), `desktopMain` |
+| `:shared:plugins:<id>` | `shared/plugins/<id>` | One server plugin each: `web` (browser pages), `watch-state` (progress, own database), `discovery` (UDP), `local-metadata` (posters, `.nfo`), `tmdb` (online details, off by default), `media-info` (ffprobe), `subtitles` (WebVTT) |
+| `:shared:ffmpeg` | `shared/ffmpeg` | Not a plugin: finds and runs the owner's FFmpeg for the plugins that need it |
+| `:shared:client` | `shared/client` | The apps: API client, `AppViewModel` (StateFlow), client plugins (`watch-state`, `jaiplayer`, `metadata`, `media-info`, `subtitles`), Compose Multiplatform screens, language files; `jvmSharedMain` (HTTP and discovery on java.net), `androidMain` (Media3 player), `desktopMain` |
 | `:shared:desktop` | `shared/desktop` | The macOS and Windows app: the server plus its window |
 | `:desktop:mac` | `desktop/mac` | macOS entry point: picks the plugins |
 | `:desktop:windows` | `desktop/windows` | Windows entry point: picks the plugins |
@@ -55,7 +56,7 @@ A free, open-source home media server with its own apps: the server on macOS and
 ```
 The server listens on port 8742 (`--port` to change) and keeps its data in `~/Library/Application Support/KS StreamFlix` (macOS) or `%APPDATA%\KS StreamFlix` (Windows); `--data <dir>` to change. Open `http://localhost:8742/` for the browser pages.
 
-Compose's packaging (`createDistributable`, dmg) refuses Homebrew's JDK; installers come in stage 6.
+Compose's packaging (`createDistributable`, dmg) refuses Homebrew's JDK; installers come in stage 6. FFmpeg (Homebrew's on the owner's Mac) is found in `STREAMFLIX_FFMPEG_DIR`, `PATH` or the usual places; tests that need it skip without it.
 
 Emulators (from the KS-Suite workspace; suite spec `specs/testing.md`): `../scripts/emulators.sh create` once, then `../scripts/emulators.sh start tv` boots the Android TV AVD (`ks-tv-36`, API 36). Then:
 ```bash

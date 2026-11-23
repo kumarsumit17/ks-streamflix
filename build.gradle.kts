@@ -57,7 +57,7 @@ val serverRuntime: Configuration by configurations.creating { jvmRuntime() }
 val desktopRuntime: Configuration by configurations.creating { jvmRuntime() }
 dependencies {
     desktopRuntime(project(":desktop:mac"))
-    listOf(":shared:server", ":shared:plugins:web", ":shared:plugins:watch-state", ":shared:plugins:discovery").forEach {
+    listOf(":shared:server", ":shared:plugins:web", ":shared:plugins:watch-state", ":shared:plugins:discovery", ":shared:plugins:media-info", ":shared:plugins:subtitles", ":shared:plugins:local-metadata", ":shared:plugins:tmdb").forEach {
         serverRuntime(project(it))
     }
     serverRuntime(libs.slf4j.simple)
@@ -94,7 +94,7 @@ val checkSize by tasks.registering {
 tasks.register("check") {
     group = "verification"
     description = "Runs every module's checks and the size budget."
-    dependsOn(":shared:api:check", ":shared:server:check", ":shared:plugins:web:check", ":shared:plugins:watch-state:check", ":shared:plugins:discovery:check", ":shared:client:check", ":shared:desktop:check", ":desktop:mac:check", ":desktop:windows:check")
+    dependsOn(":shared:api:check", ":shared:server:check", ":shared:plugins:web:check", ":shared:plugins:watch-state:check", ":shared:plugins:discovery:check", ":shared:ffmpeg:check", ":shared:plugins:media-info:check", ":shared:plugins:subtitles:check", ":shared:plugins:local-metadata:check", ":shared:plugins:tmdb:check", ":shared:client:check", ":shared:desktop:check", ":desktop:mac:check", ":desktop:windows:check")
     dependsOn(checkSize)
 }
 

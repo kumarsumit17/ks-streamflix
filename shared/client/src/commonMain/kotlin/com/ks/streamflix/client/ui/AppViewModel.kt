@@ -198,6 +198,7 @@ class AppViewModel(val host: PlatformHost, plugins: List<ClientPlugin>) : ViewMo
         _state.update { it.copy(resumeMs = null) }
         show(Screen.Detail(item))
         viewModelScope.launch { loadResume(c, item) }
+        plugins.detailSections.forEach { section -> viewModelScope.launch { runCatching { section.load(c, item) } } }
     }
 
     private suspend fun loadResume(c: StreamflixClient, item: Item) {
@@ -209,7 +210,11 @@ class AppViewModel(val host: PlatformHost, plugins: List<ClientPlugin>) : ViewMo
     fun play(item: Item, startMs: Long = 0) {
         val c = client ?: return
         if (host.hasPlayer) {
-            show(Screen.Playing(item, PlayRequest(c.streamUrl(item.id), c.authHeaders, item.title, startMs)))
+            viewModelScope.launch {
+                var request = PlayRequest(c.streamUrl(item.id), c.authHeaders, item.title, startMs)
+                plugins.playDecorators.forEach { d -> request = runCatching { d(c, item, request) }.getOrDefault(request) }
+                show(Screen.Playing(item, request))
+            }
         } else {
             work { if (!host.openExternally(c.streamLink(item.id))) throw ApiException(0, "client.error.noPlayer") }
         }

@@ -40,3 +40,68 @@ object DiscoveryApi {
 
 @Serializable
 data class DiscoveryAnswer(val name: String, val port: Int, val version: String, val apiVersion: Int = ApiV1.VERSION)
+
+/** Plugin `media-info`: what ffprobe reads from a file. */
+object MediaInfoApi {
+    const val BASE = "${ApiV1.BASE}/plugins/media-info"
+    const val STATUS = "$BASE/status"
+    fun item(id: Long) = "$BASE/items/$id"
+}
+
+@Serializable
+data class MediaInfo(
+    val itemId: Long,
+    val durationMs: Long? = null,
+    val container: String? = null,
+    val bitrate: Long? = null,
+    val video: VideoStream? = null,
+    val audio: List<AudioStream> = emptyList(),
+    val subtitles: List<SubtitleStream> = emptyList(),
+)
+
+@Serializable
+data class VideoStream(val codec: String, val width: Int, val height: Int, val frameRate: Double? = null, val hdr: Boolean = false)
+
+@Serializable
+data class AudioStream(val index: Int, val codec: String, val channels: Int? = null, val language: String? = null, val title: String? = null, val default: Boolean = false)
+
+@Serializable
+data class SubtitleStream(val index: Int, val codec: String, val language: String? = null, val title: String? = null, val forced: Boolean = false, val default: Boolean = false)
+
+/** Whether the server found FFmpeg; without it media details and embedded subtitles are off. */
+@Serializable
+data class ToolStatus(val ffprobe: Boolean, val ffmpeg: Boolean, val version: String? = null)
+
+/** Plugin `subtitles`: side-car files and embedded text tracks, served as WebVTT. */
+object SubtitlesApi {
+    const val BASE = "${ApiV1.BASE}/plugins/subtitles"
+    fun list(id: Long) = "$BASE/items/$id"
+    fun track(id: Long, trackId: String) = "$BASE/items/$id/tracks/$trackId.vtt"
+}
+
+@Serializable
+data class SubtitleTrack(
+    /** Stable within the item: `file-<n>` for a side-car file, `stream-<index>` for an embedded track. */
+    val id: String,
+    val language: String? = null,
+    val label: String,
+    val forced: Boolean = false,
+    val default: Boolean = false,
+    /** Path of the WebVTT, relative to the server. */
+    val path: String,
+)
+
+@Serializable
+data class SubtitleList(val tracks: List<SubtitleTrack>)
+
+/** Plugin `tmdb`: settings (owner only). The key is never sent back. */
+object TmdbApi {
+    const val BASE = "${ApiV1.BASE}/plugins/tmdb"
+    const val SETTINGS = "$BASE/settings"
+}
+
+@Serializable
+data class TmdbSettings(val enabled: Boolean, val hasKey: Boolean, val language: String = "en-US")
+
+@Serializable
+data class TmdbSettingsUpdate(val enabled: Boolean, val apiKey: String? = null, val language: String? = null)

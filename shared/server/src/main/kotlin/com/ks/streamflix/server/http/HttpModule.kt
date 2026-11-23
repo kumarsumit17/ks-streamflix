@@ -6,6 +6,7 @@ import com.ks.streamflix.api.Credentials
 import com.ks.streamflix.api.ItemList
 import com.ks.streamflix.api.LibraryList
 import com.ks.streamflix.api.NewLibrary
+import com.ks.streamflix.api.ImageKind
 import com.ks.streamflix.api.Session
 import com.ks.streamflix.api.StreamLink
 import com.ks.streamflix.api.User
@@ -141,6 +142,20 @@ private fun Route.apiRoutes(core: Core) {
                 call.respond(ItemList(core.libraries.items(library)))
             }
             get("{id}") { call.respond(core.libraries.item(call.longParam("id"))) }
+            get("{id}/details") {
+                val id = call.longParam("id")
+                call.respond(core.details.details(core.libraries.item(id), core.libraries.fileOf(id)))
+            }
+            get("{id}/image/{kind}") {
+                val id = call.longParam("id")
+                val kind = ImageKind.entries.firstOrNull { it.name.equals(call.parameters["kind"], ignoreCase = true) }
+                    ?: throw DomainException("common.error.notFound", DomainException.Kind.NOT_FOUND)
+                val width = call.request.queryParameters["width"]?.toIntOrNull()?.coerceIn(32, 4096) ?: 480
+                val image = core.details.image(core.libraries.item(id), core.libraries.fileOf(id), kind, width)
+                    ?: throw DomainException("common.error.notFound", DomainException.Kind.NOT_FOUND)
+                call.response.header(HttpHeaders.CacheControl, "private, max-age=86400")
+                call.respond(LocalPathContent(image, ContentType.Image.JPEG))
+            }
             post("{id}/link") {
                 val id = call.longParam("id")
                 core.libraries.item(id)

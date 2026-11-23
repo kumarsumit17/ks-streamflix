@@ -32,7 +32,7 @@ class UrlConnectionTransport(private val timeoutMs: Int = 10_000) : HttpTranspor
                 }
                 val status = c.responseCode
                 val stream = if (status >= 400) c.errorStream else c.inputStream
-                HttpResponse(status, stream?.use { it.readBytes().decodeToString() }.orEmpty())
+                HttpResponse(status, stream?.use { it.readBytes() } ?: ByteArray(0))
             } finally {
                 c.disconnect()
             }

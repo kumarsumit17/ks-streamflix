@@ -34,5 +34,15 @@
   "client.desktop.server": "इस कंप्यूटर का सर्वर",
   "client.desktop.addresses": "दूसरे डिवाइस यहां कनेक्ट करें: {addresses}",
   "client.desktop.openBrowser": "ब्राउज़र में खोलें",
-  "client.desktop.serverFailed": "सर्वर शुरू नहीं हो सका: {reason}"
+  "client.desktop.serverFailed": "सर्वर शुरू नहीं हो सका: {reason}",
+  "client.media.audio": {
+    "one": "{count} ऑडियो ट्रैक",
+    "other": "{count} ऑडियो ट्रैक"
+  },
+  "client.media.subtitles": {
+    "one": "{count} सबटाइटल ट्रैक",
+    "other": "{count} सबटाइटल ट्रैक"
+  },
+  "client.subtitles.heading": "सबटाइटल",
+  "client.subtitles.off": "बंद"
 }

@@ -10,6 +10,7 @@ import com.ks.streamflix.server.http.SessionPrincipal
 import com.ks.streamflix.server.lang.Language
 import com.ks.streamflix.server.lang.Strings
 import com.ks.streamflix.server.plugin.Core
+import com.ks.streamflix.server.plugin.LANG_COOKIE
 import com.ks.streamflix.server.plugin.PluginContext
 import com.ks.streamflix.server.plugin.SESSION_AUTH
 import com.ks.streamflix.server.plugin.SESSION_COOKIE
@@ -44,7 +45,6 @@ class WebPlugin : ServerPlugin {
     }
 }
 
-private const val LANG_COOKIE = "sf_lang"
 
 private class Pages(private val core: Core, private val strings: Strings) {
 
@@ -165,6 +165,12 @@ private class Pages(private val core: Core, private val strings: Strings) {
                     append("onerror=\"document.getElementById('unsupported').hidden=false\"></video>")
                     append("<p id=unsupported class=error hidden>").esc(t(lang, "web.watch.unsupported")).append("</p>")
                     append("<p class=muted><a href=\"$src\">").esc(t(lang, "web.watch.direct")).append("</a></p>")
+                    append("<p id=plot></p>")
+                    // Details and subtitles come from their plugins' APIs, when the server has them.
+                    append("<script>(async()=>{const id=${item.id},v=document.querySelector('video');")
+                    append("try{const d=await (await fetch('/api/v1/items/'+id+'/details')).json();if(d.plot)document.getElementById('plot').textContent=d.plot}catch(e){}")
+                    append("try{const r=await fetch('/api/v1/plugins/subtitles/items/'+id);if(r.ok){(await r.json()).tracks.forEach((t,i)=>{const e=document.createElement('track');")
+                    append("e.kind='subtitles';e.label=t.label;if(t.language)e.srclang=t.language;e.src=t.path;if(t.default)e.default=true;v.appendChild(e)})}}catch(e){}})()</script>")
                 }
             } catch (e: DomainException) {
                 call.home(e.code, null)
@@ -195,6 +201,11 @@ private class Pages(private val core: Core, private val strings: Strings) {
                 append("</li>")
             }
             append("</ul>")
+            if (user.owner && core.adminPages.isNotEmpty()) {
+                append("<h2>").esc(t(lang, "common.settings")).append("</h2><ul class=list>")
+                core.adminPages.forEach { (label, path) -> append("<li><a href=\"").esc(path).append("\">").esc(t(lang, label)).append("</a></li>") }
+                append("</ul>")
+            }
             if (user.owner) {
                 val example = if (System.getProperty("os.name").startsWith("Windows")) "D:\\Films" else "/Users/me/Movies"
                 append("<h2>").esc(t(lang, "web.library.add")).append("</h2><form method=post action=\"/libraries\" class=stack>")
@@ -254,7 +265,7 @@ private class Pages(private val core: Core, private val strings: Strings) {
         html.body()
         html.append("</main></body></html>")
         response.header("X-Content-Type-Options", "nosniff")
-        response.header("Content-Security-Policy", "default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; media-src 'self'")
+        response.header("Content-Security-Policy", "default-src 'self'; img-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; media-src 'self'; connect-src 'self'")
         respondText(html.toString(), ContentType.Text.Html.withParameter("charset", "utf-8"), status)
     }
 
@@ -263,7 +274,9 @@ private class Pages(private val core: Core, private val strings: Strings) {
     }
 
     private fun StringBuilder.itemRow(lang: Language, item: Item) {
-        append("<li><a href=\"/watch/${item.id}\">").esc(displayTitle(lang, item)).append("</a>")
+        // The poster, when a metadata plugin has one (the image is hidden when there is none).
+        append("<li><a class=item href=\"/watch/${item.id}\"><img class=thumb alt=\"\" loading=lazy src=\"/api/v1/items/${item.id}/image/poster?width=160\" onerror=\"this.remove()\">")
+            .esc(displayTitle(lang, item)).append("</a>")
         append("<span class=muted>").esc(item.container.uppercase()).append("</span></li>")
     }
 
@@ -351,6 +364,6 @@ grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}.card{display:grid;gap
 border-radius:var(--radius);background:var(--card);box-shadow:0 1px 2px rgb(0 0 0/.05)}.card .title{font-weight:600;text-decoration:none}
 .card form{margin-top:.5rem}.list{list-style:none;padding:0;margin:0;border:1px solid var(--border);border-radius:var(--radius)}
 .list li{display:flex;justify-content:space-between;gap:1rem;padding:.6rem 1rem;border-bottom:1px solid var(--border)}
-.list li:last-child{border-bottom:0}.list a{text-decoration:none}.list a:hover{text-decoration:underline}
+.list li:last-child{border-bottom:0}.item{display:flex;align-items:center;gap:.75rem}.thumb{width:40px;height:60px;object-fit:cover;border-radius:4px}.list a{text-decoration:none}.list a:hover{text-decoration:underline}
 video{width:100%;max-height:70vh;background:#000;border-radius:var(--radius)}
 """.trimIndent().replace("\n", "")

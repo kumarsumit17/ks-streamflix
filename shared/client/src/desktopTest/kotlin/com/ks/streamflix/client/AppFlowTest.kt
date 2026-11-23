@@ -80,6 +80,7 @@ class AppFlowTest {
         vm.openItem(film)
         waitFor("detail") { vm.state.value.screen is Screen.Detail }
         vm.play(film)
+        waitFor("player") { vm.state.value.screen is Screen.Playing }
         val playing = vm.state.value.screen as Screen.Playing
         assertEquals("${s.base}/api/v1/items/${film.id}/stream", playing.request.url)
         assertTrue(playing.request.headers["Authorization"]!!.startsWith("Bearer "))
@@ -98,6 +99,37 @@ class AppFlowTest {
 
         vm.signOut()
         waitFor("signed out") { vm.state.value.screen == Screen.SignIn && settings.getString(SettingKeys.TOKEN) == null }
+    }
+
+    @Test fun postersDetailsAndChosenSubtitles() = TestServer(plugins = listOf(com.ks.streamflix.plugins.localmetadata.LocalMetadataPlugin(), com.ks.streamflix.plugins.subtitles.SubtitlesPlugin())).use { s ->
+        s.setupOwner()
+        val media = java.nio.file.Files.createTempDirectory("sf-media")
+        val own = media.resolve("Quiet Hills (2008)").also { java.nio.file.Files.createDirectories(it) }
+        java.nio.file.Files.write(own.resolve("qh.mp4"), ByteArray(1000))
+        javax.imageio.ImageIO.write(java.awt.image.BufferedImage(400, 600, java.awt.image.BufferedImage.TYPE_INT_RGB), "jpg", own.resolve("poster.jpg").toFile())
+        java.nio.file.Files.writeString(own.resolve("movie.nfo"), "<movie><plot>Hills, quietly.</plot></movie>")
+        java.nio.file.Files.writeString(own.resolve("qh.hi.forced.srt"), "1\n00:00:00,000 --> 00:00:01,000\nनमस्ते\n")
+        runBlocking { s.server.ensureLibrary("Films", LibraryKind.MOVIES, media.toString()).also { s.server.libraries.scan(it.id) } }
+
+        val settings = MemorySettings().apply { putString(SettingKeys.SERVER, s.base); putString(SettingKeys.TOKEN, s.token) }
+        val metadata = com.ks.streamflix.client.plugin.MetadataPlugin()
+        val subtitles = com.ks.streamflix.client.plugin.SubtitlesPlugin()
+        val vm = AppViewModel(TestHost(settings), listOf(metadata, subtitles))
+        waitFor("home") { vm.state.value.screen == Screen.Home }
+        val film = vm.state.value.rows.single().items.single()
+
+        val image = runBlocking { vm.plugins.cardImages.single()(vm.client!!, film, 300) }
+        assertEquals(320, image!!.width, "the poster arrives at the card's size step")
+
+        vm.openItem(film)
+        waitFor("details loaded") { runBlocking { vm.client!!.details(film.id).plot } == "Hills, quietly." }
+        // A forced track is chosen by itself, and the player gets it with the video.
+        Thread.sleep(300)
+        vm.play(film)
+        waitFor("player") { vm.state.value.screen is Screen.Playing }
+        val sub = (vm.state.value.screen as Screen.Playing).request.subtitle!!
+        assertEquals("Hindi (forced)", sub.label)
+        assertTrue(sub.url.startsWith(s.base) && sub.url.endsWith("/tracks/file-0.vtt"), sub.url)
     }
 
     @Test fun withoutAPlayerVideosOpenThroughAStreamLink() = TestServer().use { s ->

@@ -13,5 +13,8 @@
   "library.error.folder": "This folder doesn’t exist on the server.",
   "library.error.exists": "A library with this name already exists.",
   "item.error.notFound": "This video doesn’t exist.",
-  "item.error.missing": "The video file is missing. Scan the library again."
+  "item.error.missing": "The video file is missing. Scan the library again.",
+  "mediaInfo.error.unavailable": "Media details aren’t available: FFmpeg isn’t installed on the server, or it couldn’t read this file.",
+  "subtitles.error.notFound": "This subtitle track doesn’t exist.",
+  "details.attribution.tmdb": "This product uses the TMDB API but is not endorsed or certified by TMDB."
 }

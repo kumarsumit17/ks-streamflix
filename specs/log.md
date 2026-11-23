@@ -1,5 +1,6 @@
 # 2026-11-23
 
+* **Update**: Stage 3 built ([Media server plan](media-server-plan.md), "Stage notes"): core extension points for metadata providers (merged details, resized and cached images) and owner settings pages; `shared/ffmpeg`; server plugins `local-metadata`, `tmdb`, `media-info`, `subtitles`; app plugins `metadata`, `media-info`, `subtitles`; posters and subtitles in the browser pages; [Quality budgets](quality-budgets.md) stage 3 measurements. No new library. FFmpeg installed on the owner's Mac with Homebrew (owner's OK) for testing.
 * **Update**: Stage 2 built ([Media server plan](media-server-plan.md), "Stage notes"): server plugins `watch-state` and `discovery`, signed stream links, `shared/client`, `shared/desktop`, the one APK in `mobile/android` + `tv/google-tv`; the empty `app/` skeleton removed; the release workflow builds `:mobile:android`.
 * **Update**: [Quality budgets](quality-budgets.md): new `size.desktop.maxMb`; the size check now measures the server, the desktop app and the release APK; stage 2 measurements.
 * **Update**: [Dependencies](dependencies.md) gained, for the apps: Compose Multiplatform (runtime, foundation, ui, material3, resources), the multiplatform lifecycle ViewModel, Media3 ExoPlayer and its Compose UI, activity-compose, kotlinx-coroutines-swing/android. Compose Desktop's Material 2 is excluded.
