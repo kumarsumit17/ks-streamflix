@@ -1,3 +1,8 @@
+# 2026-11-23
+
+* **Creation**: [App updates](app-updates.md) added: the suite's shared app-update behaviour (daily GitHub check with a switch, Check for updates, download, SHA-256 and signer checks, PackageInstaller) with ks-utility `v0.3.0`; not built yet.
+* **Update**: `ks-utility` moved to `v0.3.0`.
+
 # 2026-11-21
 
 * **Update**: [Dependencies](dependencies.md): `ks-utility` added as a git submodule for shared generic utilities.
