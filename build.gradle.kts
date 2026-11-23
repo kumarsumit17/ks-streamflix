@@ -147,6 +147,7 @@ val checkSize by tasks.registering {
 // needs a non-Homebrew JDK, or -Pcompose.desktop.packaging.checkJdkVendor=false on the owner's Mac).
 tasks.register("checkInstallerSize") {
     group = "verification"
+    mustRunAfter(":desktop:mac:packageReleaseDmg")
     description = "Fails when the macOS installer is bigger than size.installer.macMb."
     val budgetFile = layout.projectDirectory.file("quality-budgets.properties")
     val dmgDir = layout.projectDirectory.dir("desktop/mac/build/compose/binaries")

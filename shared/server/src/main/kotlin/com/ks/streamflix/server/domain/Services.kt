@@ -210,16 +210,23 @@ class LibraryService(private val store: Store) {
                 missing += folder
                 continue
             }
-            Files.walk(root).use { stream ->
-                stream.filter { it.isRegularFile(LinkOption.NOFOLLOW_LINKS) && NameParser.isVideo(it.name) }.forEach { file ->
+            // One walk that gets each file's size and time with its directory entry (one call per
+            // file on Windows, where asking for them separately is slow). Links are not followed.
+            Files.walkFileTree(root, object : java.nio.file.SimpleFileVisitor<Path>() {
+                override fun preVisitDirectory(dir: Path, attrs: java.nio.file.attribute.BasicFileAttributes) =
+                    if (dir != root && dir.name.startsWith(".")) java.nio.file.FileVisitResult.SKIP_SUBTREE else java.nio.file.FileVisitResult.CONTINUE
+
+                override fun visitFile(file: Path, attrs: java.nio.file.attribute.BasicFileAttributes): java.nio.file.FileVisitResult {
+                    if (!attrs.isRegularFile || !NameParser.isVideo(file.name)) return java.nio.file.FileVisitResult.CONTINUE
                     val segments = root.relativize(file).map { it.toString() }
-                    if (segments.any { it.startsWith(".") } || NameParser.isExtra(segments)) return@forEach
+                    if (segments.any { it.startsWith(".") } || NameParser.isExtra(segments)) return java.nio.file.FileVisitResult.CONTINUE
                     val path = file.toString()
-                    val size = Files.size(file)
-                    val modified = Files.getLastModifiedTime(file).toMillis()
-                    found[path] = Found(path, size, modified, NameParser.parse(segments, library.kind))
+                    found[path] = Found(path, attrs.size(), attrs.lastModifiedTime().toMillis(), NameParser.parse(segments, library.kind))
+                    return java.nio.file.FileVisitResult.CONTINUE
                 }
-            }
+
+                override fun visitFileFailed(file: Path, exc: java.io.IOException) = java.nio.file.FileVisitResult.CONTINUE
+            })
         }
         return found to missing
     }

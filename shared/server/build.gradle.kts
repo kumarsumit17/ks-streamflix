@@ -54,6 +54,8 @@ val budgets = Properties().apply {
 }
 tasks.test {
     useJUnitPlatform()
+    // Failures show their message (a budget test says what it measured).
+    testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
     inputs.file(rootProject.file("quality-budgets.properties"))
     budgets.stringPropertyNames().forEach { key ->
         systemProperty("budget.$key", providers.gradleProperty("budget.$key").orNull ?: budgets.getProperty(key))
