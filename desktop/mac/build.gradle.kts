@@ -1,8 +1,8 @@
-// macOS entry point. Stage 1 runs the server; the desktop window and the installer come later
-// (specs/media-server-plan.md).
+// macOS entry point: the server with its window (shared/desktop). The installer comes in stage 6.
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    application
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.compose.multiplatform)
 }
 
 kotlin { jvmToolchain(17) }
@@ -11,16 +11,24 @@ kotlin { jvmToolchain(17) }
 configurations.matching { it.name in setOf("compileClasspath", "runtimeClasspath", "testCompileClasspath", "testRuntimeClasspath") }.configureEach {
     listOf("ktor-client-core", "ktor-client-core-jvm").forEach { exclude(group = "io.ktor", module = it) }
     exclude(group = "org.jetbrains.kotlin", module = "kotlin-reflect")
+    // Compose Desktop brings Material 2; the apps use Material 3 only.
+    exclude(group = "org.jetbrains.compose.material", module = "material")
+    exclude(group = "org.jetbrains.compose.material", module = "material-desktop")
 }
 
 dependencies {
-    implementation(project(":shared:server"))
+    implementation(project(":shared:desktop"))
+    implementation(compose.desktop.currentOs)
     // The plugins this app includes (specs/media-server-plan.md); each one left out is left out of the app.
     implementation(project(":shared:plugins:web"))
+    implementation(project(":shared:plugins:watch-state"))
+    implementation(project(":shared:plugins:discovery"))
     runtimeOnly(libs.slf4j.simple)
 }
 
-application {
-    mainClass = "com.ks.streamflix.mac.MainKt"
-    applicationDefaultJvmArgs = listOf("-Dstreamflix.version=${rootProject.extra["appVersionName"]}")
+compose.desktop {
+    application {
+        mainClass = "com.ks.streamflix.mac.MainKt"
+        jvmArgs += listOf("-Dstreamflix.version=${rootProject.extra["appVersionName"]}")
+    }
 }

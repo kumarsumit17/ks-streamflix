@@ -3,6 +3,7 @@ package com.ks.streamflix.server.plugin
 import com.ks.streamflix.api.ServerInfo
 import com.ks.streamflix.server.domain.AuthService
 import com.ks.streamflix.server.domain.LibraryService
+import com.ks.streamflix.server.domain.StreamKeys
 import com.ks.streamflix.server.lang.Strings
 import io.ktor.server.routing.Route
 import java.nio.file.Path
@@ -23,6 +24,7 @@ interface ServerPlugin {
 class Core(
     val auth: AuthService,
     val libraries: LibraryService,
+    val streamKeys: StreamKeys,
     val info: suspend () -> ServerInfo,
 )
 
@@ -33,6 +35,18 @@ class PluginContext internal constructor(
     val dataDir: Path,
 ) {
     internal val routes = mutableListOf<Route.() -> Unit>()
+    internal val startListeners = mutableListOf<(Int) -> Unit>()
+    internal val stopListeners = mutableListOf<() -> Unit>()
+
+    /** Called once the server listens, with its HTTP port. */
+    fun onStarted(listener: (port: Int) -> Unit) {
+        startListeners += listener
+    }
+
+    /** Called when the server stops; close what the plugin opened. */
+    fun onStopped(listener: () -> Unit) {
+        stopListeners += listener
+    }
 
     /**
      * Adds HTTP routes. API routes go under `/api/v1/plugins/<id>/`; pages may use any path the core

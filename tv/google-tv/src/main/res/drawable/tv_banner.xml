@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The 320 × 180 banner on the TV home screen: a play mark and the name on dark zinc. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" tools:ignore="VectorRaster"
+    android:width="320dp" android:height="180dp" android:viewportWidth="320" android:viewportHeight="180">
+    <path android:fillColor="#09090B" android:pathData="M0,0h320v180h-320z" />
+    <path android:fillColor="#27272A" android:pathData="M40,58h64a8,8 0,0 1,8 8v48a8,8 0,0 1,-8 8h-64a8,8 0,0 1,-8 -8v-48a8,8 0,0 1,8 -8z" />
+    <path android:fillColor="#FAFAFA" android:pathData="M62,74L88,90L62,106Z" />
+    <!-- "KS" in block strokes -->
+    <path android:fillColor="#FAFAFA" android:pathData="M132,70h8v40h-8z M140,88l18,-18h10l-20,20l20,20h-10z M178,70h28v8h-20v8h20v24h-28v-8h20v-8h-20z" />
+    <path android:fillColor="#A1A1AA" android:pathData="M216,100h72v4h-72z" />
+</vector>

@@ -25,6 +25,6 @@ tasks.processResources { from(langDir) { into("lang/web") } }
 val checkLanguageFiles by tasks.registering(Exec::class) {
     description = "Checks the language files with the KS-Suite language-file check."
     inputs.dir(langDir)
-    commandLine("node", langTool.path, "check", langDir.asFile.path, rootProject.file("shared/server/src/main/lang").path)
+    commandLine("node", langTool.path, "check", langDir.asFile.path, rootProject.file("shared/api/lang").path)
 }
 tasks.named("check") { dependsOn(checkLanguageFiles) }

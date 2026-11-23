@@ -36,5 +36,6 @@ jobs:
       version: ${{ inputs.version }}
       app-name: ks-streamflix
       display-name: KS StreamFlix
-      android-module: ":app"
+      android-module: ":mobile:android"
+      # The macOS and Windows installers (mac-module, windows-module) are added in stage 6.
     secrets: inherit

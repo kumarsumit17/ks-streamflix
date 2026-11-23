@@ -1,5 +1,8 @@
 # 2026-11-23
 
+* **Update**: Stage 2 built ([Media server plan](media-server-plan.md), "Stage notes"): server plugins `watch-state` and `discovery`, signed stream links, `shared/client`, `shared/desktop`, the one APK in `mobile/android` + `tv/google-tv`; the empty `app/` skeleton removed; the release workflow builds `:mobile:android`.
+* **Update**: [Quality budgets](quality-budgets.md): new `size.desktop.maxMb`; the size check now measures the server, the desktop app and the release APK; stage 2 measurements.
+* **Update**: [Dependencies](dependencies.md) gained, for the apps: Compose Multiplatform (runtime, foundation, ui, material3, resources), the multiplatform lifecycle ViewModel, Media3 ExoPlayer and its Compose UI, activity-compose, kotlinx-coroutines-swing/android. Compose Desktop's Material 2 is excluded.
 * **Update**: Stage 1 built: the server core (`shared/api`, `shared/server`), the `web` plugin and the macOS and Windows entry points; [Quality budgets](quality-budgets.md) has the first measurements; [Overview](overview.md) says stage 1 is built.
 * **Update**: [Dependencies](dependencies.md) gained, with the owner's approval of the plan: Ktor (server core, CIO, content negotiation, partial content, auth, status pages), SQLDelight with its SQLite driver, kotlinx.serialization, kotlinx.coroutines, SLF4J simple (desktop apps only). Ktor's HTTP client and Kotlin reflection are excluded.
 * **Creation**: [Quality budgets](quality-budgets.md) added: stability, app size and speed as numbers the build checks (owner's rule).

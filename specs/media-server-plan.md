@@ -12,7 +12,7 @@ KS StreamFlix becomes a home media server in the spirit of [Jellyfin](https://je
 
 Jellyfin's [documentation](https://jellyfin.org/docs/) and download repository ([repo.jellyfin.org](https://repo.jellyfin.org/)) are a **feature reference only**. Jellyfin is GPL-2.0: no Jellyfin code, assets, text, API definitions or FFmpeg builds are copied or bundled. StreamFlix has its own design, its own API and its own words.
 
-> Status: approved by the owner on 2026-11-23, with one APK for Android and Google TV.
+> Status: approved by the owner on 2026-11-23, with one APK for Android and Google TV. Stages 1 and 2 are built (see [Stage notes](#stage-notes)).
 
 ## What the server does
 
@@ -103,6 +103,14 @@ Each stage is built and tested on `dev` and ends in something that works on its 
 4. **Transcoding.** Decide direct play, remux or transcode from what the client says it can play; FFmpeg to HLS with hardware encoding; clean up old segments; limit how many run at once.
 5. **Users and admin.** More users, per-library access, parental ratings, the remaining admin pages, folder watching.
 6. **Packaging and release.** `.dmg` and `.msi` for the desktop apps, signed APK (and AAB) for Android and Google TV, through ks-utility's shared release workflow (its desktop inputs), Windows CI, app updates ([App updates](app-updates.md)) for the TV app and the server.
+
+## Stage notes
+
+- **Stage 1** (2026-11-23): the server core, the `web` plugin, the desktop entry points.
+- **Stage 2** (2026-11-23): server plugins `watch-state` (its own SQLite file in its data folder) and `discovery`; signed stream links in the core (`POST /api/v1/items/{id}/link`, 6 hours, one item) for players that cannot send the sign-in header; `shared/client` (one Kotlin Multiplatform + Compose Multiplatform module for the four apps) with client plugins `watch-state` (continue watching, resume, progress) and `jaiplayer` (Open in KS JaiPlayer); `shared/desktop` (the server and its window); the one APK in `mobile/android` + `tv/google-tv`.
+  - TV focus uses Compose Multiplatform's own focus handling (focus rings, starting focus, focus restored on Back), not `androidx.tv:tv-material`, which is Android-only and could not be shared with the desktop apps. The player takes OK, left and right, and Back from the remote.
+  - The macOS and Windows apps have no player of their own (decision 5): Play opens a stream link in KS JaiPlayer when it is installed, else in the browser.
+  - **Open in KS JaiPlayer on Android** needs JaiPlayer's `ACTION_VIEW` filter to accept `http`/`https` stream URLs (today it lists `content` and `file`). Until it does, the button stays hidden, because the app checks that JaiPlayer can open the link. This is a change in ks-jaiplayer.
 
 ## Decisions (approved)
 

@@ -65,6 +65,16 @@ class ServerApiTest {
         assertContentEquals(original.copyOfRange(original.size - 10, original.size), tail.body())
         assertEquals(416, s.bytes(ApiV1.stream(film.id), mapOf("Range" to "bytes=300000-")).statusCode())
 
+        // A stream link works without the header, for this item only, and not with a changed key.
+        val link = s.send(ApiV1.link(film.id), "POST").body().decode<com.ks.streamflix.api.StreamLink>()
+        val saved = s.token
+        s.token = null
+        assertEquals(401, s.bytes(ApiV1.stream(film.id)).statusCode())
+        assertEquals(206, s.bytes(link.path, mapOf("Range" to "bytes=0-9")).statusCode())
+        assertEquals(401, s.bytes(link.path.replace("/${film.id}/", "/${items.first().id}/")).statusCode())
+        assertEquals(401, s.bytes(link.path.dropLast(2) + "xx").statusCode())
+        s.token = saved
+
         // A removed file: the stream is refused and a rescan drops the item.
         Files.delete(media.resolve("The Long Road (2019).mp4"))
         assertEquals(404, s.bytes(ApiV1.stream(film.id)).statusCode())

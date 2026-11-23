@@ -7,13 +7,15 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.sqldelight)
+    // TestServer and test media for the plugins' tests.
+    `java-test-fixtures`
 }
 
 kotlin { jvmToolchain(17) }
 
 // Ktor 3.6's server core pulls in the HTTP client and Kotlin reflection, which this server does
 // not use (its OpenAPI parts are needed by content negotiation, so they stay); leaving them out keeps the apps small (quality budgets).
-configurations.matching { it.name in setOf("compileClasspath", "runtimeClasspath", "testCompileClasspath", "testRuntimeClasspath") }.configureEach {
+configurations.matching { it.name in setOf("compileClasspath", "runtimeClasspath", "testCompileClasspath", "testRuntimeClasspath", "testFixturesCompileClasspath", "testFixturesRuntimeClasspath") }.configureEach {
     exclude(group = "io.ktor", module = "ktor-client-core")
     exclude(group = "io.ktor", module = "ktor-client-core-jvm")
     exclude(group = "org.jetbrains.kotlin", module = "kotlin-reflect")
@@ -32,6 +34,7 @@ dependencies {
     implementation(libs.ktor.server.status.pages)
     implementation(libs.sqldelight.sqlite.driver)
     testImplementation(kotlin("test"))
+    testFixturesImplementation(kotlin("test"))
 }
 
 sqldelight {
@@ -57,11 +60,12 @@ tasks.test {
     }
 }
 
-// ---- Interface text: the core's language files and ks-utility's shared catalogue ----------------
+// ---- Interface text: the API's error texts and ks-utility's shared catalogue --------------------
+// The error codes the API sends are texts in shared/api/lang, used by the server and the apps.
 // Packed as resources (lang/core, lang/common) and read at run time by Strings. The check needs
 // Node 23.6+.
 val langTool = rootProject.file("ks-utility/typescript/tools/lang.mjs")
-val langDir = layout.projectDirectory.dir("src/main/lang")
+val langDir = rootProject.layout.projectDirectory.dir("shared/api/lang")
 val sharedLangDir = rootProject.layout.projectDirectory.dir("ks-utility/lang/common")
 
 tasks.processResources {

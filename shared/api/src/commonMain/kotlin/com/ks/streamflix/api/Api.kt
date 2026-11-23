@@ -18,6 +18,7 @@ object ApiV1 {
     fun libraryScan(id: Long) = "$LIBRARIES/$id/scan"
     fun item(id: Long) = "$ITEMS/$id"
     fun stream(id: Long) = "$ITEMS/$id/stream"
+    fun link(id: Long) = "$ITEMS/$id/link"
 
     /** The JSON settings both sides use: unknown fields are ignored, so a newer server stays readable. */
     val json = Json {
@@ -92,6 +93,13 @@ data class ItemList(val items: List<Item>)
 
 @Serializable
 data class LibraryList(val libraries: List<Library>)
+
+/**
+ * A stream link a player can open without the sign-in header: [path] (relative to the server,
+ * with its `key`) works for this one item until [expiresAt].
+ */
+@Serializable
+data class StreamLink(val path: String, val expiresAt: Long)
 
 /** The body of every error response. [code] is a key of the server's language files. */
 @Serializable

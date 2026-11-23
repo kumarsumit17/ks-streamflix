@@ -1,0 +1,413 @@
+package com.ks.streamflix.client.ui
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.ks.streamflix.api.Item
+import com.ks.streamflix.api.ItemKind
+import com.ks.streamflix.api.LibraryKind
+import com.ks.streamflix.client.ProvideLanguage
+import com.ks.streamflix.client.resources.Res
+import com.ks.streamflix.client.resources.allStringResources
+import com.ks.streamflix.client.resources.client_connect_address
+import com.ks.streamflix.client.resources.client_connect_address_hint
+import com.ks.streamflix.client.resources.client_connect_found
+import com.ks.streamflix.client.resources.client_connect_heading
+import com.ks.streamflix.client.resources.client_connect_none
+import com.ks.streamflix.client.resources.client_connect_search_again
+import com.ks.streamflix.client.resources.client_connect_searching
+import com.ks.streamflix.client.resources.client_connect_submit
+import com.ks.streamflix.client.resources.client_field_name
+import com.ks.streamflix.client.resources.client_field_password
+import com.ks.streamflix.client.resources.client_home_empty
+import com.ks.streamflix.client.resources.client_home_see_all
+import com.ks.streamflix.client.resources.client_item_episode
+import com.ks.streamflix.client.resources.client_item_play
+import com.ks.streamflix.client.resources.client_item_resume
+import com.ks.streamflix.client.resources.client_item_start_over
+import com.ks.streamflix.client.resources.client_library_empty
+import com.ks.streamflix.client.resources.client_settings_change_server
+import com.ks.streamflix.client.resources.client_settings_server
+import com.ks.streamflix.client.resources.client_settings_sign_out
+import com.ks.streamflix.client.resources.client_settings_user
+import com.ks.streamflix.client.resources.client_settings_version
+import com.ks.streamflix.client.resources.client_sign_in_heading
+import com.ks.streamflix.client.resources.client_sign_in_submit
+import com.ks.streamflix.client.resources.common_back
+import com.ks.streamflix.client.resources.common_language
+import com.ks.streamflix.client.resources.common_language_english
+import com.ks.streamflix.client.resources.common_language_hindi
+import com.ks.streamflix.client.resources.common_language_system
+import com.ks.streamflix.client.resources.common_settings
+import com.ks.streamflix.client.settings.LanguageChoice
+import com.ks.streamflix.client.settings.resolveLanguage
+import org.jetbrains.compose.resources.stringResource
+
+/** The whole app, for every platform. [header] is shown above the screens (the desktop's server card). */
+@Composable
+fun StreamflixApp(vm: AppViewModel, header: @Composable () -> Unit = {}) {
+    val state by vm.state.collectAsState()
+    val host = vm.host
+    ProvideLanguage(resolveLanguage(state.language, host.preferredLanguages)) {
+        StreamflixTheme(host.isTv) {
+            Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                val screen = state.screen
+                if (screen is Screen.Playing) {
+                    host.Player(
+                        screen.request,
+                        onProgress = { p, d -> vm.playbackProgress(screen.item, p, d) },
+                        onExit = { p, d -> vm.playbackStopped(screen.item, p, d) },
+                    )
+                    return@Surface
+                }
+                // Overscan-safe margins on a TV: 48 dp sideways, 27 dp top and bottom.
+                val padding = if (host.isTv) PaddingValues(horizontal = 48.dp, vertical = 27.dp) else PaddingValues(16.dp)
+                Column(Modifier.fillMaxSize().padding(padding)) {
+                    header()
+                    when (screen) {
+                        Screen.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                        Screen.Connect -> ConnectScreen(vm, state)
+                        Screen.SignIn -> SignInScreen(vm, state)
+                        Screen.Home -> HomeScreen(vm, state)
+                        is Screen.LibraryPage -> LibraryScreen(vm, state, screen)
+                        is Screen.Detail -> DetailScreen(vm, state, screen.item)
+                        Screen.Settings -> SettingsScreen(vm, state)
+                        is Screen.Playing -> Unit
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Screens move the focus only on a TV, where the remote needs a starting point.
+
+// ---- Connect and sign in ------------------------------------------------------------------------
+
+@Composable
+private fun ConnectScreen(vm: AppViewModel, state: UiState) {
+    var address by rememberSaveable { mutableStateOf("") }
+    val first = remember { FocusRequester() }
+    Column(Modifier.widthIn(max = 520.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Heading(stringResource(Res.string.client_connect_heading))
+        Muted(stringResource(Res.string.client_connect_found))
+        when {
+            state.searching -> Muted(stringResource(Res.string.client_connect_searching))
+            state.found.isEmpty() -> Muted(stringResource(Res.string.client_connect_none))
+        }
+        state.found.forEachIndexed { i, server ->
+            ListRow(server.name, server.address, Modifier.then(if (i == 0) Modifier.focusRequester(first) else Modifier)) { vm.connect(server.address) }
+        }
+        OutlinedButton(onClick = vm::discover, modifier = Modifier.focusRing(), enabled = !state.searching) {
+            Text(stringResource(Res.string.client_connect_search_again))
+        }
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = address, onValueChange = { address = it },
+            label = { Text(stringResource(Res.string.client_connect_address)) },
+            placeholder = { Text(stringResource(Res.string.client_connect_address_hint, "192.168.1.20:8742")) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Go),
+            keyboardActions = KeyboardActions(onGo = { vm.connect(address) }),
+            modifier = Modifier.fillMaxWidth().then(if (state.found.isEmpty()) Modifier.focusRequester(first) else Modifier),
+        )
+        ErrorText(state.error)
+        PrimaryButton(stringResource(Res.string.client_connect_submit), busy = state.busy) { vm.connect(address) }
+    }
+    LaunchedEffect(state.found.isEmpty()) { if (vm.host.isTv) runCatching { first.requestFocus() } }
+}
+
+@Composable
+private fun SignInScreen(vm: AppViewModel, state: UiState) {
+    var name by rememberSaveable { mutableStateOf(state.user.orEmpty()) }
+    var password by remember { mutableStateOf("") }
+    val first = remember { FocusRequester() }
+    Column(Modifier.widthIn(max = 420.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Heading(stringResource(Res.string.client_sign_in_heading, state.serverName ?: state.server.orEmpty()))
+        OutlinedTextField(
+            name, { name = it }, label = { Text(stringResource(Res.string.client_field_name)) }, singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            modifier = Modifier.fillMaxWidth().focusRequester(first),
+        )
+        OutlinedTextField(
+            password, { password = it }, label = { Text(stringResource(Res.string.client_field_password)) }, singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Go),
+            keyboardActions = KeyboardActions(onGo = { vm.signIn(name, password) }),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        ErrorText(state.error)
+        PrimaryButton(stringResource(Res.string.client_sign_in_submit), busy = state.busy) { vm.signIn(name, password) }
+        TextButton(onClick = vm::changeServer, modifier = Modifier.focusRing()) { Text(stringResource(Res.string.client_settings_change_server)) }
+    }
+    LaunchedEffect(Unit) { if (vm.host.isTv) runCatching { first.requestFocus() } }
+}
+
+// ---- Browsing -----------------------------------------------------------------------------------
+
+@Composable
+private fun HomeScreen(vm: AppViewModel, state: UiState) {
+    // Focus returns to the last opened item; the first time, it starts on the first item (D-pad).
+    // (Only with a remote: on a phone, focus would only open the keyboard or show rings.)
+    val restore = if (!vm.host.isTv) null else state.lastFocused["home"] ?: state.rows.firstOrNull { it.items.isNotEmpty() }?.items?.first()?.id
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        item {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Heading(state.serverName ?: "KS StreamFlix", Modifier.weight(1f))
+                OutlinedButton(onClick = vm::openSettings, modifier = Modifier.focusRing()) { Text(stringResource(Res.string.common_settings)) }
+            }
+        }
+        items(vm.plugins.homeSections.size) { i ->
+            val section = vm.plugins.homeSections[i]
+            LaunchedEffect(state.homeVersion) { vm.client?.let { runCatching { section.refresh(it) } } }
+            section.Content(open = { vm.rememberFocus("home", it.id); vm.openItem(it) })
+        }
+        if (state.rows.isEmpty() && !state.busy) item { Muted(stringResource(Res.string.client_home_empty)) }
+        items(state.rows, key = { it.library.id }) { row ->
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(row.library.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                    TextButton(onClick = { vm.openLibrary(row.library) }, modifier = Modifier.focusRing()) {
+                        Text(stringResource(Res.string.client_home_see_all))
+                    }
+                }
+                if (row.items.isEmpty()) Muted(stringResource(Res.string.client_library_empty))
+                ItemRow(row.items.take(30), restore) { vm.rememberFocus("home", it.id); vm.openItem(it) }
+            }
+        }
+        item { ErrorText(state.error) }
+    }
+}
+
+/** A horizontal row of item cards; [restoreId] gets the focus back after returning to this screen. */
+@Composable
+fun ItemRow(items: List<Item>, restoreId: Long?, open: (Item) -> Unit) {
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(2.dp)) {
+        items(items, key = { it.id }) { item -> ItemCard(item, Modifier.width(180.dp), focus = item.id == restoreId) { open(item) } }
+    }
+}
+
+@Composable
+private fun LibraryScreen(vm: AppViewModel, state: UiState, screen: Screen.LibraryPage) {
+    val key = "library-${screen.library.id}"
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        BackRow(vm, screen.library.name)
+        if (state.libraryItems.isEmpty() && !state.busy) Muted(stringResource(Res.string.client_library_empty))
+        val items = if (screen.library.kind == LibraryKind.SHOWS) state.libraryItems.sortedWith(compareBy({ it.series }, { it.season }, { it.episode })) else state.libraryItems
+        LazyVerticalGrid(GridCells.Adaptive(180.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(2.dp)) {
+            items(items, key = { it.id }) { item ->
+                ItemCard(item, focus = vm.host.isTv && item.id == state.lastFocused[key]) { vm.rememberFocus(key, item.id); vm.openItem(item) }
+            }
+        }
+        ErrorText(state.error)
+    }
+}
+
+@Composable
+private fun DetailScreen(vm: AppViewModel, state: UiState, item: Item) {
+    val play = remember { FocusRequester() }
+    Column(Modifier.widthIn(max = 720.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        BackRow(vm, item.series ?: item.title)
+        Text(displayTitle(item), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+        when {
+            item.kind == ItemKind.EPISODE -> Muted(stringResource(Res.string.client_item_episode, (item.season ?: 0).toString(), (item.episode ?: 0).toString()))
+            item.year != null -> Muted(item.year.toString())
+        }
+        Muted("${item.container.uppercase()} · ${formatSize(item.size)}")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            val resume = state.resumeMs
+            if (resume != null) {
+                PrimaryButton(stringResource(Res.string.client_item_resume, formatTime(resume)), Modifier.focusRequester(play)) { vm.play(item, resume) }
+                OutlinedButton(onClick = { vm.play(item, 0) }, modifier = Modifier.focusRing()) { Text(stringResource(Res.string.client_item_start_over)) }
+            } else {
+                PrimaryButton(stringResource(Res.string.client_item_play), Modifier.focusRequester(play)) { vm.play(item, 0) }
+            }
+            vm.plugins.itemActions.forEachIndexed { i, action ->
+                if (action.isAvailable()) OutlinedButton(onClick = { vm.runAction(i, item) }, modifier = Modifier.focusRing()) { Text(action.label()) }
+            }
+        }
+        ErrorText(state.error)
+    }
+    LaunchedEffect(state.resumeMs) { if (vm.host.isTv) runCatching { play.requestFocus() } }
+}
+
+@Composable
+private fun SettingsScreen(vm: AppViewModel, state: UiState) {
+    val first = remember { FocusRequester() }
+    Column(Modifier.widthIn(max = 520.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        BackRow(vm, stringResource(Res.string.common_settings))
+        Text(stringResource(Res.string.common_language), style = MaterialTheme.typography.titleMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(
+                LanguageChoice.System to Res.string.common_language_system,
+                LanguageChoice.English to Res.string.common_language_english,
+                LanguageChoice.Hindi to Res.string.common_language_hindi,
+            ).forEachIndexed { i, (choice, label) ->
+                val selected = state.language == choice
+                val mod = Modifier.focusRing().then(if (i == 0) Modifier.focusRequester(first) else Modifier)
+                if (selected) Button(onClick = {}, modifier = mod) { Text(stringResource(label)) }
+                else OutlinedButton(onClick = { vm.chooseLanguage(choice) }, modifier = mod) { Text(stringResource(label)) }
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Muted(stringResource(Res.string.client_settings_server, state.serverName?.let { "$it (${state.server})" } ?: state.server.orEmpty()))
+        state.user?.let { Muted(stringResource(Res.string.client_settings_user, it)) }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = vm::signOut, modifier = Modifier.focusRing()) { Text(stringResource(Res.string.client_settings_sign_out)) }
+            OutlinedButton(onClick = vm::changeServer, modifier = Modifier.focusRing()) { Text(stringResource(Res.string.client_settings_change_server)) }
+        }
+        Muted(stringResource(Res.string.client_settings_version, vm.host.appVersion))
+    }
+    LaunchedEffect(Unit) { if (vm.host.isTv) runCatching { first.requestFocus() } }
+}
+
+// ---- Parts --------------------------------------------------------------------------------------
+
+@Composable
+fun ItemCard(item: Item, modifier: Modifier = Modifier, focus: Boolean = false, onClick: () -> Unit) {
+    val requester = remember { FocusRequester() }
+    var focused by remember { mutableStateOf(false) }
+    Column(
+        modifier
+            .focusRequester(requester)
+            .onFocusChanged { focused = it.isFocused }
+            .border(if (focused) 2.dp else 1.dp, if (focused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CardShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant, CardShape)
+            .clickable(onClick = onClick)
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        // A poster comes with the local-metadata plugin (stage 3); until then, the initial.
+        Box(Modifier.fillMaxWidth().height(96.dp).background(MaterialTheme.colorScheme.secondary, CardShape), contentAlignment = Alignment.Center) {
+            Text((item.series ?: item.title).take(1).uppercase(), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Text(displayTitle(item), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(subtitle(item), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+    }
+    LaunchedEffect(focus) { if (focus) runCatching { requester.requestFocus() } }
+}
+
+@Composable
+private fun ListRow(title: String, detail: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Column(
+        modifier.fillMaxWidth().focusRing().border(1.dp, MaterialTheme.colorScheme.outline, CardShape).clickable(onClick = onClick).padding(12.dp),
+    ) {
+        Text(title, fontWeight = FontWeight.Medium)
+        Muted(detail)
+    }
+}
+
+@Composable
+private fun BackRow(vm: AppViewModel, title: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        TextButton(onClick = { vm.back() }, modifier = Modifier.focusRing()) { Text("← " + stringResource(Res.string.common_back)) }
+        Heading(title)
+    }
+}
+
+@Composable
+private fun Heading(text: String, modifier: Modifier = Modifier) =
+    Text(text, modifier, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+
+@Composable
+private fun Muted(text: String) = Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+@Composable
+private fun PrimaryButton(text: String, modifier: Modifier = Modifier, busy: Boolean = false, onClick: () -> Unit) {
+    Button(onClick = onClick, enabled = !busy, modifier = modifier.focusRing(), colors = ButtonDefaults.buttonColors()) {
+        if (busy) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp) else Text(text)
+    }
+}
+
+/** An error from a language-file key (a server error code or `client.*`). */
+@Composable
+fun ErrorText(code: String?) {
+    if (code == null) return
+    val resource = Res.allStringResources[resourceName(code)] ?: Res.allStringResources["common_error_generic"]
+    Text(resource?.let { stringResource(it) } ?: code, color = MaterialTheme.colorScheme.error)
+}
+
+/** `client.error.noPlayer` → `client_error_no_player`, as the language tool names Android resources. */
+fun resourceName(key: String): String = buildString {
+    key.forEach { c ->
+        when {
+            c == '.' -> append('_')
+            c.isUpperCase() -> append('_').append(c.lowercaseChar())
+            else -> append(c)
+        }
+    }
+}
+
+fun displayTitle(item: Item): String = when (item.kind) {
+    ItemKind.MOVIE -> item.title
+    ItemKind.EPISODE -> "S${item.season ?: 0} E${item.episode ?: 0} · ${item.title}"
+}
+
+private fun subtitle(item: Item): String = when (item.kind) {
+    ItemKind.MOVIE -> item.year?.toString() ?: item.container.uppercase()
+    ItemKind.EPISODE -> item.series.orEmpty()
+}
+
+/** `1:02:03` or `2:03`. */
+fun formatTime(ms: Long): String {
+    val total = ms / 1000
+    val h = total / 3600
+    val m = (total % 3600) / 60
+    val s = total % 60
+    return if (h > 0) "$h:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}" else "$m:${s.toString().padStart(2, '0')}"
+}
+
+private fun formatSize(bytes: Long): String = when {
+    bytes >= 1L shl 30 -> "${(bytes * 10 / (1L shl 30)) / 10.0} GB"
+    bytes >= 1L shl 20 -> "${bytes / (1L shl 20)} MB"
+    else -> "${bytes / 1024} KB"
+}

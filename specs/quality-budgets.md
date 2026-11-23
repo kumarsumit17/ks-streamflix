@@ -13,8 +13,9 @@ The owner's rule (2026-11-23): stability, app size and speed are variables for a
 
 | Key | Meaning | Checked by |
 |---|---|---|
-| `size.server.maxMb` | The server's runtime files (all jars of `:desktop:mac:installDist`), in MB | `./gradlew checkSize` |
-| `size.apk.maxMb` | The release APK (stage 2), in MB; 15 MB from [Constraints](constraints.md) | `checkSize`, once the APK exists |
+| `size.server.maxMb` | The server alone: every jar of the core and the server plugins, as `--headless` runs it, in MB | `./gradlew checkSize` |
+| `size.desktop.maxMb` | The whole macOS app: every jar it runs (server, window, Compose for this OS), in MB; the Java runtime the installer bundles is measured in stage 6 | `checkSize` |
+| `size.apk.maxMb` | The release APK, shrunk by R8, in MB; 15 MB from [Constraints](constraints.md) | `checkSize` |
 | `speed.server.startMs` | From start to the first answer of `/api/v1/info` | server tests (in-process); the cold start of the installed app was 752 ms on the owner's Mac on 2026-11-23, checked by hand |
 | `speed.scan.filesPerSecond` | Scanning a library of new files, at least | server tests |
 | `speed.api.p95Ms` | The 95th percentile of item-list and first-byte stream answers on a local server | server tests |
@@ -24,6 +25,10 @@ The owner's rule (2026-11-23): stability, app size and speed are variables for a
 ## Stage 1 measurements (owner's Mac, 2026-11-23)
 
 Server runtime 22.3 MB (budget 24), cold start 752 ms, scan about 26,000 files/s, p95 2 ms, 16 parallel streams correct, open files unchanged over 5 restarts. Ktor's HTTP client and Kotlin reflection are left out of the apps; the SQLite driver's natives for every OS (12 MB) are trimmed to one OS when packaging (stage 6).
+
+## Stage 2 measurements (owner's Mac, 2026-11-23)
+
+Server 22.4 MB (budget 24); desktop app 60.5 MB (new budget 62: Compose's native graphics 17.5 MB and SQLite's natives for every OS 11.4 MB are the largest; Material 2, Ktor's client and Kotlin reflection are left out; trimming SQLite to one OS in stage 6 lowers it by about 10 MB, and the budget with it); release APK 1.7 MB (budget 15). The release APK was installed and used on the 55-inch TV emulator and the phone emulator.
 
 ## Rules
 

@@ -6,6 +6,7 @@ import com.ks.streamflix.server.data.Store
 import com.ks.streamflix.server.domain.AuthService
 import com.ks.streamflix.server.domain.LibraryService
 import com.ks.streamflix.server.domain.Passwords
+import com.ks.streamflix.server.domain.StreamKeys
 import com.ks.streamflix.server.http.coreModule
 import com.ks.streamflix.server.lang.Strings
 import com.ks.streamflix.server.plugin.Core
@@ -41,6 +42,9 @@ class StreamflixServer(private val config: ServerConfig, plugins: List<ServerPlu
     val libraries: LibraryService
     val strings: Strings
     private val engine: EmbeddedServer<*, *>
+    private val contexts: List<PluginContext>
+    /** The server's name, shown by clients. */
+    val name: String get() = config.name
 
     init {
         val ids = plugins.map { it.id }
@@ -50,11 +54,11 @@ class StreamflixServer(private val config: ServerConfig, plugins: List<ServerPlu
         auth = AuthService(store, config.passwordIterations)
         libraries = LibraryService(store)
         strings = Strings(listOf("common", "core") + ids)
-        val core = Core(auth, libraries) { ServerInfo(config.name, config.version, setupNeeded = auth.setupNeeded()) }
-        val routes = plugins.flatMap { plugin ->
-            PluginContext(core, strings, config.dataDir.resolve("plugins").resolve(plugin.id))
-                .also(plugin::install).routes
+        val core = Core(auth, libraries, StreamKeys(config.dataDir.resolve("stream-key"))) { ServerInfo(config.name, config.version, setupNeeded = auth.setupNeeded()) }
+        contexts = plugins.map { plugin ->
+            PluginContext(core, strings, config.dataDir.resolve("plugins").resolve(plugin.id)).also(plugin::install)
         }
+        val routes = contexts.flatMap { it.routes }
         engine = embeddedServer(CIO, configure = {
             connector {
                 host = config.host
@@ -66,7 +70,9 @@ class StreamflixServer(private val config: ServerConfig, plugins: List<ServerPlu
     /** Starts listening and returns the port (useful when [ServerConfig.port] is 0). */
     fun start(): Int {
         engine.start(wait = false)
-        return runBlocking { engine.engine.resolvedConnectors().first().port }
+        val port = runBlocking { engine.engine.resolvedConnectors().first().port }
+        contexts.forEach { c -> c.startListeners.forEach { it(port) } }
+        return port
     }
 
     /** Adds the library [name] unless it exists. For the command line and tests. */
@@ -75,6 +81,7 @@ class StreamflixServer(private val config: ServerConfig, plugins: List<ServerPlu
             ?: libraries.addLibrary(name, kind, listOf(folder))
 
     override fun close() {
+        contexts.forEach { c -> c.stopListeners.forEach { runCatching(it) } }
         engine.stop(gracePeriodMillis = 200, timeoutMillis = 2_000)
         store.close()
     }

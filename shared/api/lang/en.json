@@ -1,0 +1,17 @@
+{
+  "api.error.badRequest": "The request could not be read.",
+  "auth.error.name": "Enter a name of 1 to 64 characters.",
+  "auth.error.passwordShort": "The password needs at least 8 characters.",
+  "auth.error.setupDone": "The owner account already exists. Sign in instead.",
+  "auth.error.tooMany": "Too many attempts. Wait a minute and try again.",
+  "auth.error.wrong": "The name or password is wrong.",
+  "auth.error.ownerOnly": "Only the owner can do this.",
+  "auth.error.signIn": "Sign in first.",
+  "library.error.notFound": "This library doesn’t exist.",
+  "library.error.name": "Enter a library name of 1 to 100 characters.",
+  "library.error.noFolder": "Choose at least one folder.",
+  "library.error.folder": "This folder doesn’t exist on the server.",
+  "library.error.exists": "A library with this name already exists.",
+  "item.error.notFound": "This video doesn’t exist.",
+  "item.error.missing": "The video file is missing. Scan the library again."
+}

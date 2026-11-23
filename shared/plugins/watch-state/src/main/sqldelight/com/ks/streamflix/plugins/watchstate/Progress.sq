@@ -1,0 +1,28 @@
+CREATE TABLE progress (
+    user_id INTEGER NOT NULL,
+    item_id INTEGER NOT NULL,
+    position_ms INTEGER NOT NULL,
+    duration_ms INTEGER NOT NULL,
+    watched INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (user_id, item_id)
+);
+
+CREATE INDEX progress_recent ON progress(user_id, updated_at);
+
+upsert:
+INSERT OR REPLACE INTO progress(user_id, item_id, position_ms, duration_ms, watched, updated_at)
+VALUES (?, ?, ?, ?, ?, ?);
+
+forUser:
+SELECT * FROM progress WHERE user_id = ?;
+
+forItem:
+SELECT * FROM progress WHERE user_id = ? AND item_id = ?;
+
+inProgress:
+SELECT * FROM progress WHERE user_id = ? AND watched = 0 AND position_ms > 0
+ORDER BY updated_at DESC LIMIT ?;
+
+deleteItem:
+DELETE FROM progress WHERE item_id = ?;

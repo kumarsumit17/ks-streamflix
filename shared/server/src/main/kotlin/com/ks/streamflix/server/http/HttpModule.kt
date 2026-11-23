@@ -7,6 +7,7 @@ import com.ks.streamflix.api.ItemList
 import com.ks.streamflix.api.LibraryList
 import com.ks.streamflix.api.NewLibrary
 import com.ks.streamflix.api.Session
+import com.ks.streamflix.api.StreamLink
 import com.ks.streamflix.api.User
 import com.ks.streamflix.server.domain.DomainException
 import com.ks.streamflix.server.plugin.Core
@@ -140,12 +141,27 @@ private fun Route.apiRoutes(core: Core) {
                 call.respond(ItemList(core.libraries.items(library)))
             }
             get("{id}") { call.respond(core.libraries.item(call.longParam("id"))) }
-            get("{id}/stream") {
-                val file = core.libraries.fileOf(call.longParam("id"))
-                call.response.header(HttpHeaders.CacheControl, "private, max-age=3600")
-                // Byte ranges (seeking) come from the PartialContent plugin.
-                call.respond(LocalPathContent(file, contentTypeOf(file.fileName.toString())))
+            post("{id}/link") {
+                val id = call.longParam("id")
+                core.libraries.item(id)
+                val (key, expires) = core.streamKeys.create(id)
+                call.respond(StreamLink("${ApiV1.stream(id)}?key=$key", expires))
             }
+        }
+    }
+
+    // A stream needs a session, or a stream link's key for this item (for players that cannot send the header).
+    authenticate(SESSION_AUTH, optional = true) {
+        get("${ApiV1.ITEMS}/{id}/stream") {
+            val id = call.longParam("id")
+            val key = call.request.queryParameters["key"]
+            if (call.principal<SessionPrincipal>() == null && (key == null || !core.streamKeys.isValid(id, key))) {
+                throw DomainException("auth.error.signIn", DomainException.Kind.UNAUTHORIZED)
+            }
+            val file = core.libraries.fileOf(id)
+            call.response.header(HttpHeaders.CacheControl, "private, max-age=3600")
+            // Byte ranges (seeking) come from the PartialContent plugin.
+            call.respond(LocalPathContent(file, contentTypeOf(file.fileName.toString())))
         }
     }
 }
