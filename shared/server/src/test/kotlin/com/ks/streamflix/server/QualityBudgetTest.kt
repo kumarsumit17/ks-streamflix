@@ -50,7 +50,11 @@ class QualityBudgetTest {
         val library = runBlocking { s.server.ensureLibrary("Films", LibraryKind.MOVIES, media.toString()) }
         s.send(ApiV1.libraryScan(library.id), "POST")
         val id = ApiV1.json.decodeFromString<ItemList>(s.send("${ApiV1.ITEMS}?library=${library.id}").body()).items.first().id
-        repeat(20) { s.send("${ApiV1.ITEMS}?library=${library.id}") } // warm-up
+        // Warm-up of both kinds of request (the JIT, and the first file opens, which are slow on Windows).
+        repeat(20) {
+            s.send("${ApiV1.ITEMS}?library=${library.id}")
+            s.bytes(ApiV1.stream(id), mapOf("Range" to "bytes=0-0"))
+        }
         val times = (1..100).flatMap {
             listOf(
                 timed { s.send("${ApiV1.ITEMS}?library=${library.id}").statusCode() },
