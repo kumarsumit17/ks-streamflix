@@ -63,6 +63,7 @@ android {
 dependencies {
     implementation(project(":shared:client"))
     implementation(project(":tv:google-tv"))
+    implementation(libs.ks.utility)
     implementation(libs.androidx.activity.compose)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.compose.runtime)

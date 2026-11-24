@@ -18,13 +18,17 @@ dependencies {
     testImplementation(testFixtures(project(":shared:server")))
 }
 
-tasks.test { useJUnitPlatform() }
+tasks.test {
+    useJUnitPlatform()
+    // The real-TMDB test runs only with the owner's key; the key is never written anywhere.
+    providers.environmentVariable("STREAMFLIX_TMDB_KEY").orNull?.let { environment("STREAMFLIX_TMDB_KEY", it) }
+}
 
 // Language files, packed at lang/tmdb (the plugin's id) and checked.
 val langTool = rootProject.file("ks-utility/typescript/tools/lang.mjs")
 val langDir = layout.projectDirectory.dir("src/main/lang")
 tasks.processResources { from(langDir) { into("lang/tmdb") } }
-val checkLanguageFiles by tasks.registering(Exec::class) {
+val checkLanguageFiles = tasks.register<Exec>("checkLanguageFiles") {
     description = "Checks the language files with the KS-Suite language-file check."
     inputs.dir(langDir)
     commandLine("node", langTool.path, "check", langDir.asFile.path, rootProject.file("shared/api/lang").path)

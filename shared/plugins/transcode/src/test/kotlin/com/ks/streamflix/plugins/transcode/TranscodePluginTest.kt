@@ -67,6 +67,13 @@ class TranscodePluginTest {
             assertEquals(200, s.bytes("$base/${segments.last()}").statusCode())
             assertEquals(200, s.bytes("$base/${segments[1]}").statusCode())
             assertEquals(404, s.bytes("$base/seg_00999.m4s").statusCode())
+            // Browsers without HLS: one fragmented MP4 of the init segment and every segment.
+            val whole = s.bytes("$base/stream.mp4")
+            assertEquals(200, whole.statusCode())
+            assertEquals("video/mp4", whole.headers().firstValue("Content-Type").get())
+            val wholeFile = Files.createTempFile("whole", ".mp4").also { Files.write(it, whole.body()) }
+            val wholeInfo = runBlocking { ff.probe(1, wholeFile) }!!
+            assertTrue(wholeInfo.durationMs!! in 11_000..13_000, "the whole film plays from it (${wholeInfo.durationMs} ms)")
 
             // One session at a time here: a second client is told the server is busy.
             val busy = play(chrome)

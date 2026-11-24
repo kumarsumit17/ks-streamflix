@@ -133,6 +133,13 @@ Each stage is built and tested on `dev` and ends in something that works on its 
   - **Release workflow:** ks-utility's shared `kotlin-app-release.yml` with `mac-module`, `windows-module`, `test-tasks: check`; file names follow the app-update rules (`ks-streamflix-v<version>.apk`, `-macos-arm64.dmg`, `-windows-x64.msi`).
   - **CI** (`.github/workflows/ci.yml`): Linux runs every check with FFmpeg; Windows runs the tests, builds the `.msi`, installs it silently, starts the installed server, checks it answers, and uninstalls it; macOS builds the `.dmg`, checks its size and starts the packaged server. Each keeps its unsigned file for 14 days.
   - **App updates** ([App updates](app-updates.md)): plugin `app-update` in all four apps.
+- **After v1.0.0** (2026-11-24, for v1.0.1):
+  - ks-utility moved from v0.3.0 to v0.6.0: the server's text look-up is ks-utility's `Translator`, the apps' text comes from `lang.mjs compose` (Compose-safe), the release workflow is `kotlin-app-release.yml@v0.6.0`.
+  - **Phone and Google TV become separate apps** (KS-Suite [platform folders](https://github.com/kumarsumit17/KS-Suite/blob/main/specs/platform-folders.md)'s rule, as KS JaiPlayer did). The suite's rule is that an app first releases its new update checker in a one-APK release, so v1.0.1 stays one APK and, on a TV, already asks for the `-google-tv` file; the split (`mobile/android` and `tv/google-tv` as two apps with the same package name and keystore, the TV versionCode plus 1,000,000,000, the activity and manifest in `shared/client`, the release workflow's `tv-module`) follows in the release after it. It is built and tested and kept aside until then.
+  - Picture subtitles: burning in is now tested with a real PGS track (the test writes one), and the frame of the HLS output shows it.
+  - Browsers without HLS (Firefox): each session also serves `stream.mp4`, the init segment and the segments in order as one fragmented MP4 (`?at=<seconds>` starts later); the watch page uses it and reloads it for a seek past what it has. Checked by tests and in Chrome; Firefox itself is not installed on the owner's Mac.
+  - TMDB: an opt-in test against the real TMDB runs with `STREAMFLIX_TMDB_KEY` set; without a key it does nothing.
+  - Plans for the larger features, for the owner's approval: [music](plan-music.md), [photos](plan-photos.md), [live TV and recording](plan-live-tv.md), [casting](plan-casting.md), [remote access](plan-remote-access.md).
   - **Open in KS JaiPlayer on Android** needs JaiPlayer's `ACTION_VIEW` filter to accept `http`/`https` stream URLs (today it lists `content` and `file`). Until it does, the button stays hidden, because the app checks that JaiPlayer can open the link. This is a change in ks-jaiplayer.
 
 ## Decisions (approved)

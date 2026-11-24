@@ -103,8 +103,8 @@ fun Configuration.jvmRuntime() {
     exclude(group = "org.jetbrains.compose.material", module = "material")
     exclude(group = "org.jetbrains.compose.material", module = "material-desktop")
 }
-val serverRuntime: Configuration by configurations.creating { jvmRuntime() }
-val desktopRuntime: Configuration by configurations.creating { jvmRuntime() }
+val serverRuntime: Configuration = configurations.create("serverRuntime") { jvmRuntime() }
+val desktopRuntime: Configuration = configurations.create("desktopRuntime") { jvmRuntime() }
 trimSqlite(project, "desktopRuntime", macNatives)
 trimSqlite(project, "serverRuntime", macNatives)
 dependencies {
@@ -115,7 +115,7 @@ dependencies {
     serverRuntime(libs.slf4j.simple)
 }
 
-val checkSize by tasks.registering {
+val checkSize = tasks.register("checkSize") {
     description = "Fails when an app is bigger than its budget in quality-budgets.properties."
     group = "verification"
     val budgetFile = layout.projectDirectory.file("quality-budgets.properties")

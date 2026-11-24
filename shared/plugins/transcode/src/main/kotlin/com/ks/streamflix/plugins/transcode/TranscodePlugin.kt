@@ -20,6 +20,7 @@ import io.ktor.server.http.content.LocalPathContent
 import io.ktor.server.request.receive
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondOutputStream
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
@@ -141,6 +142,24 @@ class TranscodePlugin(
                         val init = session.dir.resolve(name)
                         waitFor(session) { init.isRegularFile() && Files.size(init) > 0 }
                         call.respond(LocalPathContent(init, ContentType("video", "mp4")))
+                    }
+                    // For browsers without HLS (Firefox): the init segment and every segment after it, in
+                    // order, are one fragmented MP4. `?at=<seconds>` starts at the segment holding that time.
+                    name == "stream.mp4" -> {
+                        val at = call.request.queryParameters["at"]?.toDoubleOrNull() ?: 0.0
+                        val from = indexAt(session.starts, at)
+                        val init = session.dir.resolve("init.mp4")
+                        segment(session, from)
+                        waitFor(session) { init.isRegularFile() && Files.size(init) > 0 }
+                        call.respondOutputStream(ContentType("video", "mp4")) {
+                            Files.copy(init, this)
+                            for (i in from until session.starts.size) {
+                                session.lastUsed = System.currentTimeMillis()
+                                segment(session, i)
+                                Files.copy(session.dir.resolve(Decision.segmentName(i)), this)
+                                flush()
+                            }
+                        }
                     }
                     Regex("""seg_\d{5}\.m4s""").matches(name) -> {
                         val index = name.substring(4, 9).toInt()

@@ -1,5 +1,7 @@
 # 2026-11-24
 
+* **Update**: [Media server plan](media-server-plan.md), "After v1.0.0": ks-utility v0.6.0 (Translator, `lang.mjs compose`, release workflow v0.6.0); v1.0.1 stays one APK with an update checker that asks for the Google TV file on a TV, the phone/TV split follows in the next release; real PGS burn-in test; `stream.mp4` for browsers without HLS; opt-in real-TMDB test. Gradle 9.6 delegate warnings removed from the build files.
+* **Creation**: plans for the owner's approval: [Music](plan-music.md), [Photos](plan-photos.md), [Live TV and recording](plan-live-tv.md), [Casting](plan-casting.md), [Remote access](plan-remote-access.md).
 * **Update**: Stage 6 built ([Media server plan](media-server-plan.md), "Stage notes"): `.dmg` and `.msi` with icons and SQLite trimmed to one OS; release workflow with the desktop modules; CI on Linux, Windows (install, start, uninstall) and macOS; [App updates](app-updates.md) built in all four apps (`app-update` plugin; Android checks package and signer); [Quality budgets](quality-budgets.md): budgets lowered, new `size.installer.macMb`. No new library.
 
 # 2026-11-23

@@ -22,7 +22,7 @@ tasks.test { useJUnitPlatform() }
 val langTool = rootProject.file("ks-utility/typescript/tools/lang.mjs")
 val langDir = layout.projectDirectory.dir("src/main/lang")
 tasks.processResources { from(langDir) { into("lang/web") } }
-val checkLanguageFiles by tasks.registering(Exec::class) {
+val checkLanguageFiles = tasks.register<Exec>("checkLanguageFiles") {
     description = "Checks the language files with the KS-Suite language-file check."
     inputs.dir(langDir)
     commandLine("node", langTool.path, "check", langDir.asFile.path, rootProject.file("shared/api/lang").path)

@@ -33,6 +33,8 @@ dependencies {
     api(libs.ktor.server.auth)
     implementation(libs.ktor.server.status.pages)
     implementation(libs.sqldelight.sqlite.driver)
+    // The language-file look-up (Translator) from the suite's shared helpers.
+    implementation(libs.ks.utility)
     testImplementation(kotlin("test"))
     testFixturesImplementation(kotlin("test"))
 }
@@ -75,7 +77,7 @@ tasks.processResources {
     from(sharedLangDir) { into("lang/common") }
 }
 
-val checkLanguageFiles by tasks.registering(Exec::class) {
+val checkLanguageFiles = tasks.register<Exec>("checkLanguageFiles") {
     description = "Checks the language files with the KS-Suite language-file check."
     inputs.dir(langDir)
     inputs.dir(sharedLangDir)

@@ -11,6 +11,12 @@ okf_version: "0.2"
 
 * [Media server plan](media-server-plan.md) - The plan to turn KS StreamFlix into a free, open-source home media server with macOS, Windows, Android and Google TV apps: features, platforms, engines and libraries with their licences, and a staged roadmap.
 
+* [Music plan](plan-music.md) - Music libraries in KS StreamFlix as plugins: scanning tags, albums and artists, playing on every app, with gapless playback and no new engine.
+* [Photos plan](plan-photos.md) - Photo libraries in KS StreamFlix as plugins: folders and dates, thumbnails from the core's image service, slideshows on the TV, with EXIF read by the JDK.
+* [Live TV and recording plan](plan-live-tv.md) - Live TV in KS StreamFlix as plugins: tuners and IPTV playlists, a programme guide from XMLTV, and recordings into a library, with FFmpeg for the streams.
+* [Casting plan (DLNA and Chromecast)](plan-casting.md) - Playing StreamFlix items on other screens: as a DLNA/UPnP media server for smart TVs, and by handing items to KS Beam for DLNA renderers and Google Cast receivers.
+* [Remote access plan](plan-remote-access.md) - Reaching the home server from outside the home safely: off by default, HTTPS with a certificate, sign-in hardening, and the ways in (port forwarding, a VPN, or a relay), with their trade-offs.
+
 # Policies
 
 * [Constraints](constraints.md) - The platform constraints every change to KS StreamFlix must keep.

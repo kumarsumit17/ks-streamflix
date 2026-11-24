@@ -27,6 +27,7 @@ import com.ks.streamflix.client.plugin.WatchStatePlugin
 import com.ks.streamflix.client.ui.AppViewModel
 import com.ks.streamflix.client.ui.StreamflixApp
 import com.ks.streamflix.tv.isTelevision
+import com.ks.utility.appupdate.UpdatePlatform
 
 /** The one activity for phone and TV; the layout follows the device (UiModeManager). */
 class MainActivity : ComponentActivity() {
@@ -44,7 +45,10 @@ class MainActivity : ComponentActivity() {
         val vm = ViewModelProvider(this, viewModelFactory {
             initializer {
                 val version = packageManager.getPackageInfo(packageName, 0).versionName ?: "0.0.0"
-                val updates = androidUpdater(app, AndroidSettings(app), version).also { updater = it }
+                // On a TV this one APK already asks for the Google TV build, so when separate phone and
+                // TV apps ship, copies installed on TVs move to the TV app (KS-Suite platform-folders.md).
+                val platform = if (isTelevision(app)) UpdatePlatform.GOOGLE_TV else UpdatePlatform.ANDROID
+                val updates = androidUpdater(app, AndroidSettings(app), version, platform).also { updater = it }
                 AppViewModel(
                     AndroidHost(app, isTelevision(app), version),
                     // The plugins this app includes (specs/media-server-plan.md).

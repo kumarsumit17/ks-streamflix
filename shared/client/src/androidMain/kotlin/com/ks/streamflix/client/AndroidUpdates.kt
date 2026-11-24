@@ -46,5 +46,5 @@ class AndroidUpdateInstaller(private val context: Context) : UpdateInstaller {
     }
 }
 
-fun androidUpdater(context: Context, settings: com.ks.streamflix.client.settings.SettingsStore, version: String) =
-    GitHubUpdater(GitHubUpdater.REPO, version, UpdatePlatform.ANDROID, settings, AndroidUpdateInstaller(context)).also { it.start() }
+fun androidUpdater(context: Context, settings: com.ks.streamflix.client.settings.SettingsStore, version: String, platform: UpdatePlatform = UpdatePlatform.ANDROID) =
+    GitHubUpdater(GitHubUpdater.REPO, version, platform, settings, AndroidUpdateInstaller(context)).also { it.start() }

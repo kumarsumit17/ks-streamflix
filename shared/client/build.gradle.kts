@@ -42,16 +42,16 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
         }
         // JVM code shared by desktop and Android: HTTP and discovery on java.net (no HTTP library).
-        val jvmSharedMain by creating {
+        val jvmSharedMain = create("jvmSharedMain") {
             dependsOn(commonMain.get())
             // ks-utility's app-update rules (JVM only, so not in commonMain).
             dependencies { implementation(libs.ks.utility) }
         }
-        val desktopMain by getting {
+        val desktopMain = getByName("desktopMain") {
             dependsOn(jvmSharedMain)
             dependencies { implementation(libs.kotlinx.coroutines.swing) }
         }
-        val desktopTest by getting {
+        val desktopTest = getByName("desktopTest") {
             dependencies {
                 implementation(libs.kotlinx.coroutines.test)
                 implementation(project(":shared:plugins:watch-state"))
@@ -68,6 +68,8 @@ kotlin {
             implementation(libs.media3.exoplayer.hls)
             implementation(libs.media3.ui.compose)
             implementation(libs.androidx.activity.compose)
+            // The activity of both apps lives here; app updates use ks-utility's rules.
+            implementation(libs.ks.utility)
             implementation(libs.kotlinx.coroutines.android)
         }
     }
@@ -87,8 +89,8 @@ configurations.matching { it.name == "desktopTestRuntimeClasspath" || it.name ==
 }
 
 // ---- Interface text: ks-utility language files → Compose resources ------------------------------
-// The app's en.json / hi.json and ks-utility's shared catalogue become Android-style strings.xml,
-// which Compose Multiplatform resources read on every platform. Needs Node 23.6+.
+// The app's en.json / hi.json and ks-utility's shared catalogue become strings.xml escaped for
+// Compose Multiplatform resources (`lang.mjs compose`), read on every platform. Needs Node 23.6+.
 val langTool = rootProject.file("ks-utility/typescript/tools/lang.mjs")
 val langDir = layout.projectDirectory.dir("src/commonMain/lang")
 // The API's error texts, shared with the server.
@@ -96,17 +98,17 @@ val apiLangDir = rootProject.layout.projectDirectory.dir("shared/api/lang")
 val sharedLangDir = rootProject.layout.projectDirectory.dir("ks-utility/lang/common")
 val langResources = layout.buildDirectory.dir("generated/lang/composeResources")
 
-val languageResources by tasks.registering(Exec::class) {
+val languageResources = tasks.register<Exec>("languageResources") {
     description = "Converts the language files into Compose string resources."
     inputs.dir(langDir)
     inputs.dir(apiLangDir)
     inputs.dir(sharedLangDir)
     outputs.dir(langResources)
     val out = langResources.get().asFile
-    commandLine("node", langTool.path, "android", langDir.asFile.path, apiLangDir.asFile.path, "--out", out.path)
+    commandLine("node", langTool.path, "compose", langDir.asFile.path, apiLangDir.asFile.path, "--out", out.path)
 }
 
-val checkLanguageFiles by tasks.registering(Exec::class) {
+val checkLanguageFiles = tasks.register<Exec>("checkLanguageFiles") {
     description = "Checks the language files with the KS-Suite language-file check."
     inputs.dir(langDir)
     inputs.dir(sharedLangDir)
