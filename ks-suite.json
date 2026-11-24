@@ -1,0 +1,12 @@
+{
+  "name": "KS StreamFlix",
+  "group": "media",
+  "icon": "clapperboard",
+  "platforms": ["macos", "windows", "android", "google-tv"],
+  "platformStatus": { "windows": "beta" },
+  "stack": "Kotlin Multiplatform",
+  "tagline": {
+    "en": "Free, open-source home media server: run it on your Mac or Windows PC, then browse and stream your library on phone and TV.",
+    "hi": "मुफ़्त, ओपन-सोर्स होम मीडिया सर्वर: इसे अपने Mac या Windows PC पर चलाएं, फिर फ़ोन और TV पर अपनी लाइब्रेरी देखें और स्ट्रीम करें।"
+  }
+}
