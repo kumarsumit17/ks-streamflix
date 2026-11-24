@@ -25,6 +25,7 @@ concurrency:
 jobs:
   linux:
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -38,7 +39,9 @@ jobs:
         with:
           node-version: "24"
       - name: FFmpeg, for the real transcoding tests
-        run: sudo apt-get update -q && sudo apt-get install -y -q ffmpeg
+        # A slow package mirror fails here quickly instead of holding the job.
+        timeout-minutes: 10
+        run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends ffmpeg
       - name: Every check
         run: ./gradlew --no-daemon check :mobile:android:assembleDebug
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
