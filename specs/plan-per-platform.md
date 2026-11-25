@@ -7,7 +7,7 @@ tags: [plan, platforms, macos, windows, android, google-tv, performance, accessi
 
 # Per-platform optimization plan
 
-**Status: approved by the owner on 2026-11-25** (decisions in section 3). Step 1, the phone/TV split, is built (9c1fdda, for v1.1.0); step 2 is dropped. Built steps are marked in section 4.
+**Status: approved by the owner on 2026-11-25** (decisions in section 3). Step 1, the phone/TV split, is built (9c1fdda, for v1.1.0). Built steps are marked in section 4.
 
 Owner's rule for every KS-Suite app (2026-11-25, KS-Suite [platform folders](https://github.com/kumarsumit17/KS-Suite/blob/dev/specs/platform-folders.md), "Each platform build is optimized for its OS"): each build is its own app, made the best it can be on its OS, with as few dependencies as possible and nothing the user has to install separately. Modelled on [ks-jaiplayer's plan](https://github.com/kumarsumit17/ks-jaiplayer/blob/dev/specs/plan-per-platform.md).
 
@@ -90,7 +90,7 @@ Dependencies: no new library on desktop (JNA is not used today; where a native c
 
 ## 3. Owner's decisions (2026-11-25)
 
-1. **Versions: one version for all builds.** StreamFlix keeps one `vX.Y.Z` tag for macOS, Windows, Android and Google TV; no platform tags, so no bridge release. The API version keeps clients and servers of different versions working together if this changes later.
+1. **One version for all builds**, as the suite rule says ([versioning and signing](https://github.com/kumarsumit17/KS-Suite/blob/dev/specs/versioning-signing.md), "One version for every platform"): one `vX.Y.Z` tag releases macOS, Windows, Android and Google TV together. The optimizations below are per platform; the version is not.
 2. **FFmpeg: bundled** (LGPL build, VideoToolbox / Media Foundation and hardware encoders, no `libx264`). It adds about 25–35 MB to the dmg and msi; the installer budget (`size.installer.macMb=80`) is raised in that step and the new number reported to the owner. `STREAMFLIX_FFMPEG_DIR` still overrides it.
 3. **Start at login: on by default**, hidden to the menu bar or tray; can be turned off in Settings.
 4. **Continue watching on the Google TV home screen: yes** (`androidx.tvprovider`, a new dependency).
@@ -103,9 +103,8 @@ Each step is one or more commits on `dev`, tested on its platform before the nex
 | Step | What | Where | Tested on |
 |---|---|---|---|
 | 1 | **Built** (9c1fdda): phone/TV split (v1.1.0) | `tv/google-tv`, `mobile/android`, release workflow `tv-module` | Phone and TV emulators, release rehearsal |
-| 2 | ~~Versioning per platform~~: dropped (decision 1) | | |
-| 3 | Desktop always-on server: window close, menu bar / tray, start at login, keep awake | `shared/desktop`, `desktop/mac`, `desktop/windows` | This Mac; Windows CI (install, start, close window, server still answers) |
-| 4 | Bundled FFmpeg | packaging in `desktop/mac`, `desktop/windows`; `shared/ffmpeg` locate order | Transcode tests against the bundled binary on CI (all three OSes); dmg/msi size check |
-| 5 | Android media stack and session, PiP, keep screen on, touch | `shared/client/src/androidMain`, `mobile/android` | Phone emulator |
-| 6 | Google TV: frame rate, passthrough and HDR in the profile, hold-to-seek, side panel, Watch Next | `tv/google-tv`, `shared/api`, `shared/plugins/transcode` | Every TV emulator 32–100 inch; the owner's TV for passthrough and frame rate |
-| 7 | Look per desktop OS, accessibility pass on all four | each platform, `shared/client` | VoiceOver (Mac), TalkBack (phone, TV), Narrator by the owner |
+| 2 | Desktop always-on server: window close, menu bar / tray, start at login, keep awake | `shared/desktop`, `desktop/mac`, `desktop/windows` | This Mac; Windows CI (install, start, close window, server still answers) |
+| 3 | Bundled FFmpeg | packaging in `desktop/mac`, `desktop/windows`; `shared/ffmpeg` locate order | Transcode tests against the bundled binary on CI (all three OSes); dmg/msi size check |
+| 4 | Android media stack and session, PiP, keep screen on, touch | `shared/client/src/androidMain`, `mobile/android` | Phone emulator |
+| 5 | Google TV: frame rate, passthrough and HDR in the profile, hold-to-seek, side panel, Watch Next | `tv/google-tv`, `shared/api`, `shared/plugins/transcode` | Every TV emulator 32–100 inch; the owner's TV for passthrough and frame rate |
+| 6 | Look per desktop OS, accessibility pass on all four | each platform, `shared/client` | VoiceOver (Mac), TalkBack (phone, TV), Narrator by the owner |
