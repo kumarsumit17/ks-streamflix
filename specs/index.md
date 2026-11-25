@@ -16,6 +16,7 @@ okf_version: "0.2"
 * [Live TV and recording plan](plan-live-tv.md) - Live TV in KS StreamFlix as plugins: tuners and IPTV playlists, a programme guide from XMLTV, and recordings into a library, with FFmpeg for the streams.
 * [Casting plan (DLNA and Chromecast)](plan-casting.md) - Playing StreamFlix items on other screens: as a DLNA/UPnP media server for smart TVs, and by handing items to KS Beam for DLNA renderers and Google Cast receivers.
 * [Remote access plan](plan-remote-access.md) - Reaching the home server from outside the home safely: off by default, HTTPS with a certificate, sign-in hardening, and the ways in (port forwarding, a VPN, or a relay), with their trade-offs.
+* [Per-platform optimization plan](plan-per-platform.md) - Draft plan for making each KS StreamFlix build (macOS, Windows, Android phone, Google TV) its own app tuned to its OS, with an audit of each build today and what changes per OS, awaiting the owner's approval.
 
 # Policies
 
