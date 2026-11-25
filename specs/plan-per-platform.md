@@ -1,13 +1,13 @@
 ---
 type: Plan
 title: Per-platform optimization plan
-description: Draft plan for making each KS StreamFlix build (macOS, Windows, Android phone, Google TV) its own app tuned to its OS, with an audit of each build today and what changes per OS, awaiting the owner's approval.
+description: Approved plan for making each KS StreamFlix build (macOS, Windows, Android phone, Google TV) its own app tuned to its OS, with an audit of each build today and what changes per OS.
 tags: [plan, platforms, macos, windows, android, google-tv, performance, accessibility]
 ---
 
 # Per-platform optimization plan
 
-**Status: draft, waiting for the owner's approval.** Nothing in section 2 is built yet.
+**Status: approved by the owner on 2026-11-25** (decisions in section 3). Step 1, the phone/TV split, is built (9c1fdda, for v1.1.0); step 2 is dropped. Built steps are marked in section 4.
 
 Owner's rule for every KS-Suite app (2026-11-25, KS-Suite [platform folders](https://github.com/kumarsumit17/KS-Suite/blob/dev/specs/platform-folders.md), "Each platform build is optimized for its OS"): each build is its own app, made the best it can be on its OS, with as few dependencies as possible and nothing the user has to install separately. Modelled on [ks-jaiplayer's plan](https://github.com/kumarsumit17/ks-jaiplayer/blob/dev/specs/plan-per-platform.md).
 
@@ -17,7 +17,7 @@ StreamFlix differs from JaiPlayer in one way that shapes everything below: **the
 
 | | macOS (`desktop/mac`) | Windows (`desktop/windows`) | Android phone (`mobile/android`) | Google TV (`tv/google-tv`) |
 |---|---|---|---|---|
-| Entry point | `Main.kt`: data in `~/Library/Application Support`, plugin lists; everything else in `shared/desktop` (`runDesktopApp`) | Same, data in `%APPDATA%`; identical plugin lists | `MainActivity` (single task); TV detection at run time | **Not its own app yet**: a library merged into the phone APK (leanback entry, banner, `isTelevision`). The split is parked for v1.1.0 ([plan](media-server-plan.md), "After v1.0.0") |
+| Entry point | `Main.kt`: data in `~/Library/Application Support`, plugin lists; everything else in `shared/desktop` (`runDesktopApp`) | Same, data in `%APPDATA%`; identical plugin lists | `MainActivity` (single task); TV detection at run time | **Not its own app in v1.0.1**: a library merged into the phone APK. Since 9c1fdda (v1.1.0) its own application module (Leanback required, touchscreen not required, banner, `FORM_FACTOR=tv`, versionCode + 1,000,000,000) |
 | Server lifetime | **Closing the window stops the server**; no menu-bar item, no start at login, so phones and TVs lose the library whenever the window is closed | Same: no tray icon, no start at login, no Windows service | n/a (client) | n/a (client) |
 | Sleep while streaming | **Not prevented**: the Mac may sleep mid-film on a TV | Not prevented | n/a | n/a |
 | Look | Compose window, system appearance (`apple.awt.application.appearance=system`), no menu bar of its own | Compose in a Swing frame, light title bar | Material 3 Compose, `Theme.Material.NoActionBar` | Same UI with TV focus rings, larger type |
@@ -28,7 +28,7 @@ StreamFlix differs from JaiPlayer in one way that shapes everything below: **the
 | TV-specific playback | | | | No frame-rate matching, no passthrough (the profile lists decoders only, so AC-3/DTS are transcoded instead of sent to the receiver), HDR untested |
 | Transcoding (server) | FFmpeg found on the machine (Homebrew); `h264_videotoolbox` first, `libx264` fallback | FFmpeg found on the machine; `h264_nvenc`, `h264_qsv`, `h264_amf`, then `libx264` | n/a | n/a |
 | **Needs installing separately** | **FFmpeg** (and KS JaiPlayer to play) | **FFmpeg** (and KS JaiPlayer) | Nothing | Nothing |
-| Packaging | dmg (arm64), jlink with 9 modules, ProGuard off, SQLite natives trimmed to the OS; 79.4 MB | msi, same modules, ProGuard off; 69 MB; no per-user install, no start-menu folder choice | APK 1.96 MB, R8 and resource shrinking on | In the phone APK |
+| Packaging | dmg (arm64), jlink with 9 modules, ProGuard off, SQLite natives trimmed to the OS; 79.4 MB | msi, same modules, ProGuard off; 69 MB; no per-user install, no start-menu folder choice | APK 1.96 MB, R8 and resource shrinking on | In the phone APK (v1.0.1); its own APK and AAB from v1.1.0 |
 | Version | One tag `vX.Y.Z` for all builds | Same | Same | Same |
 | Accessibility | Few `contentDescription`s; Tab focus works via `focusRing` | Same, and `jdk.accessibility` is not in the runtime, so Narrator and NVDA cannot see the window | TalkBack reads Compose semantics; label gaps on cards | D-pad focus on every screen; label gaps |
 
@@ -71,14 +71,14 @@ Dependencies: no new library on desktop (JNA is not used today; where a native c
 
 ### 2.4 Google TV (`tv/google-tv/`)
 
-- **Its own app first**: the phone/TV split (parked patch) becomes step 1: a separate application module with the same package, the TV versionCode offset, leanback required, touchscreen not required, `UpdatePlatform.GOOGLE_TV`. It ships in v1.1.0 after v1.0.1 carried the new update checker.
+- **Its own app first** (built, 9c1fdda, ships in v1.1.0): a separate application module with the same package, the TV versionCode offset, leanback required, touchscreen not required, `UpdatePlatform.GOOGLE_TV`; shared Android code in `shared/client/src/androidMain`.
 - **Media stack**:
   - **Frame-rate matching**: "Match the video's frame rate" (off / seamless only / always), default seamless only, through `setVideoChangeFrameRateStrategy`.
   - **Audio passthrough**: the device profile adds AC-3, E-AC-3, DTS and TrueHD when `AudioCapabilities` says the HDMI sink takes them, so the server sends them untouched instead of transcoding to AAC.
   - **HDR**: the profile reports HDR10/HLG/Dolby Vision support from `Display.HdrCapabilities`, so HDR files are not tone-mapped or transcoded needlessly; `SurfaceView` stays.
 - **Media session** (same `media3-session`): remote media keys and Google Assistant ("pause", "skip forward 30 seconds") reach the player.
 - **D-pad**: hold left/right to seek faster (10 s, 30 s, 1 min); up opens subtitles and audio tracks in a side panel that keeps focus; every screen checked on the 32–100 inch emulators.
-- **Continue watching on the home screen** (Watch Next channel, `androidx.tvprovider`): optional, owner decides (section 3).
+- **Continue watching on the home screen** (Watch Next channel, `androidx.tvprovider`), for items with a saved position (decision 4).
 - **Size and start**: R8 and a baseline profile, as the phone; cold start under 1.5 s on a Chromecast with Google TV class device.
 
 ### 2.5 Shared
@@ -88,13 +88,13 @@ Dependencies: no new library on desktop (JNA is not used today; where a native c
 - Device-profile extensions (passthrough, HDR) go in `shared/api` (`DeviceProfile`) with defaults that keep older clients working; the server's decision code in `shared/plugins/transcode` uses them.
 - New interface text in English and Hindi (`lang/en.json`, `hi.json`) with the Hindi style guide; the language-file check runs in `check`.
 
-## 3. Decisions for the owner
+## 3. Owner's decisions (2026-11-25)
 
-1. **Own version per platform.** JaiPlayer chose one tag per platform (`mac-vX.Y.Z`, `windows-…`, `android-…`, `google-tv-…`), which needs ks-utility's release workflow and update helpers to learn platform prefixes (ks-utility v0.10.0). StreamFlix follows the same scheme once that ks-utility version exists, or (b) keeps one tag train for now. **Note:** the desktop builds contain the server, and the API version keeps phones/TVs and servers of different versions working together, so independent versions are safe here.
-2. **Bundle FFmpeg** (LGPL build, VideoToolbox / Media Foundation and hardware encoders, no `libx264`): adds about 25–35 MB to the dmg and msi and would need the installer budgets (`size.installer.macMb=80`) raised. Or keep "install FFmpeg yourself" (today), which breaks the "nothing to install separately" rule.
-3. **Start at login on by default** for the desktop server, or off until the user turns it on.
-4. **Continue watching on the Google TV home screen** (`androidx.tvprovider`, a new dependency), or leave it out.
-5. **New Android dependency** `androidx.media3:media3-session` for the media session on phone and TV.
+1. **Versions: one version for all builds.** StreamFlix keeps one `vX.Y.Z` tag for macOS, Windows, Android and Google TV; no platform tags, so no bridge release. The API version keeps clients and servers of different versions working together if this changes later.
+2. **FFmpeg: bundled** (LGPL build, VideoToolbox / Media Foundation and hardware encoders, no `libx264`). It adds about 25–35 MB to the dmg and msi; the installer budget (`size.installer.macMb=80`) is raised in that step and the new number reported to the owner. `STREAMFLIX_FFMPEG_DIR` still overrides it.
+3. **Start at login: on by default**, hidden to the menu bar or tray; can be turned off in Settings.
+4. **Continue watching on the Google TV home screen: yes** (`androidx.tvprovider`, a new dependency).
+5. **`androidx.media3:media3-session`: approved** with the plan, for the media session on phone and TV.
 
 ## 4. Build order and testing
 
@@ -102,10 +102,10 @@ Each step is one or more commits on `dev`, tested on its platform before the nex
 
 | Step | What | Where | Tested on |
 |---|---|---|---|
-| 1 | Phone/TV split (v1.1.0) | `tv/google-tv`, `mobile/android`, release workflow `tv-module` | Phone and TV emulators, release rehearsal |
-| 2 | Versioning per platform (if 3.1) | ks-utility (new tag), this repo's workflow | Rehearsal per platform |
+| 1 | **Built** (9c1fdda): phone/TV split (v1.1.0) | `tv/google-tv`, `mobile/android`, release workflow `tv-module` | Phone and TV emulators, release rehearsal |
+| 2 | ~~Versioning per platform~~: dropped (decision 1) | | |
 | 3 | Desktop always-on server: window close, menu bar / tray, start at login, keep awake | `shared/desktop`, `desktop/mac`, `desktop/windows` | This Mac; Windows CI (install, start, close window, server still answers) |
-| 4 | Bundled FFmpeg (if 3.2) | packaging in `desktop/mac`, `desktop/windows`; `shared/ffmpeg` locate order | Transcode tests against the bundled binary on CI (all three OSes); dmg/msi size check |
+| 4 | Bundled FFmpeg | packaging in `desktop/mac`, `desktop/windows`; `shared/ffmpeg` locate order | Transcode tests against the bundled binary on CI (all three OSes); dmg/msi size check |
 | 5 | Android media stack and session, PiP, keep screen on, touch | `shared/client/src/androidMain`, `mobile/android` | Phone emulator |
-| 6 | Google TV: frame rate, passthrough and HDR in the profile, hold-to-seek, side panel, (Watch Next) | `tv/google-tv`, `shared/api`, `shared/plugins/transcode` | Every TV emulator 32–100 inch; the owner's TV for passthrough and frame rate |
+| 6 | Google TV: frame rate, passthrough and HDR in the profile, hold-to-seek, side panel, Watch Next | `tv/google-tv`, `shared/api`, `shared/plugins/transcode` | Every TV emulator 32–100 inch; the owner's TV for passthrough and frame rate |
 | 7 | Look per desktop OS, accessibility pass on all four | each platform, `shared/client` | VoiceOver (Mac), TalkBack (phone, TV), Narrator by the owner |
