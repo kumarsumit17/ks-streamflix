@@ -55,14 +55,20 @@ class QualityBudgetTest {
             s.send("${ApiV1.ITEMS}?library=${library.id}")
             s.bytes(ApiV1.stream(id), mapOf("Range" to "bytes=0-0"))
         }
-        val times = (1..100).flatMap {
-            listOf(
-                timed { s.send("${ApiV1.ITEMS}?library=${library.id}").statusCode() },
-                timed { s.bytes(ApiV1.stream(id), mapOf("Range" to "bytes=0-0")).statusCode() },
-            )
-        }.sorted()
-        val p95 = times[(times.size * 95) / 100 - 1]
-        println("budget speed.api.p95Ms: $p95 ms")
+        // Five rounds of 50 request pairs; the budget is checked against the median round's p95.
+        // A slower server is slower in every round, while a pause on a shared CI machine
+        // (another job, the disk, a GC) spoils one or two rounds, not three.
+        val rounds = (1..5).map {
+            val times = (1..50).flatMap {
+                listOf(
+                    timed { s.send("${ApiV1.ITEMS}?library=${library.id}").statusCode() },
+                    timed { s.bytes(ApiV1.stream(id), mapOf("Range" to "bytes=0-0")).statusCode() },
+                )
+            }.sorted()
+            times[(times.size * 95) / 100 - 1]
+        }
+        val p95 = rounds.sorted()[rounds.size / 2]
+        println("budget speed.api.p95Ms: $p95 ms (rounds: ${rounds.joinToString()})")
         assertTrue(p95 <= Budget.long("speed.api.p95Ms"), "p95 was $p95 ms")
     }
 

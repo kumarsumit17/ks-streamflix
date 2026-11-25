@@ -1,5 +1,6 @@
 # 2026-11-25
 
+* **Update**: [Per-platform optimization plan](plan-per-platform.md): versioning per platform is back (owner, suite rule "Platform tags"); v1.2.0 is the bridge release. [Quality budgets](quality-budgets.md): the API p95 is measured in five rounds and the median round counts.
 * **Update**: [Per-platform optimization plan](plan-per-platform.md): the per-platform versioning step removed; one version for every platform (KS-Suite rule).
 * **Update**: [Per-platform optimization plan](plan-per-platform.md) approved by the owner: one version for all builds, FFmpeg bundled, start at login on by default, Continue watching on the Google TV home screen, `media3-session`; step 1 (the phone/TV split) built.
 * **Update**: Phone and Google TV are separate apps (v1.1.0): [Media server plan](media-server-plan.md) ("v1.1.0", decision 2), [Constraints](constraints.md), [Overview](overview.md), [App updates](app-updates.md).
