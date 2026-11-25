@@ -135,17 +135,22 @@ Each stage is built and tested on `dev` and ends in something that works on its 
   - **App updates** ([App updates](app-updates.md)): plugin `app-update` in all four apps.
 - **After v1.0.0** (2026-11-24, for v1.0.1):
   - ks-utility moved from v0.3.0 to v0.6.0: the server's text look-up is ks-utility's `Translator`, the apps' text comes from `lang.mjs compose` (Compose-safe), the release workflow is `kotlin-app-release.yml@v0.6.0`.
-  - **Phone and Google TV become separate apps** (KS-Suite [platform folders](https://github.com/kumarsumit17/KS-Suite/blob/main/specs/platform-folders.md)'s rule, as KS JaiPlayer did). The suite's rule is that an app first releases its new update checker in a one-APK release, so v1.0.1 stays one APK and, on a TV, already asks for the `-google-tv` file; the split (`mobile/android` and `tv/google-tv` as two apps with the same package name and keystore, the TV versionCode plus 1,000,000,000, the activity and manifest in `shared/client`, the release workflow's `tv-module`) follows in the release after it. It is built and tested and kept aside until then.
+  - **Phone and Google TV become separate apps** (KS-Suite [platform folders](https://github.com/kumarsumit17/KS-Suite/blob/main/specs/platform-folders.md)'s rule, as KS JaiPlayer did). The suite's rule is that an app first releases its new update checker in a one-APK release, so v1.0.1 stays one APK and, on a TV, already asks for the `-google-tv` file; the split (`mobile/android` and `tv/google-tv` as two apps with the same package name and keystore, the TV versionCode plus 1,000,000,000, the activity and manifest in `shared/client`, the release workflow's `tv-module`) follows in the release after it (v1.1.0, below).
   - Picture subtitles: burning in is now tested with a real PGS track (the test writes one), and the frame of the HLS output shows it.
   - Browsers without HLS (Firefox): each session also serves `stream.mp4`, the init segment and the segments in order as one fragmented MP4 (`?at=<seconds>` starts later); the watch page uses it and reloads it for a seek past what it has. Checked by tests and in Chrome; Firefox itself is not installed on the owner's Mac.
   - TMDB: an opt-in test against the real TMDB runs with `STREAMFLIX_TMDB_KEY` set; without a key it does nothing.
   - Plans for the larger features, for the owner's approval: [music](plan-music.md), [photos](plan-photos.md), [live TV and recording](plan-live-tv.md), [casting](plan-casting.md), [remote access](plan-remote-access.md).
   - **Open in KS JaiPlayer on Android** needs JaiPlayer's `ACTION_VIEW` filter to accept `http`/`https` stream URLs (today it lists `content` and `file`). Until it does, the button stays hidden, because the app checks that JaiPlayer can open the link. This is a change in ks-jaiplayer.
+- **v1.1.0** (2026-11-25): phone and Google TV are separate apps.
+  - `mobile/android` (phone launcher entry) and `tv/google-tv` (Leanback entry, banner, `com.ks.streamflix.FORM_FACTOR` meta-data) are two `android.application` modules configured once in the root `build.gradle.kts`: package name `com.ks.streamflix`, the same version and keystore, the TV versionCode plus 1,000,000,000.
+  - The activity, the manifest with its permissions, `queries` and update `FileProvider`, the icon, the language list and the R8 rules moved to `shared/client` (androidMain); `TvSupport.kt` (UiModeManager) is gone: the layout follows the app (`isTvBuild`), not the device.
+  - Each app updates to its own file (`UpdatePlatform.GOOGLE_TV` → `-google-tv.apk`, `ANDROID` → the plain APK); copies of v1.0.1 on a TV already ask for the TV file.
+  - The release publishes `ks-streamflix-v<version>.apk`/`.aab` and `-google-tv.apk`/`.aab` (`tv-module`); `checkSize` measures both APKs; CI builds both debug APKs.
 
 ## Decisions (approved)
 
 1. **Four apps:** macOS and Windows are the server with a desktop window; Android and Google TV are clients. Kotlin/JVM server (code in `shared/`); the jar also runs on Linux unofficially.
-2. **Android and Google TV: one APK** that switches its layout on a TV (as JaiPlayer does). Two APKs would keep the TV app leaner, at the cost of a second build and release.
+2. **Android and Google TV: separate apps** (changed 2026-11-25 by the suite rule): a phone app and a Google TV app with the same package name, from v1.1.0. Until then one APK switched its layout on a TV.
 3. **Modern architecture** (changed by the owner the same day): Ktor with coroutines for the server, SQLDelight on SQLite for the database, `kotlinx.serialization` for JSON, and one Kotlin Multiplatform + Compose Multiplatform client module for the four apps.
 4. **Transcoding engine:** FFmpeg installed by the owner and run as a separate program, never bundled; from stage 4.
 5. **Desktop playback:** the macOS and Windows apps hand playback to JaiPlayer (or the browser) instead of having their own player, which keeps them small.

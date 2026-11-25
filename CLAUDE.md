@@ -10,7 +10,7 @@ A free, open-source home media server with its own apps: the server on macOS and
 
 ## Stack
 - Server: Kotlin/JVM 17 with coroutines, Ktor (CIO engine), SQLDelight on SQLite, JSON with `kotlinx.serialization`; layers `domain` / `data` / `http`. FFmpeg (stage 4) is installed by the owner and run as a separate program, never bundled.
-- Apps (stage 2): one Kotlin Multiplatform + Compose Multiplatform module `shared/client` (API client, ViewModel + StateFlow, screens) for all four apps; one APK for Android phone and Google TV with Media3/ExoPlayer.
+- Apps (stage 2): one Kotlin Multiplatform + Compose Multiplatform module `shared/client` (API client, ViewModel + StateFlow, screens) for all four apps; separate phone and Google TV apps (two APKs and AABs) with Media3/ExoPlayer.
 - **Budgets:** stability, app size and speed are numbers in `quality-budgets.properties`, checked by `./gradlew check` and `checkSize` (`specs/quality-budgets.md`). Never raise one without the owner's OK.
 - Package: `com.ks.streamflix`. minSdk 26 · targetSdk latest stable
 - Interface text with an apostrophe uses ’ (U+2019): the language tool escapes `'` for Android, and Compose resources show the backslash.
@@ -22,12 +22,12 @@ A free, open-source home media server with its own apps: the server on macOS and
 | `:shared:server` | `shared/server` | Server core only: libraries, scanner, name parser, database, owner account, HTTP API, direct play, plugin API |
 | `:shared:plugins:<id>` | `shared/plugins/<id>` | One server plugin each: `web` (browser pages), `watch-state` (progress, own database), `discovery` (UDP), `local-metadata` (posters, `.nfo`), `tmdb` (online details, off by default), `media-info` (ffprobe), `subtitles` (WebVTT), `transcode` (direct play / remux / transcode to HLS), `users` (users, libraries per user, age limits), `folder-watch` (rescan on changes) |
 | `:shared:ffmpeg` | `shared/ffmpeg` | Not a plugin: finds and runs the owner's FFmpeg for the plugins that need it |
-| `:shared:client` | `shared/client` | The apps: API client, `AppViewModel` (StateFlow), client plugins (`watch-state`, `jaiplayer`, `metadata`, `media-info`, `subtitles`, `transcode`), Compose Multiplatform screens, language files; `jvmSharedMain` (HTTP and discovery on java.net), `androidMain` (Media3 player), `desktopMain` |
+| `:shared:client` | `shared/client` | The apps: API client, `AppViewModel` (StateFlow), client plugins (`watch-state`, `jaiplayer`, `metadata`, `media-info`, `subtitles`, `transcode`), Compose Multiplatform screens, language files; `jvmSharedMain` (HTTP and discovery on java.net), `androidMain` (Media3 player, and everything both Android apps run: the activity, the manifest with permissions and the update provider, R8 rules), `desktopMain` |
 | `:shared:desktop` | `shared/desktop` | The macOS and Windows app: the server plus its window |
 | `:desktop:mac` | `desktop/mac` | macOS entry point: picks the plugins |
 | `:desktop:windows` | `desktop/windows` | Windows entry point: picks the plugins |
-| `:mobile:android` | `mobile/android` | The one APK for phone and TV: activity, plugins, R8 |
-| `:tv:google-tv` | `tv/google-tv` | Android library merged into the APK: leanback entry, banner, TV detection |
+| `:mobile:android` | `mobile/android` | The phone app (APK + AAB): phone launcher entry |
+| `:tv:google-tv` | `tv/google-tv` | The Google TV app (`-google-tv` APK + AAB): Leanback entry, banner, `FORM_FACTOR` meta-data (TV layout) |
 
 ## Core and plugins
 - **Keep the core bare minimum** (owner's rule): every feature outside the core is a plugin in its own module, compiled in and listed by each app's entry point, so an app carries only what it lists. See `specs/media-server-plan.md`. Never add a feature to the core when it can be a plugin.
@@ -37,7 +37,7 @@ A free, open-source home media server with its own apps: the server on macOS and
 - **Lean means lean.** Keep the release APK under 15 MB. Ask before adding a dependency. Prefer what's already in Media3, Compose, and Room.
 - **Low-RAM TVs.** Load images at their display size. Never keep a full-resolution bitmap in a row. Cap the decoded-image cache.
 - **10-foot UI.** Overscan-safe margins are 48dp horizontal, 27dp vertical.
-- **One APK for phone and TV.** Declare `android.software.leanback` and `android.hardware.touchscreen` with `required="false"`; the TV layout switches at runtime. Provide a banner (320×180) for the TV home row.
+- **Separate phone and Google TV apps.** `mobile/android` and `tv/google-tv` are two application modules with the same package name (`com.ks.streamflix`), version and keystore, configured once in the root `build.gradle.kts`; the TV app's versionCode adds 1,000,000,000 (Google Play needs a different code per bundle). Both only add a launcher entry to what `shared/client/src/androidMain` declares. The TV app declares `android.software.leanback` required and `android.hardware.touchscreen` not required, has the banner (320×180), and marks itself with the `com.ks.streamflix.FORM_FACTOR` meta-data (`isTvBuild`): the layout follows the app, not the device. Each app updates to its own build (`UpdatePlatform.GOOGLE_TV` / `ANDROID`). Both APKs stay within `size.apk.maxMb`.
 - Watch progress and favourites live on the server, per user. Any local database in the apps needs a `Migration` plus an exported schema for every schema change.
 
 ## Server constraints
@@ -53,7 +53,8 @@ A free, open-source home media server with its own apps: the server on macOS and
 ./gradlew check                                   # tests, lint, language files, all budgets incl. sizes (needs Node 23.6+)
 ./gradlew :desktop:mac:run --args="--library Films=movies:$HOME/Movies"   # the macOS app: server and window
 ./gradlew :desktop:mac:run --args="--headless"    # the server alone
-./gradlew :mobile:android:installDebug            # Android / Google TV (one APK); an emulator reaches the Mac at 10.0.2.2:8742
+./gradlew :mobile:android:installDebug            # the phone app; an emulator reaches the Mac at 10.0.2.2:8742
+./gradlew :tv:google-tv:installDebug              # the Google TV app
 ./gradlew -Pcompose.desktop.packaging.checkJdkVendor=false :desktop:mac:packageReleaseDmg checkInstallerSize   # .dmg on the owner's Mac (Homebrew JDK)
 ```
 The server listens on port 8742 (`--port` to change) and keeps its data in `~/Library/Application Support/KS StreamFlix` (macOS) or `%APPDATA%\KS StreamFlix` (Windows); `--data <dir>` to change. Open `http://localhost:8742/` for the browser pages.
@@ -63,13 +64,13 @@ Compose's packaging refuses Homebrew's JDK unless `-Pcompose.desktop.packaging.c
 Emulators (from the KS-Suite workspace; suite spec `specs/testing.md`): `../scripts/emulators.sh create` once, then `../scripts/emulators.sh start tv` boots the Android TV AVD (`ks-tv-36`, API 36). Then:
 ```bash
 export ANDROID_SERIAL=$(../scripts/emulators.sh serial tv)
-./gradlew installDebug connectedDebugAndroidTest
+./gradlew :tv:google-tv:installDebug   # the phone emulator: :mobile:android:installDebug
 adb shell monkey -p com.ks.streamflix -c android.intent.category.LEANBACK_LAUNCHER 1   # open it (use the debug package if it has a suffix)
 ```
 
 ## Platform folders
 - Every KS-Suite app repo has the same top-level platform folders: `tv/google-tv/`, `desktop/mac/`, `desktop/windows/`, `mobile/android/` and `mobile/ios/`. All five exist in every app repo, whether or not the app supports that platform yet.
-- This app targets `desktop/mac`, `desktop/windows` (the server), `mobile/android` and `tv/google-tv` (one APK). `mobile/ios` is empty on purpose (a `.gitkeep` only). Do not add code for a platform that is not a target without the owner asking.
+- This app targets `desktop/mac`, `desktop/windows` (the server), `mobile/android` and `tv/google-tv` (separate phone and TV apps). `mobile/ios` is empty on purpose (a `.gitkeep` only). Do not add code for a platform that is not a target without the owner asking.
 - Three layers, narrowest first: a platform folder holds code for one platform of this app; `shared/` in the repository root holds code used by two or more platforms of this app, written once and never copied between platform folders; `ks-utility` holds generic code used by several apps. Here `shared/` holds the API models and the server core.
 - Never rename, merge or remove these folders, and never add another top-level platform folder; the layout is a suite-wide rule.
 

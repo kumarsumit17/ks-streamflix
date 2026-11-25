@@ -1,5 +1,6 @@
 # 2026-11-25
 
+* **Update**: Phone and Google TV are separate apps (v1.1.0): [Media server plan](media-server-plan.md) ("v1.1.0", decision 2), [Constraints](constraints.md), [Overview](overview.md), [App updates](app-updates.md).
 * **Creation**: [Per-platform optimization plan](plan-per-platform.md), a draft for the owner's approval: an audit of each build today and what changes per OS (KS-Suite rule "Each platform build is optimized for its OS").
 * **Update**: `ks-utility` moved from `v0.6.0` to `v0.9.0` (more languages, the translation tools; [ks-utility translation tools](https://github.com/kumarsumit17/ks-utility/blob/main/specs/translating.md)).
 

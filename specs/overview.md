@@ -13,7 +13,7 @@ A free, open-source home media server: it scans the owner's video folders and st
 | | |
 |---|---|
 | **Server** | macOS and Windows (`desktop/mac`, `desktop/windows`); core in `shared/server` |
-| **Clients** | Android phone and Google TV (one APK, stage 2), and browser pages served by the server |
+| **Clients** | Android phone and Google TV (separate apps since v1.1.0; one APK before), and browser pages served by the server |
 | **Server stack** | Kotlin/JVM 17, the JDK's HTTP server, SQLite (`sqlite-jdbc`), `kotlinx.serialization`; FFmpeg from stage 4, installed by the owner |
 | **Client stack** | Kotlin, Compose (Compose for TV on a TV), Media3/ExoPlayer |
 

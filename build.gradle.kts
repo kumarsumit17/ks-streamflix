@@ -61,6 +61,58 @@ val windowsNatives = listOf("Windows/x86_64", "Windows/aarch64")
 project(":desktop:mac") { pluginManager.withPlugin("org.jetbrains.kotlin.jvm") { trimSqlite(this@project, "runtimeClasspath", macNatives) } }
 project(":desktop:windows") { pluginManager.withPlugin("org.jetbrains.kotlin.jvm") { trimSqlite(this@project, "runtimeClasspath", windowsNatives) } }
 
+// ---- The two Android apps: phone (mobile/android) and Google TV (tv/google-tv) ---------------------
+// Separate APKs and AABs with the same package name, version and keystore, so each updates over
+// itself. Google Play needs a different versionCode for every bundle of one app: the TV app adds
+// TV_CODE_OFFSET, which also stops the phone build being installed over the TV build.
+val TV_CODE_OFFSET = 1_000_000_000
+
+subprojects {
+    plugins.withId("com.android.application") {
+        val tv = path == ":tv:google-tv"
+        val keystoreProperties = java.util.Properties().apply {
+            val file = rootProject.file("keystore.properties")
+            if (file.exists()) file.inputStream().use(::load)
+        }
+        // Blank counts as missing: GitHub Actions passes an unset secret as an empty string.
+        fun signingValue(env: String, key: String): String? =
+            providers.environmentVariable(env).orNull?.takeIf { it.isNotBlank() }
+                ?: keystoreProperties.getProperty(key)?.takeIf { it.isNotBlank() }
+        val catalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
+        extensions.configure<com.android.build.api.dsl.ApplicationExtension> {
+            compileSdk = catalog.findVersion("androidCompileSdk").get().requiredVersion.toInt()
+            defaultConfig {
+                applicationId = "com.ks.streamflix"
+                minSdk = catalog.findVersion("androidMinSdk").get().requiredVersion.toInt()
+                targetSdk = catalog.findVersion("androidTargetSdk").get().requiredVersion.toInt()
+                versionCode = (rootProject.extra["appVersionCode"] as Int) + if (tv) TV_CODE_OFFSET else 0
+                versionName = rootProject.extra["appVersionName"] as String
+            }
+            signingValue("SIGNING_STORE_FILE", "storeFile")?.let { storePath ->
+                signingConfigs.create("release") {
+                    storeFile = file(storePath)
+                    storePassword = signingValue("SIGNING_STORE_PASSWORD", "storePassword")
+                    keyAlias = signingValue("SIGNING_KEY_ALIAS", "keyAlias")
+                    keyPassword = signingValue("SIGNING_KEY_PASSWORD", "keyPassword")
+                }
+            }
+            buildTypes.getByName("release") {
+                // R8 keeps each APK within its size budget (quality-budgets.properties).
+                isMinifyEnabled = true
+                isShrinkResources = true
+                proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), rootProject.file("shared/client/proguard-rules.pro"))
+                signingConfig = signingConfigs.findByName("release")
+            }
+            compileOptions {
+                sourceCompatibility = JavaVersion.VERSION_17
+                targetCompatibility = JavaVersion.VERSION_17
+            }
+            androidResources { localeFilters += listOf("en", "hi") }
+        }
+        dependencies.add("implementation", project(":shared:client"))
+    }
+}
+
 // ---- Versioning (never hardcoded) ----------------------------------------------------------------
 // Priority: -PversionName / -PversionCode (the release workflow passes them from the tag), then the
 // latest git tag, then a development fallback. The modules read these two extras.
@@ -121,8 +173,8 @@ val checkSize = tasks.register("checkSize") {
     val budgetFile = layout.projectDirectory.file("quality-budgets.properties")
     val serverJars: FileCollection = serverRuntime
     val desktopJars: FileCollection = desktopRuntime
-    val apkDir = layout.projectDirectory.dir("mobile/android/build/outputs/apk/release")
-    dependsOn(":mobile:android:assembleRelease")
+    val apkDirs = listOf("mobile/android", "tv/google-tv").map { layout.projectDirectory.dir("$it/build/outputs/apk/release") }
+    dependsOn(":mobile:android:assembleRelease", ":tv:google-tv:assembleRelease")
     val overrides = listOf("size.server.maxMb", "size.desktop.maxMb", "size.apk.maxMb").associateWith { providers.gradleProperty("budget.$it") }
     inputs.file(budgetFile)
     inputs.files(serverJars, desktopJars)
@@ -138,9 +190,8 @@ val checkSize = tasks.register("checkSize") {
         // Every jar the macOS app runs (Compose's native code for this OS is inside a jar); the Java
         // runtime the installer bundles is measured when the installers exist (stage 6).
         check("size.desktop.maxMb", desktopJars.files.sumOf { it.length() })
-        // The release APK, shrunk by R8 (unsigned here; signing adds a few KB).
-        val apk = apkDir.asFile.listFiles().orEmpty().single { it.extension == "apk" }
-        check("size.apk.maxMb", apk.length())
+        // The release APKs of the phone and the Google TV app, shrunk by R8 (unsigned here; signing adds a few KB).
+        apkDirs.forEach { dir -> check("size.apk.maxMb", dir.asFile.listFiles().orEmpty().single { it.extension == "apk" }.length()) }
     }
 }
 // The macOS installer's size, after `:desktop:mac:packageReleaseDmg` (not part of `check`: packaging
@@ -164,7 +215,7 @@ tasks.register("checkInstallerSize") {
 tasks.register("check") {
     group = "verification"
     description = "Runs every module's checks and the size budget."
-    dependsOn(":shared:api:check", ":shared:server:check", ":shared:plugins:web:check", ":shared:plugins:watch-state:check", ":shared:plugins:discovery:check", ":shared:ffmpeg:check", ":shared:plugins:media-info:check", ":shared:plugins:subtitles:check", ":shared:plugins:local-metadata:check", ":shared:plugins:tmdb:check", ":shared:plugins:transcode:check", ":shared:plugins:users:check", ":shared:plugins:folder-watch:check", ":shared:client:check", ":shared:desktop:check", ":desktop:mac:check", ":desktop:windows:check")
+    dependsOn(":shared:api:check", ":shared:server:check", ":shared:plugins:web:check", ":shared:plugins:watch-state:check", ":shared:plugins:discovery:check", ":shared:ffmpeg:check", ":shared:plugins:media-info:check", ":shared:plugins:subtitles:check", ":shared:plugins:local-metadata:check", ":shared:plugins:tmdb:check", ":shared:plugins:transcode:check", ":shared:plugins:users:check", ":shared:plugins:folder-watch:check", ":shared:client:check", ":shared:desktop:check", ":mobile:android:check", ":tv:google-tv:check", ":desktop:mac:check", ":desktop:windows:check")
     dependsOn(checkSize)
 }
 

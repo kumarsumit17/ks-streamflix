@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Merged into the one APK: makes it a Google TV app without requiring TV hardware. -->
+<!-- The Google TV app: the same activity as the phone app (from :shared:client), with the TV
+     layout, the Leanback launcher entry and the banner. Google Play offers it to TVs only. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.software.leanback" android:required="true" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
     <application android:banner="@drawable/tv_banner">
-        <!-- The activity lives in :mobile:android; this entry is merged into it. -->
+        <!-- Read by isTvBuild() (shared/client): this build is the Google TV app. -->
+        <meta-data android:name="com.ks.streamflix.FORM_FACTOR" android:value="tv" />
         <activity android:name="com.ks.streamflix.android.MainActivity" android:exported="true" tools:ignore="MissingClass">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

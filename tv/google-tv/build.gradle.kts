@@ -1,15 +1,10 @@
-// Google TV: what only the TV needs (leanback launcher entry and banner, TV detection).
-// One APK serves phone and TV; this library is merged into it by :mobile:android.
+// The Google TV app: a separate APK and AAB (<app>-v<version>-google-tv.apk) with the TV layout,
+// the Leanback launcher entry and the banner. Everything it runs is in :shared:client (androidMain).
+// Package name, version (plus the TV offset) and signing: the root build.gradle.kts.
 plugins {
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.android.application)
 }
 
 android {
     namespace = "com.ks.streamflix.tv"
-    compileSdk = libs.versions.androidCompileSdk.get().toInt()
-    defaultConfig { minSdk = libs.versions.androidMinSdk.get().toInt() }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
 }

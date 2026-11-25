@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What the phone app (mobile/android) and the Google TV app (tv/google-tv) share: permissions,
+     the one activity, and the update FileProvider. Each app adds only its launcher entry. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The home server, found and reached on the local network; app updates from GitHub. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- App updates (ks-utility app-update rules); Android asks before every install. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <!-- KS JaiPlayer, for "Open in KS JaiPlayer" (Android 11+ package visibility). -->
+    <queries>
+        <package android:name="com.ks.jaiplayer" />
+    </queries>
+
+    <!-- A home server speaks plain HTTP on the local network. -->
+    <application
+        android:label="KS StreamFlix"
+        android:icon="@drawable/ic_launcher"
+        android:localeConfig="@xml/locales_config"
+        android:theme="@android:style/Theme.Material.NoActionBar"
+        android:usesCleartextTraffic="true"
+        android:supportsRtl="true">
+        <activity
+            android:name="com.ks.streamflix.android.MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode" />
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.updates"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/update_paths" />
+        </provider>
+    </application>
+</manifest>
