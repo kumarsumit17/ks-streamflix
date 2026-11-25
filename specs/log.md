@@ -1,3 +1,7 @@
+# 2026-11-25
+
+* **Update**: `ks-utility` moved from `v0.6.0` to `v0.9.0` (more languages, the translation tools; [ks-utility translation tools](https://github.com/kumarsumit17/ks-utility/blob/main/specs/translating.md)).
+
 # 2026-11-24
 
 * **Update**: [Media server plan](media-server-plan.md), "After v1.0.0": ks-utility v0.6.0 (Translator, `lang.mjs compose`, release workflow v0.6.0); v1.0.1 stays one APK with an update checker that asks for the Google TV file on a TV, the phone/TV split follows in the next release; real PGS burn-in test; `stream.mp4` for browsers without HLS; opt-in real-TMDB test. Gradle 9.6 delegate warnings removed from the build files.
