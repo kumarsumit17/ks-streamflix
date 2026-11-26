@@ -12,7 +12,7 @@ KS StreamFlix becomes a home media server in the spirit of [Jellyfin](https://je
 
 Jellyfin's [documentation](https://jellyfin.org/docs/) and download repository ([repo.jellyfin.org](https://repo.jellyfin.org/)) are a **feature reference only**. Jellyfin is GPL-2.0: no Jellyfin code, assets, text, API definitions or FFmpeg builds are copied or bundled. StreamFlix has its own design, its own API and its own words.
 
-> Status: approved by the owner on 2026-11-23, with one APK for Android and Google TV. Stages 1 to 6 are built (see [Stage notes](#stage-notes)); the first release waits for the owner's OK.
+> Status: approved by the owner on 2026-11-23, with one APK for Android and Google TV. Stages 1 to 6 are built (see [Stage notes](#stage-notes)); released from v1.0.0 on.
 
 ## What the server does
 
@@ -95,7 +95,7 @@ Only what each stage needs, each justified when it is added ([Dependencies](depe
 
 ## Roadmap
 
-Each stage is built and tested on `dev` and ends in something that works on its own. A release (dev → main → tag) happens only with the owner's OK.
+Each stage is built and tested on `dev` and ends in something that works on its own. Each change is released with the next tag once its tests pass, without waiting for approval ([Constraints](constraints.md), "Build, test, release, no waiting").
 
 1. **Server core (first version).** Gradle build (`shared/api`, `shared/server`, `shared/plugins/web`, `desktop/mac`, `desktop/windows`). The core: libraries, scanning and name parsing, SQLite, the owner account, the API (`/api/v1`: server info, sign-in, libraries, items, rescan, stream with byte ranges) and the plugin API. The first plugin, `web`: browser pages for setup, sign-in, browsing and playing. Run with `./gradlew :desktop:mac:run`. Tests: name parser, scanner on a temporary folder, byte ranges, password hashing, the API end to end against a server on a free port. Done when: on the Mac, a folder of films is added, scanned, listed in the browser and plays with seeking; English and Hindi pages pass the language-file check.
 2. **The four apps.** macOS and Windows: the desktop window around the server (start/stop, address, libraries, browse, play through JaiPlayer or the browser). Android and Google TV: find or type the server, sign in, rows per library and "continue watching", detail page, playback with ExoPlayer (direct play), watch progress back to the server, "Open in JaiPlayer" with the stream URL. Tested on the phone and TV emulators and Windows CI ([Testing](https://github.com/kumasumit/KS-Suite/blob/main/specs/testing.md)). The APK stays under 15 MB.

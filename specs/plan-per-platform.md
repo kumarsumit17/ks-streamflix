@@ -98,7 +98,7 @@ Dependencies: no new library on desktop (JNA is not used today; where a native c
 
 ## 4. Build order and testing
 
-Each step is one or more commits on `dev`, tested on its platform before the next; nothing is pushed or tagged without the owner's OK, and every release is tried on the emulators first (owner does real-device checks).
+Each step is one or more commits on `dev`, tested on its platform before the next; each step is released with the next tag once its tests pass (no approval asked first), and every release is tried on the emulators first (owner does real-device checks).
 
 | Step | What | Where | Tested on |
 |---|---|---|---|

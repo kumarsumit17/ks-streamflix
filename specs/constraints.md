@@ -27,3 +27,4 @@ status: draft
 - An "Open in JaiPlayer" option sends an explicit `ACTION_VIEW` intent to `com.ks.jaiplayer`. It falls back to the built-in ExoPlayer when JaiPlayer isn't installed.
 
 These rules are also in `CLAUDE.md`, where they are loaded into every AI-assisted session; change both together.
+- **Build, test, release, no waiting** (owner's suite rule, 2026-11-26, KS-Suite [release cycle](https://github.com/kumasumit/KS-Suite/blob/dev/specs/release-cycle.md)): every feature or fix is built, tested on the emulators or CI, pushed to `dev` and released with the next tag (dev → main fast-forward → tag), with no approval asked before the tag. A feature raises MINOR, a fix raises PATCH. Never commit or release while a test fails. The owner's real-device checks come later, never block a release, and what they find goes into the next version.
