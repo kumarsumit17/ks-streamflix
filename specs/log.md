@@ -1,5 +1,6 @@
 # 2026-11-26
 
+* **Update**: Versioning per platform (v1.2.0, the bridge release): `ks-utility` moved from `v0.9.0` to `v0.10.0`; `release.yml` takes platform tags (`android-`, `google-tv-`, `mac-`, `windows-vX.Y.Z`) and a rehearsal `platform`; each build's version is the higher of its own and the plain tag; the updaters read the release list ([App updates](app-updates.md), [Per-platform optimization plan](plan-per-platform.md)).
 * **Update**: The repository moved to the GitHub account `kumasumit`: links, the release workflow's ks-utility reference, the submodule URL and the updater's repository changed; [App updates](app-updates.md) says copies up to v1.1.0 update once by hand.
 
 # 2026-11-25

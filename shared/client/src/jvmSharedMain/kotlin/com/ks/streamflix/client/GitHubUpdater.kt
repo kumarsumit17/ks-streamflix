@@ -54,7 +54,7 @@ class GitHubUpdater(
     private val platform: UpdatePlatform,
     private val settings: SettingsStore,
     private val installer: UpdateInstaller,
-    private val fetch: (GitHubRepo) -> String = ::fetchLatest,
+    private val fetch: (GitHubRepo) -> String = ::fetchReleases,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
 ) : AppUpdater {
     private val repo = requireNotNull(GitHubRepo.parse(repo)) { "Not owner/name: $repo" }
@@ -106,7 +106,7 @@ class GitHubUpdater(
             return
         }
         settings.putString(LAST_CHECK, System.currentTimeMillis().toString())
-        when (val outcome = AppUpdate.evaluate(body, repo, currentVersion, platform)) {
+        when (val outcome = AppUpdate.evaluateReleases(body, repo, currentVersion, platform)) {
             null -> if (!silent) _status.value = UpdateStatus.Failed(UpdateFailure.Unreadable)
             is UpdateOutcome.UpToDate -> if (!silent) _status.value = UpdateStatus.UpToDate(outcome.version)
             is UpdateOutcome.NoInstaller -> if (!silent) _status.value = UpdateStatus.NoInstaller(outcome.version)
@@ -161,9 +161,12 @@ class GitHubUpdater(
         private const val LAST_CHECK = "update.lastCheck"
         private const val MAX_RESPONSE = 1 shl 20
 
-        /** The latest release's JSON, with ks-utility's headers only. */
-        fun fetchLatest(repo: GitHubRepo): String {
-            val c = URI(repo.latestReleaseApiUrl).toURL().openConnection() as HttpURLConnection
+        /**
+         * The release list's JSON, with ks-utility's headers only. A platform release
+         * (`android-v…`) is not marked latest, so the list is read, not `releases/latest`.
+         */
+        fun fetchReleases(repo: GitHubRepo): String {
+            val c = URI(repo.releasesApiUrl).toURL().openConnection() as HttpURLConnection
             try {
                 c.connectTimeout = 15_000
                 c.readTimeout = 15_000

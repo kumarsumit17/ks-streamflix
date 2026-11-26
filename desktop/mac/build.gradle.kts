@@ -38,13 +38,13 @@ dependencies {
 }
 
 // jpackage needs MAJOR >= 1; untagged development builds package as 1.0.0.
-val versionName = (rootProject.extra["appVersionName"] as String).substringBefore('-')
+val versionName = (rootProject.extra["appVersionName.mac"] as String).substringBefore('-')
 val installerVersion = versionName.takeIf { (it.substringBefore('.').toIntOrNull() ?: 0) >= 1 } ?: "1.0.0"
 
 compose.desktop {
     application {
         mainClass = "com.ks.streamflix.mac.MainKt"
-        jvmArgs += listOf("-Dstreamflix.version=${rootProject.extra["appVersionName"]}", "-Dapple.awt.application.appearance=system")
+        jvmArgs += listOf("-Dstreamflix.version=${rootProject.extra["appVersionName.mac"]}", "-Dapple.awt.application.appearance=system")
         nativeDistributions {
             targetFormats(TargetFormat.Dmg)
             packageName = "KS StreamFlix"

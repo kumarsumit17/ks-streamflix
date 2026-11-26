@@ -7,16 +7,24 @@ name: Release
 #   Tag push vMAJOR.MINOR.PATCH   Builds and verifies the signed APKs and AABs (phone and Google TV),
 #                                 the macOS .dmg and the Windows .msi, then publishes the GitHub
 #                                 Release (full release, latest).
+#   Tag push <platform>-vX.Y.Z    The same for one platform (android, google-tv, mac, windows); its
+#                                 release is not marked latest (each app reads the release list).
 #   Manual run (rehearsal)        Builds and checks everything for the version given; never publishes.
 
 on:
   push:
-    tags: ["v*.*.*"]
+    # vX.Y.Z releases every platform; android-, google-tv-, mac-, windows-vX.Y.Z only that one.
+    tags: ["v*.*.*", "*-v*.*.*"]
   workflow_dispatch:
     inputs:
       version:
         description: "Version to rehearse, X.Y.Z. Builds everything, releases nothing."
         required: true
+        type: string
+      platform:
+        description: "Platform to rehearse: all, android, google-tv, mac or windows."
+        required: false
+        default: "all"
         type: string
 
 permissions:
@@ -28,13 +36,14 @@ concurrency:
 
 jobs:
   release:
-    uses: kumasumit/ks-utility/.github/workflows/kotlin-app-release.yml@v0.6.0
+    uses: kumasumit/ks-utility/.github/workflows/kotlin-app-release.yml@v0.10.0
     permissions:
       contents: write
       id-token: write
       attestations: write
     with:
       version: ${{ inputs.version }}
+      platform: ${{ inputs.platform || 'all' }}
       app-name: ks-streamflix
       display-name: KS StreamFlix
       android-module: ":mobile:android"

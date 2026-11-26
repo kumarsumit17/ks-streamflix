@@ -7,7 +7,7 @@ tags: [plan, platforms, macos, windows, android, google-tv, performance, accessi
 
 # Per-platform optimization plan
 
-**Status: approved by the owner on 2026-11-25** (decisions in section 3). Step 1, the phone/TV split, is built (9c1fdda, for v1.1.0). Built steps are marked in section 4; step 2 (versioning per platform) comes next.
+**Status: approved by the owner on 2026-11-25** (decisions in section 3). Step 1, the phone/TV split, is built (9c1fdda, for v1.1.0). Built steps are marked in section 4; step 2 (versioning per platform) is built and ships in v1.2.0, the bridge release.
 
 Owner's rule for every KS-Suite app (2026-11-25, KS-Suite [platform folders](https://github.com/kumasumit/KS-Suite/blob/dev/specs/platform-folders.md), "Each platform build is optimized for its OS"): each build is its own app, made the best it can be on its OS, with as few dependencies as possible and nothing the user has to install separately. Modelled on [ks-jaiplayer's plan](https://github.com/kumasumit/ks-jaiplayer/blob/dev/specs/plan-per-platform.md).
 
@@ -103,7 +103,7 @@ Each step is one or more commits on `dev`, tested on its platform before the nex
 | Step | What | Where | Tested on |
 |---|---|---|---|
 | 1 | **Built** (9c1fdda, released in v1.1.0): phone/TV split | `tv/google-tv`, `mobile/android`, release workflow `tv-module` | Phone and TV emulators, release rehearsal |
-| 2 | Versioning per platform: ks-utility v0.10.0 (release workflow `platform` input, `AppUpdate.evaluateReleases` in the phone, TV and desktop updaters), then v1.2.0 as the plain bridge release | `ks-utility` pin, `.github/workflows/release.yml`, `shared/client` updaters | Unit tests of the update choice; a rehearsal; the emulators' update check finds v1.2.0 |
+| 2 | **Built** (for v1.2.0): versioning per platform: ks-utility v0.10.0 (release workflow `platform` input, `AppUpdate.evaluateReleases` in the phone, TV and desktop updaters), then v1.2.0 as the plain bridge release | `ks-utility` pin, `.github/workflows/release.yml`, `shared/client` updaters | Unit tests of the update choice; a rehearsal; the emulators' update check finds v1.2.0 |
 | 3 | Desktop always-on server: window close, menu bar / tray, start at login, keep awake | `shared/desktop`, `desktop/mac`, `desktop/windows` | This Mac; Windows CI (install, start, close window, server still answers) |
 | 4 | Bundled FFmpeg | packaging in `desktop/mac`, `desktop/windows`; `shared/ffmpeg` locate order | Transcode tests against the bundled binary on CI (all three OSes); dmg/msi size check |
 | 5 | Android media stack and session, PiP, keep screen on, touch | `shared/client/src/androidMain`, `mobile/android` | Phone emulator |

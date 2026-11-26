@@ -38,13 +38,13 @@ dependencies {
 }
 
 // The MSI version needs MAJOR >= 1; untagged development builds package as 1.0.0.
-val versionName = (rootProject.extra["appVersionName"] as String).substringBefore('-')
+val versionName = (rootProject.extra["appVersionName.windows"] as String).substringBefore('-')
 val installerVersion = versionName.takeIf { (it.substringBefore('.').toIntOrNull() ?: 0) >= 1 } ?: "1.0.0"
 
 compose.desktop {
     application {
         mainClass = "com.ks.streamflix.windows.MainKt"
-        jvmArgs += listOf("-Dstreamflix.version=${rootProject.extra["appVersionName"]}")
+        jvmArgs += listOf("-Dstreamflix.version=${rootProject.extra["appVersionName.windows"]}")
         nativeDistributions {
             targetFormats(TargetFormat.Msi)
             packageName = "KS StreamFlix"

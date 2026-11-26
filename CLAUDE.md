@@ -59,6 +59,7 @@ A free, open-source home media server with its own apps: the server on macOS and
 ```
 The server listens on port 8742 (`--port` to change) and keeps its data in `~/Library/Application Support/KS StreamFlix` (macOS) or `%APPDATA%\KS StreamFlix` (Windows); `--data <dir>` to change. Open `http://localhost:8742/` for the browser pages.
 
+Releases: a plain `vX.Y.Z` tag releases all four builds; `android-vX.Y.Z`, `google-tv-vX.Y.Z`, `mac-vX.Y.Z` or `windows-vX.Y.Z` releases only that build (from after v1.2.0, the bridge release), and a rehearsal can pick one with `-f platform=…`. A build's version is the higher of its own latest tag and the latest plain tag (KS-Suite versioning rule).
 Compose's packaging refuses Homebrew's JDK unless `-Pcompose.desktop.packaging.checkJdkVendor=false` is passed (only on the command line; CI uses Temurin). The `.msi` builds only on Windows: CI (`.github/workflows/ci.yml`) builds, installs, starts and uninstalls it. Before every release the release build is tried on the phone and Google TV emulators and the Mac (KS-Suite release-cycle step 1); the owner does the real-device checks. `STREAMFLIX_TMDB_KEY=… ./gradlew :shared:plugins:tmdb:test` runs the real-TMDB test. FFmpeg (Homebrew's on the owner's Mac) is found in `STREAMFLIX_FFMPEG_DIR`, `PATH` or the usual places; tests that need it skip without it.
 
 Emulators (from the KS-Suite workspace; suite spec `specs/testing.md`): `../scripts/emulators.sh create` once, then `../scripts/emulators.sh start tv` boots the Android TV AVD (`ks-tv-36`, API 36). Then:
