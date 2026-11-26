@@ -15,6 +15,10 @@ class WindowsSystemTest {
         assertEquals("\"$launcher\" --background", WindowsSystem.runCommand(launcher))
     }
 
+    @Test fun quotesInsideAnArgumentAreEscapedForReg() {
+        assertEquals("""\"$launcher\" --background""", WindowsSystem.commandLineArg(WindowsSystem.runCommand(launcher)))
+    }
+
     @Test fun theKeepAwakeScriptIsEncodedForPowerShell() {
         val script = WindowsSystem.keepAwakeScript(4242)
         assertTrue("SetThreadExecutionState([uint32]2147483649)" in script, "ES_CONTINUOUS | ES_SYSTEM_REQUIRED")
@@ -25,11 +29,16 @@ class WindowsSystemTest {
     /** Real registry, under a value name of its own (removed again). Windows CI runs it. */
     @Test fun startAtLoginWritesAndRemovesTheRunValue() {
         if (!isWindows) return
-        val system = WindowsSystem(launcher, valueName = "KS StreamFlix test ${UUID.randomUUID()}")
+        val name = "KS StreamFlix test ${UUID.randomUUID()}"
+        val system = WindowsSystem(launcher, valueName = name)
         assertFalse(system.isStartAtLogin())
         system.setStartAtLogin(true)
         try {
             assertTrue(system.isStartAtLogin())
+            // The stored command is exactly the quoted launcher and the flag.
+            val query = ProcessBuilder("reg.exe", "query", WindowsSystem.RUN_KEY, "/v", name).redirectErrorStream(true).start()
+            val out = query.inputStream.readAllBytes().decodeToString()
+            assertTrue(out.lines().any { it.trim().endsWith("REG_SZ    \"$launcher\" --background") }, out)
         } finally {
             system.setStartAtLogin(false)
         }

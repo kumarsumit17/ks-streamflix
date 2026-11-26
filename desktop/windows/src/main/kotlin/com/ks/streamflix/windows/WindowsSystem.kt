@@ -27,7 +27,7 @@ class WindowsSystem(
     override fun setStartAtLogin(on: Boolean) {
         if (on) {
             val l = launcher ?: return
-            check(reg("add", RUN_KEY, "/v", valueName, "/t", "REG_SZ", "/d", runCommand(l), "/f") == 0) { "reg add failed" }
+            check(reg("add", RUN_KEY, "/v", valueName, "/t", "REG_SZ", "/d", commandLineArg(runCommand(l)), "/f") == 0) { "reg add failed" }
         } else if (isStartAtLogin()) {
             check(reg("delete", RUN_KEY, "/v", valueName, "/f") == 0) { "reg delete failed" }
         }
@@ -56,6 +56,13 @@ class WindowsSystem(
     companion object {
         const val RUN_KEY = """HKCU\Software\Microsoft\Windows\CurrentVersion\Run"""
         const val VALUE_NAME = "KS StreamFlix"
+
+        /**
+         * One argument for a Windows program's command line. Java wraps an argument with spaces in
+         * quotes but leaves quotes inside it as they are, so reg.exe would end the argument at the
+         * first one; Windows programs read `\"` as a quote inside an argument.
+         */
+        fun commandLineArg(s: String) = s.replace("\"", "\\\"")
 
         /** The Run value: the launcher, quoted (its folder has spaces), started without its window. */
         fun runCommand(launcher: String) = "\"$launcher\" ${DesktopSystem.BACKGROUND_FLAG}"
