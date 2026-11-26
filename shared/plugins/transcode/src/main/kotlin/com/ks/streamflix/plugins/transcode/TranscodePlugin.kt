@@ -136,7 +136,7 @@ class TranscodePlugin(
                 session.lastUsed = System.currentTimeMillis()
                 call.response.header(HttpHeaders.CacheControl, "no-cache")
                 val name = call.parameters["file"].orEmpty()
-                when {
+                context.core.streaming.serving { when {
                     name == "index.m3u8" -> call.respondText(session.playlist, ContentType("application", "vnd.apple.mpegurl"))
                     name == "init.mp4" -> {
                         val init = session.dir.resolve(name)
@@ -168,7 +168,7 @@ class TranscodePlugin(
                         call.respond(LocalPathContent(session.dir.resolve(name), ContentType("video", "iso.segment")))
                     }
                     else -> throw DomainException("common.error.notFound", DomainException.Kind.NOT_FOUND)
-                }
+                } }
             }
         }
     }

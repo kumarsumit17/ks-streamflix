@@ -38,6 +38,9 @@ class Core(
     /** What the metadata plugins know about [item] (merged), for plugins such as `users` (age ratings). */
     suspend fun itemDetails(item: com.ks.streamflix.api.Item): com.ks.streamflix.api.ItemDetails = details.details(item, libraries.fileOf(item.id))
 
+    /** Whether a stream is being watched; plugins that serve video wrap their answers in [StreamActivity.serving]. */
+    val streaming = com.ks.streamflix.server.domain.StreamActivity()
+
     /** Settings pages that plugins add for the owner: (language-file key of the label, path). The `web` plugin links them. */
     val adminPages: MutableList<Pair<String, String>> = java.util.concurrent.CopyOnWriteArrayList()
 }

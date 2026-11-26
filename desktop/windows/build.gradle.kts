@@ -35,7 +35,10 @@ dependencies {
     implementation(project(":shared:plugins:users"))
     implementation(project(":shared:plugins:folder-watch"))
     runtimeOnly(libs.slf4j.simple)
+    testImplementation(kotlin("test"))
 }
+
+tasks.test { useJUnitPlatform() }
 
 // The MSI version needs MAJOR >= 1; untagged development builds package as 1.0.0.
 val versionName = (rootProject.extra["appVersionName.windows"] as String).substringBefore('-')

@@ -44,6 +44,8 @@ class StreamflixServer(private val config: ServerConfig, plugins: List<ServerPlu
     val strings: Strings
     private val engine: EmbeddedServer<*, *>
     private val contexts: List<PluginContext>
+    /** Whether a stream is being watched (the desktop app keeps the computer awake meanwhile). */
+    val streaming: com.ks.streamflix.server.domain.StreamActivity
     /** The server's name, shown by clients. */
     val name: String get() = config.name
 
@@ -56,6 +58,7 @@ class StreamflixServer(private val config: ServerConfig, plugins: List<ServerPlu
         libraries = LibraryService(store)
         strings = Strings(listOf("common", "core") + ids)
         val core = Core(auth, libraries, StreamKeys(config.dataDir.resolve("stream-key")), DetailsService(config.dataDir.resolve("cache/images"))) { ServerInfo(config.name, config.version, setupNeeded = auth.setupNeeded()) }
+        streaming = core.streaming
         contexts = plugins.map { plugin ->
             PluginContext(core, strings, config.dataDir.resolve("plugins").resolve(plugin.id)).also(plugin::install)
         }

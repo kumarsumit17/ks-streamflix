@@ -1,5 +1,6 @@
 # 2026-11-26
 
+* **Update**: The desktop server runs until Quit (v1.3.0, [Per-platform optimization plan](plan-per-platform.md) step 3; [Constraints](constraints.md)): menu-bar / notification-area item, start at login on by default, the computer stays awake while someone watches.
 * **Update**: `ks-utility` moved from `v0.10.0` to `v0.13.2` (owner-approved Hindi terms); the TMDB page's Hindi text says शीर्षक instead of टाइटल.
 * **Update**: [Constraints](constraints.md): build, test, release, no waiting (suite rule): tested changes ship with the next tag, no approval before tagging; the plans now say the same.
 * **Update**: Versioning per platform (v1.2.0, the bridge release): `ks-utility` moved from `v0.9.0` to `v0.10.0`; `release.yml` takes platform tags (`android-`, `google-tv-`, `mac-`, `windows-vX.Y.Z`) and a rehearsal `platform`; each build's version is the higher of its own and the plain tag; the updaters read the release list ([App updates](app-updates.md), [Per-platform optimization plan](plan-per-platform.md)).

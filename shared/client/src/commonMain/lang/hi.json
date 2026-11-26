@@ -35,6 +35,16 @@
   "client.desktop.addresses": "दूसरे डिवाइस यहां कनेक्ट करें: {addresses}",
   "client.desktop.openBrowser": "ब्राउज़र में खोलें",
   "client.desktop.serverFailed": "सर्वर शुरू नहीं हो सका: {reason}",
+  "client.desktop.section": "इस कंप्यूटर पर",
+  "client.desktop.startAtLogin": "लॉगिन करते ही शुरू करें",
+  "client.desktop.startAtLogin.hint": "इस कंप्यूटर पर लॉगिन करते ही सर्वर बिना विंडो के शुरू हो जाता है, ताकि फ़ोन और टीवी को आपकी लाइब्रेरी हमेशा मिले।",
+  "client.desktop.startAtLogin.unavailable": "लॉगिन पर शुरू होना इंस्टॉल किए गए ऐप में ही काम करता है।",
+  "client.desktop.keepAwake.hint": "जब कोई देख रहा हो, तब यह कंप्यूटर स्लीप में नहीं जाता।",
+  "client.desktop.tray.tooltip": "KS StreamFlix सर्वर",
+  "client.desktop.tray.open": "KS StreamFlix खोलें",
+  "client.desktop.tray.quit": "बंद करें (सर्वर रुक जाएगा)",
+  "client.desktop.tray.running": "KS StreamFlix चलता रहेगा",
+  "client.desktop.tray.runningText": "सर्वर आपकी लाइब्रेरी देता रहेगा। इसे यहां से बंद करें।",
   "client.media.audio": {
     "one": "{count} ऑडियो ट्रैक",
     "other": "{count} ऑडियो ट्रैक"

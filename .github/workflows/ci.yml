@@ -71,7 +71,7 @@ jobs:
         with:
           node-version: "24"
       - name: Server and app tests, and the .msi
-        run: ./gradlew --no-daemon :shared:server:test :shared:client:desktopTest :shared:plugins:folder-watch:test :desktop:windows:packageReleaseMsi
+        run: ./gradlew --no-daemon :shared:server:test :shared:client:desktopTest :shared:plugins:folder-watch:test :desktop:windows:test :desktop:windows:packageReleaseMsi
       - name: Install, start, stop and uninstall
         shell: pwsh
         run: |
@@ -87,6 +87,19 @@ jobs:
           }
           Stop-Process -Id $app.Id -Force
           if (-not $ok) { Write-Error "The installed server did not answer"; exit 1 }
+          # The whole app as a start at login runs it: tray icon, no window. It turns start at login on.
+          $app = Start-Process $exe.FullName -ArgumentList "--background --bind 127.0.0.1 --port 8743 --data `"$env:RUNNER_TEMP\sfdata2`"" -PassThru
+          $ok = $false
+          for ($i = 0; $i -lt 90 -and -not $ok; $i++) {
+            Start-Sleep -Seconds 1
+            try { $r = Invoke-RestMethod http://127.0.0.1:8743/api/v1/info; $ok = $r.setupNeeded } catch {}
+          }
+          reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "KS StreamFlix"
+          $login = $LASTEXITCODE -eq 0
+          Stop-Process -Id $app.Id -Force
+          reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "KS StreamFlix" /f
+          if (-not $ok) { Write-Error "The app in the background did not answer"; exit 1 }
+          if (-not $login) { Write-Error "Start at login was not turned on"; exit 1 }
           $p = Start-Process msiexec -ArgumentList "/x `"$($msi.FullName)`" /qn" -Wait -PassThru
           if ($p.ExitCode -ne 0) { exit 1 }
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -111,7 +124,7 @@ jobs:
         with:
           node-version: "24"
       - name: The .dmg and its size budget
-        run: ./gradlew --no-daemon :desktop:mac:packageReleaseDmg checkInstallerSize
+        run: ./gradlew --no-daemon :desktop:mac:test :desktop:mac:packageReleaseDmg checkInstallerSize
       - name: Start the packaged server
         run: |
           app="$(find desktop/mac/build/compose/binaries -maxdepth 4 -name '*.app' | head -1)"
@@ -120,6 +133,14 @@ jobs:
           for i in $(seq 1 60); do curl -sf http://127.0.0.1:8742/api/v1/info && break; sleep 1; done
           curl -sf http://127.0.0.1:8742/api/v1/info | grep -q '"setupNeeded":true'
           kill $pid
+          # The whole app as a start at login runs it: menu-bar item, no window. It turns start at login on.
+          "$app/Contents/MacOS/KS StreamFlix" --background --bind 127.0.0.1 --port 8743 --data "$RUNNER_TEMP/sfdata2" &
+          pid=$!
+          for i in $(seq 1 90); do curl -sf http://127.0.0.1:8743/api/v1/info && break; sleep 1; done
+          curl -sf http://127.0.0.1:8743/api/v1/info | grep -q '"setupNeeded":true'
+          plutil -lint ~/Library/LaunchAgents/com.ks.streamflix.plist
+          kill $pid
+          rm -f ~/Library/LaunchAgents/com.ks.streamflix.plist
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: macos-dmg-unsigned

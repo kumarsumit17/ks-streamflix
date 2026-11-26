@@ -35,6 +35,16 @@
   "client.desktop.addresses": "Other devices connect to: {addresses}",
   "client.desktop.openBrowser": "Open in browser",
   "client.desktop.serverFailed": "The server could not start: {reason}",
+  "client.desktop.section": "On this computer",
+  "client.desktop.startAtLogin": "Start when I log in",
+  "client.desktop.startAtLogin.hint": "The server starts without a window when you log in to this computer, so phones and TVs always find your library.",
+  "client.desktop.startAtLogin.unavailable": "Starting at login works in the installed app.",
+  "client.desktop.keepAwake.hint": "While someone is watching, this computer does not go to sleep.",
+  "client.desktop.tray.tooltip": "KS StreamFlix server",
+  "client.desktop.tray.open": "Open KS StreamFlix",
+  "client.desktop.tray.quit": "Quit (stops the server)",
+  "client.desktop.tray.running": "KS StreamFlix keeps running",
+  "client.desktop.tray.runningText": "The server keeps serving your library. Quit it from here.",
   "client.media.audio": {
     "one": "{count} audio track",
     "other": "{count} audio tracks"

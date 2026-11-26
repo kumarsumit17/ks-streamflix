@@ -31,4 +31,5 @@ fun main(args: Array<String>) = runDesktopApp(
         WatchStateClient(), MetadataClient(), MediaInfoClient(),
         JaiPlayerPlugin(DesktopJaiPlayer::isInstalled) { url, _ -> DesktopJaiPlayer.open(url) },
     ),
+    system = MacSystem(),
 )

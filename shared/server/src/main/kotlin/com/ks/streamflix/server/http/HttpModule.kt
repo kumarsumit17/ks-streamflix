@@ -195,7 +195,7 @@ private fun Route.apiRoutes(core: Core) {
             val file = core.libraries.fileOf(id)
             call.response.header(HttpHeaders.CacheControl, "private, max-age=3600")
             // Byte ranges (seeking) come from the PartialContent plugin.
-            call.respond(LocalPathContent(file, contentTypeOf(file.fileName.toString())))
+            core.streaming.serving { call.respond(LocalPathContent(file, contentTypeOf(file.fileName.toString()))) }
         }
     }
 }
