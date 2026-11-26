@@ -20,6 +20,7 @@ The owner's rule (2026-11-23): stability, app size and speed are variables for a
 | `speed.server.startMs` | From start to the first answer of `/api/v1/info` | server tests (in-process); the cold start of the installed app was 752 ms on the owner's Mac on 2026-11-23, checked by hand |
 | `speed.scan.filesPerSecond` | Scanning a library of new files, at least | server tests |
 | `speed.api.p95Ms` | The 95th percentile of item-list and first-byte stream answers on a local server, measured in five rounds of 50 pairs; the median round counts, so one pause on a shared CI machine does not fail it | server tests |
+| `speed.api.p95Ms.windows` | The same p95 on Windows: 150 ms, because GitHub's shared Windows machines measure 105–128 ms where the Mac measures about 15 ms (owner's decision, 2026-11-26) | server tests on Windows |
 | `speed.transcode.firstSegmentMs` | From the playback request to the first HLS segment, for a remux and for a transcode (a 720p test film) | transcode plugin tests, with FFmpeg installed |
 | `speed.folderWatch.detectMs` | From a new file in a library folder to the item in the library | folder-watch plugin tests |
 | `stability.concurrentStreams` | Simultaneous range requests that must all succeed | server tests |

@@ -68,8 +68,10 @@ class QualityBudgetTest {
             times[(times.size * 95) / 100 - 1]
         }
         val p95 = rounds.sorted()[rounds.size / 2]
-        println("budget speed.api.p95Ms: $p95 ms (rounds: ${rounds.joinToString()})")
-        assertTrue(p95 <= Budget.long("speed.api.p95Ms"), "p95 was $p95 ms")
+        // Windows has its own budget (quality-budgets.properties); every other system uses the common one.
+        val key = if (System.getProperty("os.name").startsWith("Windows")) "speed.api.p95Ms.windows" else "speed.api.p95Ms"
+        println("budget $key: $p95 ms (rounds: ${rounds.joinToString()})")
+        assertTrue(p95 <= Budget.long(key), "p95 was $p95 ms (budget $key ${Budget.long(key)} ms, rounds: ${rounds.joinToString()})")
     }
 
     @Test fun concurrentStreams() = TestServer().use { s ->
