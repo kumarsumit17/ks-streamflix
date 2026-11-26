@@ -1,3 +1,7 @@
+# 2026-11-26
+
+* **Update**: The repository moved to the GitHub account `kumasumit`: links, the release workflow's ks-utility reference, the submodule URL and the updater's repository changed; [App updates](app-updates.md) says copies up to v1.1.0 update once by hand.
+
 # 2026-11-25
 
 * **Update**: [Per-platform optimization plan](plan-per-platform.md): versioning per platform is back (owner, suite rule "Platform tags"); v1.2.0 is the bridge release. [Quality budgets](quality-budgets.md): the API p95 is measured in five rounds and the median round counts.
@@ -5,7 +9,7 @@
 * **Update**: [Per-platform optimization plan](plan-per-platform.md) approved by the owner: one version for all builds, FFmpeg bundled, start at login on by default, Continue watching on the Google TV home screen, `media3-session`; step 1 (the phone/TV split) built.
 * **Update**: Phone and Google TV are separate apps (v1.1.0): [Media server plan](media-server-plan.md) ("v1.1.0", decision 2), [Constraints](constraints.md), [Overview](overview.md), [App updates](app-updates.md).
 * **Creation**: [Per-platform optimization plan](plan-per-platform.md), a draft for the owner's approval: an audit of each build today and what changes per OS (KS-Suite rule "Each platform build is optimized for its OS").
-* **Update**: `ks-utility` moved from `v0.6.0` to `v0.9.0` (more languages, the translation tools; [ks-utility translation tools](https://github.com/kumarsumit17/ks-utility/blob/main/specs/translating.md)).
+* **Update**: `ks-utility` moved from `v0.6.0` to `v0.9.0` (more languages, the translation tools; [ks-utility translation tools](https://github.com/kumasumit/ks-utility/blob/main/specs/translating.md)).
 
 # 2026-11-24
 
@@ -28,7 +32,7 @@
 * **Update**: [Media server plan](media-server-plan.md): a bare-minimum core in every app, every other feature a compiled-in plugin (owner's decision), with the plugin list and stages.
 * **Update**: [Overview](overview.md) and [Constraints](constraints.md) follow the approved plan: server on macOS and Windows, one APK for Android and Google TV, server constraints added.
 * **Creation**: [Media server plan](media-server-plan.md) added and approved by the owner (one APK for Android and Google TV): StreamFlix as a home media server with four apps (macOS and Windows: server with a desktop window; Android and Google TV: clients) and browser pages; Jellyfin's docs and repo.jellyfin.org as a feature reference only.
-* **Update**: Release: `.github/workflows/release.yml` now calls ks-utility's shared release workflow (`kotlin-app-release.yml@v0.4.0`, [spec](https://github.com/kumarsumit17/ks-utility/blob/main/specs/release-workflow.md)): one workflow for every Kotlin app, with a rehearsal input, pinned actions, signature checks, build-provenance attestations and `gh` publishing.
+* **Update**: Release: `.github/workflows/release.yml` now calls ks-utility's shared release workflow (`kotlin-app-release.yml@v0.4.0`, [spec](https://github.com/kumasumit/ks-utility/blob/main/specs/release-workflow.md)): one workflow for every Kotlin app, with a rehearsal input, pinned actions, signature checks, build-provenance attestations and `gh` publishing.
 * **Creation**: [App updates](app-updates.md) added: the suite's shared app-update behaviour (daily GitHub check with a switch, Check for updates, download, SHA-256 and signer checks, PackageInstaller) with ks-utility `v0.3.0`; not built yet.
 * **Update**: `ks-utility` moved to `v0.3.0`.
 

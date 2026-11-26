@@ -15,9 +15,9 @@ import kotlin.test.assertTrue
 
 class GitHubUpdaterTest {
     private val sha = "a".repeat(64)
-    private fun release(version: String) = """{"tag_name":"v$version","draft":false,"prerelease":false,"html_url":"https://github.com/kumarsumit17/ks-streamflix/releases/tag/v$version",
-        "assets":[{"name":"ks-streamflix-v$version.apk","size":1900000,"browser_download_url":"https://github.com/kumarsumit17/ks-streamflix/releases/download/v$version/ks-streamflix-v$version.apk","digest":"sha256:$sha"},
-                  {"name":"ks-streamflix-v$version-macos-arm64.dmg","size":76000000,"browser_download_url":"https://github.com/kumarsumit17/ks-streamflix/releases/download/v$version/ks-streamflix-v$version-macos-arm64.dmg","digest":"sha256:$sha"}]}"""
+    private fun release(version: String) = """{"tag_name":"v$version","draft":false,"prerelease":false,"html_url":"https://github.com/kumasumit/ks-streamflix/releases/tag/v$version",
+        "assets":[{"name":"ks-streamflix-v$version.apk","size":1900000,"browser_download_url":"https://github.com/kumasumit/ks-streamflix/releases/download/v$version/ks-streamflix-v$version.apk","digest":"sha256:$sha"},
+                  {"name":"ks-streamflix-v$version-macos-arm64.dmg","size":76000000,"browser_download_url":"https://github.com/kumasumit/ks-streamflix/releases/download/v$version/ks-streamflix-v$version-macos-arm64.dmg","digest":"sha256:$sha"}]}"""
 
     private val installer = object : UpdateInstaller {
         override fun downloadDir(): File = Files.createTempDirectory("upd").toFile()

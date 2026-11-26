@@ -156,7 +156,7 @@ class GitHubUpdater(
     override fun openInstallPermissionSettings() = installer.openPermissionSettings()
 
     companion object {
-        const val REPO = "kumarsumit17/ks-streamflix"
+        const val REPO = "kumasumit/ks-streamflix"
         private const val AUTO = "update.auto"
         private const val LAST_CHECK = "update.lastCheck"
         private const val MAX_RESPONSE = 1 shl 20

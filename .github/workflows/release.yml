@@ -1,7 +1,7 @@
 name: Release
 
 # The release workflow is shared by every KS-Suite Kotlin app and lives in ks-utility
-# (https://github.com/kumarsumit17/ks-utility/blob/main/specs/release-workflow.md).
+# (https://github.com/kumasumit/ks-utility/blob/main/specs/release-workflow.md).
 # This file only names KS StreamFlix's platforms.
 #
 #   Tag push vMAJOR.MINOR.PATCH   Builds and verifies the signed APKs and AABs (phone and Google TV),
@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   release:
-    uses: kumarsumit17/ks-utility/.github/workflows/kotlin-app-release.yml@v0.6.0
+    uses: kumasumit/ks-utility/.github/workflows/kotlin-app-release.yml@v0.6.0
     permissions:
       contents: write
       id-token: write
