@@ -9,7 +9,7 @@ tags: [plan, platforms, macos, windows, android, google-tv, performance, accessi
 
 **Status: approved by the owner on 2026-11-25** (decisions in section 3). Step 1, the phone/TV split, is built (9c1fdda, for v1.1.0). Built steps are marked in section 4; steps 2 (versioning per platform, v1.2.0) and 3 (the desktop always-on server, v1.3.0) are built.
 
-Owner's rule for every KS-Suite app (2026-11-25, KS-Suite [platform folders](https://github.com/kumasumit/KS-Suite/blob/dev/specs/platform-folders.md), "Each platform build is optimized for its OS"): each build is its own app, made the best it can be on its OS, with as few dependencies as possible and nothing the user has to install separately. Modelled on [ks-jaiplayer's plan](https://github.com/kumasumit/ks-jaiplayer/blob/dev/specs/plan-per-platform.md).
+Owner's rule for every KS-Suite app (2026-11-25, KS-Suite [platform folders](https://github.com/kumasumit/ks-suite/blob/dev/specs/platform-folders.md), "Each platform build is optimized for its OS"): each build is its own app, made the best it can be on its OS, with as few dependencies as possible and nothing the user has to install separately. Modelled on [ks-jaiplayer's plan](https://github.com/kumasumit/ks-jaiplayer/blob/dev/specs/plan-per-platform.md).
 
 StreamFlix differs from JaiPlayer in one way that shapes everything below: **the desktop builds are the server** (library, metadata, streaming, transcoding) plus a window that browses it and hands videos to KS JaiPlayer, while **the Android builds are clients** with their own Media3 player. So on desktop the work is about being a good always-on background service; on Android it is about being a good player.
 
@@ -90,7 +90,7 @@ Dependencies: no new library on desktop (JNA is not used today; where a native c
 
 ## 3. Owner's decisions (2026-11-25)
 
-1. **Own version per platform** (changed by the owner later on 2026-11-25, with the suite rule [Platform tags](https://github.com/kumasumit/KS-Suite/blob/dev/specs/versioning-signing.md)): tags `android-vX.Y.Z`, `google-tv-vX.Y.Z`, `mac-vX.Y.Z`, `windows-vX.Y.Z`; a plain `vX.Y.Z` still releases all four. v1.1.0 (the split) ships plain on ks-utility v0.9.0; v1.2.0 is the plain **bridge release** whose builds already read the release list (ks-utility v0.10.0); the first platform tags come after it. The API version keeps clients and servers of different versions working together.
+1. **Own version per platform** (changed by the owner later on 2026-11-25, with the suite rule [Platform tags](https://github.com/kumasumit/ks-suite/blob/dev/specs/versioning-signing.md)): tags `android-vX.Y.Z`, `google-tv-vX.Y.Z`, `mac-vX.Y.Z`, `windows-vX.Y.Z`; a plain `vX.Y.Z` still releases all four. v1.1.0 (the split) ships plain on ks-utility v0.9.0; v1.2.0 is the plain **bridge release** whose builds already read the release list (ks-utility v0.10.0); the first platform tags come after it. The API version keeps clients and servers of different versions working together.
 2. **FFmpeg: bundled** (LGPL build, VideoToolbox / Media Foundation and hardware encoders, no `libx264`). It adds about 25–35 MB to the dmg and msi; the installer budget (`size.installer.macMb=80`) is raised in that step and the new number reported to the owner. `STREAMFLIX_FFMPEG_DIR` still overrides it.
 3. **Start at login: on by default**, hidden to the menu bar or tray; can be turned off in Settings.
 4. **Continue watching on the Google TV home screen: yes** (`androidx.tvprovider`, a new dependency).

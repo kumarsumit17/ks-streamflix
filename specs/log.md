@@ -1,5 +1,6 @@
 # 2026-11-26
 
+* **Update**: `ks-utility` moved from `v0.13.2` to `v0.14.0` (newest tag before each release). Links to the suite repository now say `kumasumit/ks-suite` (renamed).
 * **Update**: [Quality budgets](quality-budgets.md): `speed.api.p95Ms.windows=150` (owner's decision); other systems keep 100 ms.
 * **Update**: The desktop server runs until Quit (v1.3.0, [Per-platform optimization plan](plan-per-platform.md) step 3; [Constraints](constraints.md)): menu-bar / notification-area item, start at login on by default, the computer stays awake while someone watches.
 * **Update**: `ks-utility` moved from `v0.10.0` to `v0.13.2` (owner-approved Hindi terms); the TMDB page's Hindi text says शीर्षक instead of टाइटल.
