@@ -1,5 +1,6 @@
 # 2026-11-27
 
+* **Update**: The opt-in test against the real TMDB (it needed the owner's API key) is removed, at the owner's request; the TMDB plugin is still tested against a stand-in server ([Media server plan](media-server-plan.md)). Users still enter their own TMDB key for the plugin.
 * **Update**: TV focus fixes (v1.3.1): the home screen's first focus goes to the first card on screen once every row has loaded, never moves by itself after that, and comes back to the card in the row it was opened from; Settings focuses the chosen language, also after choosing one. `HomeSection` gained `items` and a focus target in `Content`.
 
 # 2026-11-26
