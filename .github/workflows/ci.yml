@@ -101,8 +101,13 @@ jobs:
             Start-Sleep -Seconds 1
             try { $r = Invoke-RestMethod http://127.0.0.1:8743/api/v1/info; $ok = $r.setupNeeded } catch {}
           }
-          reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "KS StreamFlix"
-          $login = $LASTEXITCODE -eq 0
+          # The app writes the Run value just after its server starts answering: give it a moment.
+          $login = $false
+          for ($i = 0; $i -lt 20 -and -not $login; $i++) {
+            reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "KS StreamFlix" *> $null
+            $login = $LASTEXITCODE -eq 0
+            if (-not $login) { Start-Sleep -Seconds 1 }
+          }
           Stop-Process -Id $app.Id -Force
           reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "KS StreamFlix" /f
           if (-not $ok) { Write-Error "The app in the background did not answer"; exit 1 }
