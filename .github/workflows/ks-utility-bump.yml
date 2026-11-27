@@ -16,9 +16,12 @@ permissions: {}
 jobs:
   bump:
     permissions: { contents: write, issues: write }
-    uses: kumasumit/ks-utility/.github/workflows/ks-utility-bump.yml@v0.15.0
+    uses: kumasumit/ks-utility/.github/workflows/ks-utility-bump.yml@v0.16.0
     with:
       kind: kotlin
       java: true
       # Every test, lint, the language files and the size budgets (FFmpeg tests skip without FFmpeg).
       test: ./gradlew --no-daemon check
+    # A token that may change workflow files, so the move also updates the calls of ks-utility's shared workflows.
+    secrets:
+      KS_WORKFLOWS_TOKEN: ${{ secrets.KS_WORKFLOWS_TOKEN }}
