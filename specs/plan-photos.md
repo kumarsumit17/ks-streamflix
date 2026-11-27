@@ -3,12 +3,12 @@ type: Plan
 title: Photos plan
 description: Photo libraries in KS StreamFlix as plugins: folders and dates, thumbnails from the core's image service, slideshows on the TV, with EXIF read by the JDK.
 tags: [plan, photos, plugins]
-status: draft
+status: approved
 ---
 
 # Photos plan
 
-> Draft for the owner's approval; nothing is built.
+> Approved by the owner on 2026-11-27; nothing is built yet.
 
 **What it does.** A library kind `photos`: folders of pictures (`jpg`, `png`, `heic` where FFmpeg can read it, `webp`) and short videos, shown by folder and by month, full screen with swipe or D-pad, and a slideshow on the TV with a chosen interval.
 

@@ -3,12 +3,12 @@ type: Plan
 title: Live TV and recording plan
 description: Live TV in KS StreamFlix as plugins: tuners and IPTV playlists, a programme guide from XMLTV, and recordings into a library, with FFmpeg for the streams.
 tags: [plan, live-tv, dvr, iptv, plugins]
-status: draft
+status: approved
 ---
 
 # Live TV and recording plan
 
-> Draft for the owner's approval; nothing is built.
+> Approved by the owner on 2026-11-27; nothing is built yet. Its open questions are asked when its build starts.
 
 **What it does.** Channels from network tuners (HDHomeRun-style devices on the home network) and from M3U IPTV playlists the owner adds, a programme guide (EPG), watching live with pause, and scheduled recordings that land in a library as normal items.
 

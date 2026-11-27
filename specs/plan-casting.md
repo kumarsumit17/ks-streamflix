@@ -3,12 +3,12 @@ type: Plan
 title: Casting plan (DLNA and Chromecast)
 description: Playing StreamFlix items on other screens: as a DLNA/UPnP media server for smart TVs, and by handing items to KS Beam for DLNA renderers and Google Cast receivers.
 tags: [plan, dlna, upnp, chromecast, cast, plugins]
-status: draft
+status: approved
 ---
 
 # Casting plan (DLNA and Chromecast)
 
-> Draft for the owner's approval; nothing is built.
+> Approved by the owner on 2026-11-27; nothing is built yet. Its open questions are asked when its build starts.
 
 **What it does.** Smart TVs and players that browse DLNA servers see StreamFlix's libraries (respecting each library's access rules for a "guest" profile chosen by the owner). From the apps, "Play on…" sends an item to a TV or speaker on the network.
 

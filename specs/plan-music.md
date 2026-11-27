@@ -3,12 +3,12 @@ type: Plan
 title: Music plan
 description: Music libraries in KS StreamFlix as plugins: scanning tags, albums and artists, playing on every app, with gapless playback and no new engine.
 tags: [plan, music, audio, plugins]
-status: draft
+status: approved
 ---
 
 # Music plan
 
-> Draft for the owner's approval; nothing is built.
+> Approved by the owner on 2026-11-27; nothing is built yet.
 
 **What it does.** A library kind `music`: folders of audio files (`mp3`, `flac`, `m4a`/`aac`, `ogg`/`opus`, `wav`) shown by artist, album and track, with album art, playlists and "play album / shuffle". Listening history and "continue" reuse the `watch-state` plugin.
 

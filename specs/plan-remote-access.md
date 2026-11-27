@@ -3,12 +3,12 @@ type: Plan
 title: Remote access plan
 description: Reaching the home server from outside the home safely: off by default, HTTPS with a certificate, sign-in hardening, and the ways in (port forwarding, a VPN, or a relay), with their trade-offs.
 tags: [plan, remote-access, security, https, plugins]
-status: draft
+status: approved
 ---
 
 # Remote access plan
 
-> Draft for the owner's approval; nothing is built. This one is mainly a security decision.
+> Approved by the owner on 2026-11-27; nothing is built yet. Its open questions are asked when its build starts.
 
 **What it does.** Watching the home library from outside: on a phone on mobile data, or at a friend's home, with transcoding to fit a slow connection.
 
