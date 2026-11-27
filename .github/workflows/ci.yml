@@ -82,8 +82,10 @@ jobs:
           # The bundled FFmpeg (LGPL) is installed and runs.
           $ff = Get-ChildItem -Recurse "$env:ProgramFiles\KS StreamFlix" -Filter "ffmpeg.exe" | Select-Object -First 1
           if (-not $ff) { Write-Error "The bundled ffmpeg.exe is missing"; exit 1 }
-          & $ff.FullName -hide_banner -version | Select-Object -First 1
-          if ($LASTEXITCODE -ne 0) { Write-Error "The bundled ffmpeg.exe does not run"; exit 1 }
+          $version = & $ff.FullName -hide_banner -version
+          $code = $LASTEXITCODE
+          $version | Select-Object -First 1
+          if ($code -ne 0) { Write-Error "The bundled ffmpeg.exe does not run"; exit 1 }
           $app = Start-Process $exe.FullName -ArgumentList "--headless --bind 127.0.0.1 --port 8742 --data `"$env:RUNNER_TEMP\sfdata`"" -PassThru
           $ok = $false
           for ($i = 0; $i -lt 60 -and -not $ok; $i++) {
@@ -134,7 +136,8 @@ jobs:
         run: |
           app="$(find desktop/mac/build/compose/binaries -maxdepth 4 -name '*.app' | head -1)"
           # The bundled FFmpeg (LGPL) is in the app, executable, and runs.
-          "$app/Contents/app/resources/ffmpeg/ffmpeg" -hide_banner -version | head -1
+          version="$("$app/Contents/app/resources/ffmpeg/ffmpeg" -hide_banner -version)"
+          echo "${version%%$'\n'*}"
           "$app/Contents/MacOS/KS StreamFlix" --headless --bind 127.0.0.1 --port 8742 --data "$RUNNER_TEMP/sfdata" &
           pid=$!
           for i in $(seq 1 60); do curl -sf http://127.0.0.1:8742/api/v1/info && break; sleep 1; done
