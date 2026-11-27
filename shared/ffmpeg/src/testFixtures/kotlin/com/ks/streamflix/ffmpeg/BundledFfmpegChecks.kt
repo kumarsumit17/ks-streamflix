@@ -64,10 +64,11 @@ object BundledFfmpegChecks {
         val made = runBlocking {
             ff.ffmpegOutput(listOf("-i", clip.path, "-map", "0:v:0", "-map", "0:a:0", "-c:v", encoder, "-c:a", "aac", "-ac", "2",
                 "-f", "hls", "-hls_time", "1", "-hls_playlist_type", "event", "-hls_segment_type", "fmp4", "-hls_fmp4_init_filename", "init.mp4",
-                "-hls_segment_filename", File(hls, "seg_%05d.m4s").path, File(hls, "index.m3u8").path))
+                "-hls_segment_filename", Ffmpeg.path(File(hls, "seg_%05d.m4s").path), Ffmpeg.path(File(hls, "index.m3u8").path)))
         }
         assertNotNull(made, "HLS failed")
-        assertTrue(File(hls, "init.mp4").length() > 0 && (hls.listFiles()?.count { it.name.endsWith(".m4s") } ?: 0) >= 1, "init segment and media segments")
+        assertTrue(File(hls, "init.mp4").length() > 0 && (hls.listFiles()?.count { it.name.endsWith(".m4s") } ?: 0) >= 1,
+            "init segment and media segments; found: ${hls.listFiles()?.joinToString { "${it.name} (${it.length()})" }}")
 
         // A text subtitle to WebVTT, as the subtitles plugin serves it.
         val srt = File(work, "sub.srt").apply { writeText("1\n00:00:00,500 --> 00:00:01,500\nNamaste\n") }

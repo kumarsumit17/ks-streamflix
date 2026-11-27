@@ -104,6 +104,12 @@ class Ffmpeg(val ffprobe: File?, val ffmpeg: File?) {
 
     companion object {
         /**
+         * A path as FFmpeg should get it: with forward slashes, which it takes on Windows too. Its HLS
+         * muxer finds the folder for `init.mp4` from the playlist's path, and `C:\a\b` confuses that.
+         */
+        fun path(p: String): String = p.replace('\\', '/')
+
+        /**
          * Finds FFmpeg: the folder in `STREAMFLIX_FFMPEG_DIR` (to use another build), then the copy
          * bundled in the app ([bundled], the app's resources), then `PATH`, then the usual places
          * (Homebrew on macOS; `ffmpeg\bin` folders and winget's links on Windows).
