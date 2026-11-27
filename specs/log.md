@@ -1,5 +1,6 @@
 # 2026-11-27
 
+* **Update**: `ks-utility` moved from `v0.15.0` to `v0.16.0` (ks-suite-check also checks the shared-workflow refs).
 * **Update**: The release workflow is ks-utility's `@v0.15.0` (with ks-suite-check), `.github/workflows/ks-utility-bump.yml` moves ks-utility to its newest tag by itself, and the desktop updater installs through `DesktopInstaller` ([App updates](app-updates.md)).
 * **Update**: `ks-utility` moved from `v0.14.0` to `v0.15.0` (DesktopInstaller, ks-suite-check, the bump workflow).
 * **Update**: App icons (suite rule): the phone and Google TV apps have an adaptive launcher icon with a monochrome layer and a round icon (`mipmap-anydpi-v26`); the desktop window shows the app icon instead of the framework's default. The TV banner, the menu-bar/tray icon and the dmg/msi icons were already the app's own.
