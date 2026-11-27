@@ -20,8 +20,15 @@ interface ClientPlugin {
 interface HomeSection {
     suspend fun refresh(client: StreamflixClient)
 
+    /** The items this section shows, in order (the home screen's first D-pad focus goes to the first card on screen). */
+    val items: List<Item> get() = emptyList()
+
+    /**
+     * The section's rows. [focusId] is the card that should take the D-pad focus (null: none), and
+     * [onFocused] is called when one of its cards gets the focus; pass both to [com.ks.streamflix.client.ui.ItemRow].
+     */
     @Composable
-    fun Content(open: (Item) -> Unit)
+    fun Content(open: (Item) -> Unit, focusId: Long?, onFocused: () -> Unit)
 }
 
 /** A button on an item's page, after Play. */

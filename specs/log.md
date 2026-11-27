@@ -1,3 +1,7 @@
+# 2026-11-27
+
+* **Update**: TV focus fixes (v1.3.1): the home screen's first focus goes to the first card on screen once every row has loaded, never moves by itself after that, and comes back to the card in the row it was opened from; Settings focuses the chosen language, also after choosing one. `HomeSection` gained `items` and a focus target in `Content`.
+
 # 2026-11-26
 
 * **Update**: `ks-utility` moved from `v0.13.2` to `v0.14.0` (newest tag before each release). Links to the suite repository now say `kumasumit/ks-suite` (renamed).

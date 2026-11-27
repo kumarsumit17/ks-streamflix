@@ -27,18 +27,18 @@ class WatchStatePlugin : ClientPlugin {
 
     override fun install(context: ClientPluginContext) {
         context.addHomeSection(object : HomeSection {
-            var items by mutableStateOf<List<Item>>(emptyList())
+            override var items by mutableStateOf<List<Item>>(emptyList())
 
             override suspend fun refresh(client: StreamflixClient) {
                 items = runCatching { client.continueWatching().map { it.item } }.getOrDefault(emptyList())
             }
 
             @Composable
-            override fun Content(open: (Item) -> Unit) {
+            override fun Content(open: (Item) -> Unit, focusId: Long?, onFocused: () -> Unit) {
                 if (items.isEmpty()) return
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(Res.string.client_continue_heading), style = MaterialTheme.typography.titleMedium)
-                    ItemRow(items, null, open)
+                    ItemRow(items, focusId, onFocused, open)
                 }
             }
         })

@@ -213,9 +213,29 @@ private fun SignInScreen(vm: AppViewModel, state: UiState) {
 
 @Composable
 private fun HomeScreen(vm: AppViewModel, state: UiState) {
-    // Focus returns to the last opened item; the first time, it starts on the first item (D-pad).
-    // (Only with a remote: on a phone, focus would only open the keyboard or show rings.)
-    val restore = if (!vm.host.isTv) null else state.lastFocused["home"] ?: state.rows.firstOrNull { it.items.isNotEmpty() }?.items?.first()?.id
+    // Focus returns to the last opened item; the first time, it starts on the first card on screen
+    // (the plugins' sections come first, then the libraries). Once a card has the focus, the screen
+    // never moves it by itself: rows that load later must not take it, or OK opens another film
+    // than the one shown focused. (Only with a remote: on a phone, focus would only show rings.)
+    // The first card is known only once every section has loaded (the libraries often arrive first).
+    var focusTaken by remember { mutableStateOf(false) }
+    var sectionsLoaded by remember(state.homeVersion) { mutableStateOf(0) }
+    val firstCard = if (sectionsLoaded < vm.plugins.homeSections.size) null
+        else vm.plugins.homeSections.firstNotNullOfOrNull { it.items.firstOrNull() }?.id
+            ?: state.rows.firstOrNull { it.items.isNotEmpty() }?.items?.first()?.id
+    // An item can be in two rows (Continue watching and its library), so the row is remembered too.
+    val lastRow = state.lastFocused[HOME_ROW]
+    fun restoreIn(row: Long): Long? = when {
+        !vm.host.isTv || focusTaken -> null
+        lastRow != null -> if (lastRow == row) state.lastFocused["home"] else null
+        else -> firstCard
+    }
+    fun open(row: Long, item: Item) {
+        vm.rememberFocus("home", item.id)
+        vm.rememberFocus(HOME_ROW, row)
+        vm.openItem(item)
+    }
+    val onFocused = { focusTaken = true }
     LazyColumn(verticalArrangement = Arrangement.spacedBy(20.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -225,8 +245,11 @@ private fun HomeScreen(vm: AppViewModel, state: UiState) {
         }
         items(vm.plugins.homeSections.size) { i ->
             val section = vm.plugins.homeSections[i]
-            LaunchedEffect(state.homeVersion) { vm.client?.let { runCatching { section.refresh(it) } } }
-            section.Content(open = { vm.rememberFocus("home", it.id); vm.openItem(it) })
+            LaunchedEffect(state.homeVersion) {
+                vm.client?.let { runCatching { section.refresh(it) } }
+                sectionsLoaded++
+            }
+            section.Content(open = { open(i.toLong(), it) }, focusId = restoreIn(i.toLong()), onFocused = onFocused)
         }
         if (state.rows.isEmpty() && !state.busy) item { Muted(stringResource(Res.string.client_home_empty)) }
         items(state.rows, key = { it.library.id }) { row ->
@@ -238,18 +261,25 @@ private fun HomeScreen(vm: AppViewModel, state: UiState) {
                     }
                 }
                 if (row.items.isEmpty()) Muted(stringResource(Res.string.client_library_empty))
-                ItemRow(row.items.take(30), restore) { vm.rememberFocus("home", it.id); vm.openItem(it) }
+                ItemRow(row.items.take(30), restoreIn(LIBRARY_ROWS + row.library.id), onFocused) { open(LIBRARY_ROWS + row.library.id, it) }
             }
         }
         item { ErrorText(state.error) }
     }
 }
 
-/** A horizontal row of item cards; [restoreId] gets the focus back after returning to this screen. */
+/** Which home row a card was opened from: the plugins' sections by index, libraries after [LIBRARY_ROWS]. */
+private const val HOME_ROW = "home-row"
+private const val LIBRARY_ROWS = 1_000_000L
+
+/**
+ * A horizontal row of item cards; [restoreId] gets the focus (back after returning to this screen),
+ * and [onFocused] is called whenever one of its cards gets the focus.
+ */
 @Composable
-fun ItemRow(items: List<Item>, restoreId: Long?, open: (Item) -> Unit) {
+fun ItemRow(items: List<Item>, restoreId: Long?, onFocused: () -> Unit = {}, open: (Item) -> Unit) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(2.dp)) {
-        items(items, key = { it.id }) { item -> ItemCard(item, Modifier.width(180.dp), focus = item.id == restoreId) { open(item) } }
+        items(items, key = { it.id }) { item -> ItemCard(item, Modifier.width(180.dp), focus = item.id == restoreId, onFocused = onFocused) { open(item) } }
     }
 }
 
@@ -300,7 +330,9 @@ private fun DetailScreen(vm: AppViewModel, state: UiState, item: Item) {
 
 @Composable
 private fun SettingsScreen(vm: AppViewModel, state: UiState) {
-    val first = remember { FocusRequester() }
+    // The D-pad focus starts on the chosen language. Choosing one rebuilds the screen in the new
+    // language (ProvideLanguage), so this also keeps the focus on the button just pressed.
+    val chosen = remember { FocusRequester() }
     Column(Modifier.widthIn(max = 520.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         BackRow(vm, stringResource(Res.string.common_settings))
         Text(stringResource(Res.string.common_language), style = MaterialTheme.typography.titleMedium)
@@ -309,8 +341,8 @@ private fun SettingsScreen(vm: AppViewModel, state: UiState) {
                 LanguageChoice.System to Res.string.common_language_system,
                 LanguageChoice.English to Res.string.common_language_english,
                 LanguageChoice.Hindi to Res.string.common_language_hindi,
-            ).forEachIndexed { i, (choice, label) ->
-                ChoiceButton(stringResource(label), state.language == choice, if (i == 0) Modifier.focusRequester(first) else Modifier) {
+            ).forEach { (choice, label) ->
+                ChoiceButton(stringResource(label), state.language == choice, if (state.language == choice) Modifier.focusRequester(chosen) else Modifier) {
                     vm.chooseLanguage(choice)
                 }
             }
@@ -325,7 +357,7 @@ private fun SettingsScreen(vm: AppViewModel, state: UiState) {
         Muted(stringResource(Res.string.client_settings_version, vm.host.appVersion))
         vm.plugins.settingsSections.forEach { it() }
     }
-    LaunchedEffect(Unit) { if (vm.host.isTv) runCatching { first.requestFocus() } }
+    LaunchedEffect(Unit) { if (vm.host.isTv) runCatching { chosen.requestFocus() } }
 }
 
 // ---- Parts --------------------------------------------------------------------------------------
@@ -346,13 +378,13 @@ fun ChoiceButton(label: String, selected: Boolean, modifier: Modifier = Modifier
 }
 
 @Composable
-fun ItemCard(item: Item, modifier: Modifier = Modifier, focus: Boolean = false, onClick: () -> Unit) {
+fun ItemCard(item: Item, modifier: Modifier = Modifier, focus: Boolean = false, onFocused: () -> Unit = {}, onClick: () -> Unit) {
     val requester = remember { FocusRequester() }
     var focused by remember { mutableStateOf(false) }
     Column(
         modifier
             .focusRequester(requester)
-            .onFocusChanged { focused = it.isFocused }
+            .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocused() }
             .border(if (focused) 2.dp else 1.dp, if (focused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CardShape)
             .background(MaterialTheme.colorScheme.surfaceVariant, CardShape)
             .clickable(onClick = onClick)
