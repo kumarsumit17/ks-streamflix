@@ -15,7 +15,7 @@ The owner's rule (2026-11-23): stability, app size and speed are variables for a
 |---|---|---|
 | `size.server.maxMb` | The server alone: every jar of the core and the server plugins, as `--headless` runs it, in MB | `./gradlew checkSize` |
 | `size.desktop.maxMb` | The whole macOS app: every jar it runs (server, window, Compose for this OS), in MB; the Java runtime the installer bundles is measured in stage 6 | `checkSize` |
-| `size.installer.macMb` | The macOS `.dmg`, with its own Java runtime, in MB | `./gradlew checkInstallerSize` after `:desktop:mac:packageReleaseDmg` (CI's macOS job) |
+| `size.installer.macMb` | The macOS `.dmg`, with its own Java runtime and the bundled FFmpeg, in MB (85 since v1.4.0: FFmpeg added 5.4 MB, 75.6 → 81.0) | `./gradlew checkInstallerSize` after `:desktop:mac:packageReleaseDmg` (CI's macOS job) |
 | `size.apk.maxMb` | The release APK, shrunk by R8, in MB; 15 MB from [Constraints](constraints.md) | `checkSize` |
 | `speed.server.startMs` | From start to the first answer of `/api/v1/info` | server tests (in-process); the cold start of the installed app was 752 ms on the owner's Mac on 2026-11-23, checked by hand |
 | `speed.scan.filesPerSecond` | Scanning a library of new files, at least | server tests |

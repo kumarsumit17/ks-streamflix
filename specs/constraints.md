@@ -23,7 +23,7 @@ status: draft
 - Passwords are stored only as PBKDF2 hashes; session tokens come from `SecureRandom`. No telemetry: the server contacts nothing the owner has not switched on.
 - Files are served by item id only, and only files inside a library folder; a path from a request is never opened.
 - Every route that serves an item checks the access rules (libraries per user, age limits); a hidden item answers "not found", as if it did not exist.
-- Without FFmpeg the server still runs and direct play still works; a missing FFmpeg is a clear message, never a crash.
+- **FFmpeg is bundled in the desktop apps** (v1.4.0, [Per-platform optimization plan](plan-per-platform.md) step 4): FFmpeg 9.1 built from its official source (SHA-256 and the release key checked), LGPL 2.1 only, as shared libraries beside `ffmpeg` and `ffprobe` in the app's resources, with `LICENSE.txt` and `SOURCE.txt` (source address and configure flags). Every demuxer and decoder; only the encoders, muxers, filters and protocols the server uses (`gradle/bundled-ffmpeg.gradle.kts`). H.264: VideoToolbox on macOS; NVENC, AMF, then Media Foundation on Windows. `STREAMFLIX_FFMPEG_DIR` points at another build. Without FFmpeg the server still runs and direct play still works; a missing FFmpeg is a clear message, never a crash.
 - An "Open in JaiPlayer" option sends an explicit `ACTION_VIEW` intent to `com.ks.jaiplayer`. It falls back to the built-in ExoPlayer when JaiPlayer isn't installed.
 
 These rules are also in `CLAUDE.md`, where they are loaded into every AI-assisted session; change both together.

@@ -36,9 +36,13 @@ dependencies {
     implementation(project(":shared:plugins:folder-watch"))
     runtimeOnly(libs.slf4j.simple)
     testImplementation(kotlin("test"))
+    testImplementation(testFixtures(project(":shared:ffmpeg")))
 }
 
 tasks.test { useJUnitPlatform() }
+
+// FFmpeg (LGPL), built from its source and bundled in the app (gradle/bundled-ffmpeg.gradle.kts).
+apply(from = rootProject.file("gradle/bundled-ffmpeg.gradle.kts"))
 
 // jpackage needs MAJOR >= 1; untagged development builds package as 1.0.0.
 val versionName = (rootProject.extra["appVersionName.mac"] as String).substringBefore('-')
@@ -56,6 +60,8 @@ compose.desktop {
             vendor = "KS-Suite"
             // The Java modules the server and its window use (checked with suggestRuntimeModules).
             modules(*desktopModules.toTypedArray())
+            // build/ffmpeg-resources/<os>/ffmpeg: ffmpeg, ffprobe and their libraries.
+            appResourcesRootDir.set(layout.buildDirectory.dir("ffmpeg-resources"))
             macOS {
                 bundleID = "com.ks.streamflix"
                 appCategory = "public.app-category.video"
