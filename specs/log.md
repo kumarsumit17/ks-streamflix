@@ -1,5 +1,6 @@
 # 2026-11-27
 
+* **Update**: `ks-utility` moved to `v0.18.0`; `release.yml` and `ks-utility-bump.yml` call ks-utility's shared workflows `@main`, which always equals its newest release, so only the code pin moves; no `KS_WORKFLOWS_TOKEN` (owner's decision).
 * **Update**: `ks-utility` moved from `v0.16.0` to `v0.17.0`; `release.yml` and `ks-utility-bump.yml` call it `@v0.17.0`.
 * **Update**: `ks-utility` moved from `v0.15.0` to `v0.16.0` (ks-suite-check also checks the shared-workflow refs); `release.yml` and `ks-utility-bump.yml` call ks-utility `@v0.16.0`, and the bump passes `KS_WORKFLOWS_TOKEN` so automatic moves also update those calls.
 * **Update**: The release workflow is ks-utility's `@v0.15.0` (with ks-suite-check), `.github/workflows/ks-utility-bump.yml` moves ks-utility to its newest tag by itself, and the desktop updater installs through `DesktopInstaller` ([App updates](app-updates.md)).
