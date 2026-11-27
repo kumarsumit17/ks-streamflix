@@ -162,6 +162,8 @@ fun runDesktopApp(args: Array<String>, dataDir: Path, serverPlugins: List<Server
                     }
                 },
                 title = "KS StreamFlix",
+                // The app's own icon (title bar, Windows taskbar), never the framework's default.
+                icon = AppIcon,
                 state = rememberWindowState(size = DpSize(1100.dp, 760.dp)),
                 onPreviewKeyEvent = { e -> e.type == KeyEventType.KeyDown && e.key == Key.Escape && vm.back() },
             ) {
@@ -173,6 +175,25 @@ fun runDesktopApp(args: Array<String>, dataDir: Path, serverPlugins: List<Server
 
 private const val LOGIN_DEFAULT_SET = "desktop.startAtLogin.defaultSet"
 private const val TRAY_HINT_SHOWN = "desktop.trayHintShown"
+
+/** The app icon, as on the installers (packaging/icon.icns, icon.ico): a play mark on a dark rounded square. */
+private object AppIcon : Painter() {
+    override val intrinsicSize = Size(256f, 256f)
+    override fun DrawScope.onDraw() {
+        val w = size.width
+        val h = size.height
+        drawRoundRect(Color(0xFF18181B), cornerRadius = androidx.compose.ui.geometry.CornerRadius(w * 0.18f, h * 0.18f))
+        drawPath(
+            DrawPath().apply {
+                moveTo(w * 0.40f, h * 0.30f)
+                lineTo(w * 0.70f, h * 0.50f)
+                lineTo(w * 0.40f, h * 0.70f)
+                close()
+            },
+            Color(0xFFFAFAFA),
+        )
+    }
+}
 
 /** The menu-bar / notification-area icon: a play mark in a circle, drawn (no image file). */
 private object TrayIcon : Painter() {

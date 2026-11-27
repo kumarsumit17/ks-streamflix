@@ -1,5 +1,6 @@
 # 2026-11-27
 
+* **Update**: App icons (suite rule): the phone and Google TV apps have an adaptive launcher icon with a monochrome layer and a round icon (`mipmap-anydpi-v26`); the desktop window shows the app icon instead of the framework's default. The TV banner, the menu-bar/tray icon and the dmg/msi icons were already the app's own.
 * **Update**: FFmpeg is bundled in the desktop apps (v1.4.0; [Constraints](constraints.md), [Per-platform optimization plan](plan-per-platform.md) step 4): FFmpeg 9.1 from its official source, LGPL only; the dmg grows 75.6 → 81.0 MB and its budget is 85 MB ([Quality budgets](quality-budgets.md)).
 * **Update**: [Quality budgets](quality-budgets.md): the API p95 counts the fastest of five rounds (shared Windows runners measured 45–223 ms in one run); the budgets are unchanged.
 * **Update**: The owner approved the [music](plan-music.md), [photos](plan-photos.md), [live TV](plan-live-tv.md), [casting](plan-casting.md) and [remote access](plan-remote-access.md) plans; the open questions in live TV, casting and remote access are asked when each build starts.
