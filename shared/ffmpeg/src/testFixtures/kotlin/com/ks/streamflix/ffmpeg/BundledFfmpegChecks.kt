@@ -28,7 +28,18 @@ object BundledFfmpegChecks {
         assertFalse("--enable-gpl" in config || "--enable-nonfree" in config || "libx264" in config, "LGPL only:\n$config")
 
         val encoder = ff.h264Encoder
-        assertNotEquals("libx264", encoder, "a working H.264 encoder of the bundle")
+        if (encoder == "libx264") {
+            // Say why: which H.264 encoders the build lists, and what each one answers.
+            val listed = output(listOf(ff.ffmpeg.path, "-hide_banner", "-encoders")).lines().filter { "h264" in it }
+            val tries = listed.mapNotNull { Regex("""\s(h264_\w+)\s""").find(it)?.groupValues?.get(1) }.joinToString("\n") { enc ->
+                val p = ProcessBuilder(ff.ffmpeg.path, "-hide_banner", "-v", "error", "-f", "rawvideo", "-pix_fmt", "yuv420p", "-s", "256x144", "-r", "25",
+                    "-i", "-", "-frames:v", "5", "-c:v", enc, "-f", "null", "-").redirectErrorStream(true).start()
+                runCatching { p.outputStream.use { o -> repeat(5) { o.write(ByteArray(256 * 144 * 3 / 2)) } } }
+                "$enc: " + p.inputStream.readAllBytes().decodeToString().trim().take(400)
+            }
+            println("No H.264 encoder works here.\nListed:\n${listed.joinToString("\n")}\nTried:\n$tries")
+        }
+        assertNotEquals("libx264", encoder, "a working H.264 encoder of the bundle (see the output above)")
 
         val work = Files.createTempDirectory("bundled-ffmpeg").toFile()
         // Two seconds of video (raw grey frames on stdin) and of silence, encoded as the server would.

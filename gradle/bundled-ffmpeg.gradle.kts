@@ -170,5 +170,7 @@ if (resourceOs != null) {
     tasks.named<Test>("test") {
         dependsOn(bundleFfmpeg)
         systemProperty("streamflix.bundledFfmpeg", target.path)
+        // CI keeps no test reports: print the whole failure.
+        testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL; showStandardStreams = true }
     }
 }
