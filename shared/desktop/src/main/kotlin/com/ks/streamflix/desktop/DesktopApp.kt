@@ -106,7 +106,7 @@ fun runDesktopApp(args: Array<String>, dataDir: Path, serverPlugins: List<Server
         server.close()
     }
     // App updates (the server is part of this app, so it updates with it).
-    val updates = com.ks.streamflix.client.desktopUpdater(settings, options.config.version) { stopServer(); kotlin.system.exitProcess(0) }
+    val updates = com.ks.streamflix.client.desktopUpdater(settings, options.config.version) { stopServer() }
     val plugins = clientPlugins + DesktopSystemPlugin(system) + listOfNotNull(updates?.let { com.ks.streamflix.client.plugin.AppUpdatePlugin(it) })
     val vm = AppViewModel(DesktopHost(options.config.version, settings), plugins)
     val addresses = lanAddresses().map { "http://$it:$port" }.ifEmpty { listOf(local) }

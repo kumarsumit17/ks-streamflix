@@ -28,7 +28,7 @@ import com.ks.streamflix.client.resources.common_app_update_install_failed
 import com.ks.streamflix.client.resources.common_app_update_no_installer
 import com.ks.streamflix.client.resources.common_app_update_open_failed
 import com.ks.streamflix.client.resources.common_app_update_opened_android
-import com.ks.streamflix.client.resources.common_app_update_opened_mac
+import com.ks.streamflix.client.resources.common_app_update_opened_mac_closes
 import com.ks.streamflix.client.resources.common_app_update_opened_windows
 import com.ks.streamflix.client.resources.common_app_update_section
 import com.ks.streamflix.client.resources.common_app_update_unreadable
@@ -97,7 +97,7 @@ private fun Section(u: AppUpdater) {
             UpdateStatus.NeedsPermission -> stringResource(Res.string.common_app_update_allow_install)
             is UpdateStatus.Downloading -> stringResource(Res.string.common_app_update_downloading, s.version)
             is UpdateStatus.Opened -> when (s.on) {
-                OpenedOn.Mac -> stringResource(Res.string.common_app_update_opened_mac, "KS StreamFlix")
+                OpenedOn.Mac -> stringResource(Res.string.common_app_update_opened_mac_closes, "KS StreamFlix")
                 OpenedOn.Windows -> stringResource(Res.string.common_app_update_opened_windows)
                 OpenedOn.Android -> stringResource(Res.string.common_app_update_opened_android)
             }

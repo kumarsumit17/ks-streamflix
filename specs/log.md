@@ -1,5 +1,6 @@
 # 2026-11-27
 
+* **Update**: The release workflow is ks-utility's `@v0.15.0` (with ks-suite-check), `.github/workflows/ks-utility-bump.yml` moves ks-utility to its newest tag by itself, and the desktop updater installs through `DesktopInstaller` ([App updates](app-updates.md)).
 * **Update**: `ks-utility` moved from `v0.14.0` to `v0.15.0` (DesktopInstaller, ks-suite-check, the bump workflow).
 * **Update**: App icons (suite rule): the phone and Google TV apps have an adaptive launcher icon with a monochrome layer and a round icon (`mipmap-anydpi-v26`); the desktop window shows the app icon instead of the framework's default. The TV banner, the menu-bar/tray icon and the dmg/msi icons were already the app's own.
 * **Update**: FFmpeg is bundled in the desktop apps (v1.4.0; [Constraints](constraints.md), [Per-platform optimization plan](plan-per-platform.md) step 4): FFmpeg 9.1 from its official source, LGPL only; the dmg grows 75.6 → 81.0 MB and its budget is 85 MB ([Quality budgets](quality-budgets.md)).
