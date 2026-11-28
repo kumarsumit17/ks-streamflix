@@ -21,6 +21,7 @@ The KS-Suite [release cycle](https://github.com/kumasumit/ks-suite/blob/dev/spec
 | Desktop app settings (`java.util.prefs`) | `com/ks/streamflix/client` | `com/ks/streamflix-dev/client` |
 | HTTP and discovery port | 8742 | 8752, so both servers run at once |
 | Server name | the computer's name | the computer's name + " DEV" |
+| Browser pages | KS StreamFlix in the title and header | KS StreamFlix DEV |
 | Browser cookies | `sf_session`, `sf_lang` | the same with `_dev` (cookies are shared between ports) |
 | Updates | GitHub releases | none: a DEV version is never offered a release |
 | Android signing | suite key | `DEV_KEYSTORE_BASE64`, `DEV_KEYSTORE_PASSWORD`, `DEV_KEY_ALIAS`, `DEV_KEY_PASSWORD` |
@@ -38,7 +39,7 @@ A server keeps watch progress and users, so a DEV app must not use a production 
 
 ## Not marked
 
-The browser pages and the Android app's own headings still read "KS StreamFlix"; a DEV server is told apart by its port and name.
+The Android app's own headings still read "KS StreamFlix".
 
 ## Where it is set
 

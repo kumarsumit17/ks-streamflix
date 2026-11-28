@@ -41,6 +41,21 @@ class WebPluginTest {
 
     private fun HttpResponse<String>.location() = headers().firstValue("Location").orElse("")
 
+    @Test fun onlyADevServersPagesSayDev() = server.use {
+        val prod = get("/setup").body()
+        assertContains(prod, " · KS StreamFlix</title>")
+        assertContains(prod, ">KS StreamFlix</a>")
+        assertFalse("KS StreamFlix DEV" in prod)
+        StreamflixServer(
+            ServerConfig(Files.createTempDirectory("sf-web-dev"), port = 0, host = "127.0.0.1", name = "test", passwordIterations = 1_000, dev = true),
+            listOf(WebPlugin()),
+        ).use { dev ->
+            val page = http.send(HttpRequest.newBuilder(URI("http://127.0.0.1:${dev.start()}/setup")).build(), HttpResponse.BodyHandlers.ofString()).body()
+            assertContains(page, " · KS StreamFlix DEV</title>")
+            assertContains(page, ">KS StreamFlix DEV</a>")
+        }
+    }
+
     @Test fun setupAddLibraryBrowseAndWatch() = server.use {
         assertEquals("/setup", get("/").location())
         val setup = get("/setup", lang = "hi-IN,en;q=0.5")

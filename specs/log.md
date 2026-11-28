@@ -1,5 +1,6 @@
 # 2026-11-28
 
+* **Update**: [DEV builds side by side](dev-variant.md): a DEV server's browser pages say DEV in the title and header.
 * **Added**: [DEV builds side by side with production](dev-variant.md): the DEV variant, built into the apps.
 * **Update**: `ks-utility` moved to `v0.19.0`; `release.yml` names the production and `DEV_*` signing secrets.
 * **Update**: [Per-platform optimization plan](plan-per-platform.md): releases follow the suite release cycle.

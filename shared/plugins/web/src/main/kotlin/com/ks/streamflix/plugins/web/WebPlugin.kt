@@ -276,11 +276,13 @@ private class Pages(private val core: Core, private val strings: Strings) {
         body: StringBuilder.() -> Unit,
     ) {
         val lang = lang()
+        // A DEV server's pages say so (specs/dev-variant.md).
+        val brand = if (core.info().dev) "KS StreamFlix DEV" else "KS StreamFlix"
         val html = StringBuilder()
         html.append("<!doctype html><html lang=${lang.code}><head><meta charset=utf-8>")
             .append("<meta name=viewport content=\"width=device-width, initial-scale=1\">")
-            .append("<title>").esc(title).append(" · KS StreamFlix</title><style>").append(CSS).append("</style></head><body>")
-            .append("<header><a class=brand href=\"/\">KS StreamFlix</a><nav>")
+            .append("<title>").esc(title).append(" · $brand</title><style>").append(CSS).append("</style></head><body>")
+            .append("<header><a class=brand href=\"/\">$brand</a><nav>")
         val back = request.local.uri.takeIf { it.startsWith("/") } ?: "/"
         val choice = request.cookies[LANG_COOKIE].orEmpty()
         listOf("" to "common.language.system", "en" to "common.language.english", "hi" to "common.language.hindi").forEach { (code, key) ->
