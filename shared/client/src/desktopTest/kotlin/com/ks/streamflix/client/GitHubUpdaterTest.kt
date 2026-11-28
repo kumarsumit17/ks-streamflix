@@ -12,6 +12,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class GitHubUpdaterTest {
@@ -70,16 +71,23 @@ class GitHubUpdaterTest {
     @Test fun aSourceBuildAndTheSwitch() {
         val settings = MemorySettings()
         val dev = updater("0.0.0", UpdatePlatform.ANDROID, { release("1.1.0") }, settings)
-        assertTrue(dev.isDevBuild)
+        assertNull(dev.shownVersion, "a build from source has no version")
         dev.setAutoCheck(false)
         assertFalse(updater("1.0.0", UpdatePlatform.ANDROID, { "" }, settings).autoCheck.value, "the switch is remembered")
     }
 
     @Test fun aDevBuildIsNeverOfferedARelease() {
         val u = updater("1.4.0-dev+abc1234", UpdatePlatform.MACOS_ARM64, { release("9.0.0") })
-        assertTrue(u.isDevBuild)
         u.check(silent = false)
         assertIs<UpdateStatus.UpToDate>(u.status.value)
+    }
+
+    @Test fun productionAndDevBuildsShowTheirVersion() {
+        for (version in listOf("1.4.1", "1.4.1-dev+abc1234")) {
+            for (platform in listOf(UpdatePlatform.ANDROID, UpdatePlatform.MACOS_ARM64)) {
+                assertEquals(version, updater(version, platform, { release("9.0.0") }).shownVersion)
+            }
+        }
     }
 
     @Test fun downloadsOnlyOverHttps() {
