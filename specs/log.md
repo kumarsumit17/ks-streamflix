@@ -1,5 +1,8 @@
 # 2026-11-28
 
+* **Added**: [DEV builds side by side with production](dev-variant.md): the DEV variant, built into the apps.
+* **Update**: `ks-utility` moved to `v0.19.0`; `release.yml` names the production and `DEV_*` signing secrets.
+* **Update**: [Per-platform optimization plan](plan-per-platform.md): releases follow the suite release cycle.
 * **Added**: [Progress](progress.md): the checkpoint the suite working method requires.
 * **Update**: [Constraints](constraints.md), [Media server plan](media-server-plan.md) and `CLAUDE.md`: releases follow the suite release cycle (DEV build, the owner's manual test, explicit approval), replacing "build, test, release, no waiting".
 * **Added**: [KS JaiPlayer as the default player](plan-jaiplayer-default.md): plan for playing through KS JaiPlayer by default (fallbacks, the DEV variant, future asks of JaiPlayer); waits for the owner's approval, no code changed.

@@ -1,6 +1,7 @@
 package com.ks.streamflix.mac
 
 import com.ks.streamflix.client.DesktopJaiPlayer
+import com.ks.streamflix.client.DesktopVariant
 import com.ks.streamflix.client.plugin.JaiPlayerPlugin
 import com.ks.streamflix.client.plugin.MediaInfoPlugin as MediaInfoClient
 import com.ks.streamflix.client.plugin.MetadataPlugin as MetadataClient
@@ -21,9 +22,9 @@ import java.nio.file.Paths
 /** macOS entry point: the server and its window, with the plugins this app includes. */
 fun main(args: Array<String>) = runDesktopApp(
     args,
-    dataDir = Paths.get(System.getProperty("user.home"), "Library", "Application Support", "KS StreamFlix"),
+    dataDir = Paths.get(System.getProperty("user.home"), "Library", "Application Support", DesktopVariant.current.appName),
     serverPlugins = listOf(
-        WebPlugin(), WatchStatePlugin(), DiscoveryPlugin(),
+        WebPlugin(), WatchStatePlugin(), DiscoveryPlugin(DesktopVariant.current.port),
         LocalMetadataPlugin(), TmdbPlugin(), MediaInfoPlugin(), SubtitlesPlugin(), TranscodePlugin(),
         UsersPlugin(), FolderWatchPlugin(),
     ),

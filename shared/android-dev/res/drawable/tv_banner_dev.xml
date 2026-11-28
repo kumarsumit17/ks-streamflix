@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The 320 × 180 banner on the TV home screen: a play mark and the name on orange, marked DEV (the DEV build). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" tools:ignore="VectorRaster"
+    android:width="320dp" android:height="180dp" android:viewportWidth="320" android:viewportHeight="180">
+    <path android:fillColor="#C2410C" android:pathData="M0,0h320v180h-320z" />
+    <path android:fillColor="#7C2D12" android:pathData="M40,58h64a8,8 0,0 1,8 8v48a8,8 0,0 1,-8 8h-64a8,8 0,0 1,-8 -8v-48a8,8 0,0 1,8 -8z" />
+    <path android:fillColor="#FAFAFA" android:pathData="M62,74L88,90L62,106Z" />
+    <!-- "KS" in block strokes -->
+    <path android:fillColor="#FAFAFA" android:pathData="M132,70h8v40h-8z M140,88l18,-18h10l-20,20l20,20h-10z M178,70h28v8h-20v8h20v24h-28v-8h20v-8h-20z" />
+    <path android:fillColor="#FED7AA" android:pathData="M216,100h72v4h-72z" />
+    <!-- "DEV" in block strokes -->
+    <group android:translateX="216" android:translateY="114" android:scaleX="2.5" android:scaleY="2.5">
+        <path android:fillColor="#FAFAFA" android:fillType="evenOdd" android:pathData="M0,0h3l2,2v5l-2,2h-3z M1.5,1.5v6h1l1,-1v-4l-1,-1z M7,0h5v1.5h-3.5v2.25h3v1.5h-3v2.25h3.5v1.5h-5z M14,0h1.6l1.4,6.5l1.4,-6.5h1.6l-2,9h-2z" />
+    </group>
+</vector>

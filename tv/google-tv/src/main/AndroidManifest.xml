@@ -6,7 +6,7 @@
     <uses-feature android:name="android.software.leanback" android:required="true" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
-    <application android:banner="@drawable/tv_banner">
+    <application android:banner="${tvBanner}">
         <!-- Read by isTvBuild() (shared/client): this build is the Google TV app. -->
         <meta-data android:name="com.ks.streamflix.FORM_FACTOR" android:value="tv" />
         <activity android:name="com.ks.streamflix.android.MainActivity" android:exported="true" tools:ignore="MissingClass">

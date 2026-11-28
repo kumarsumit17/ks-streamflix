@@ -58,7 +58,7 @@ Dependencies: no new library on desktop (JNA is not used today; where a native c
 - **Transcoding with nothing to install**: bundle an LGPL FFmpeg build for x64 with `h264_mf` (Media Foundation, on every Windows), `h264_nvenc`, `h264_qsv` and `h264_amf`; the encoder probe already picks the first that works. `libx264` is not in an LGPL build, so `h264_mf` is the software-free fallback.
 - **Look**: system look and feel for the Swing parts, dark title bar (`DWMWA_USE_IMMERSIVE_DARK_MODE`) when the app is dark, the native folder picker for "Add library".
 - **Packaging**: per-user install by default (no admin prompt), start-menu shortcut, `jdk.accessibility` added to the runtime so Narrator and NVDA see the app.
-- **Checks**: CI already installs, starts and uninstalls the msi; add a check that the tray icon starts and the server survives closing the window. Hand checks by the owner never block a release.
+- **Checks**: CI already installs, starts and uninstalls the msi; add a check that the tray icon starts and the server survives closing the window. The owner's manual test of the DEV build comes before a release ([release cycle](https://github.com/kumasumit/ks-suite/blob/dev/specs/release-cycle.md)).
 
 ### 2.3 Android phone (`mobile/android/`, shared Android code in `shared/client/src/androidMain`)
 
@@ -98,7 +98,7 @@ Dependencies: no new library on desktop (JNA is not used today; where a native c
 
 ## 4. Build order and testing
 
-Each step is one or more commits on `dev`, tested on its platform before the next; each step is released with the next tag once its tests pass (no approval asked first), and every release is tried on the emulators first (owner does real-device checks).
+Each step is one or more commits on `dev`, tested on its platform before the next; releases follow the suite [release cycle](https://github.com/kumasumit/ks-suite/blob/dev/specs/release-cycle.md): DEV build, the owner's manual test, explicit approval.
 
 | Step | What | Where | Tested on |
 |---|---|---|---|

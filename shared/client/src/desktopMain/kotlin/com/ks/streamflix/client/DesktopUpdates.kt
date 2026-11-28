@@ -11,7 +11,7 @@ import java.io.File
  * (at once on Windows, after a few seconds on macOS). [beforeQuit] stops the server first.
  */
 class DesktopUpdateInstaller(beforeQuit: () -> Unit) : UpdateInstaller {
-    private val installer = DesktopInstaller(appName = "KS StreamFlix", beforeQuit = beforeQuit)
+    private val installer = DesktopInstaller(appName = DesktopVariant.current.appName, beforeQuit = beforeQuit)
 
     override fun downloadDir() = File(System.getProperty("java.io.tmpdir"), "ks-streamflix-update")
 

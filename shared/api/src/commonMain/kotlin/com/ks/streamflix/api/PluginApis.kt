@@ -36,6 +36,8 @@ data class ContinueList(val items: List<ContinueItem>)
 /** Plugin `discovery`: a client sends [QUESTION] as a UDP broadcast to [PORT]; servers answer with a [DiscoveryAnswer] in JSON. */
 object DiscoveryApi {
     const val PORT = 8742
+    /** A DEV build's server and apps use their own port, so they never find or answer production ones. */
+    const val DEV_PORT = 8752
     const val QUESTION = "KS-STREAMFLIX-WHO-IS-THERE/1"
 }
 

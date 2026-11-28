@@ -48,13 +48,16 @@ apply(from = rootProject.file("gradle/bundled-ffmpeg.gradle.kts"))
 val versionName = (rootProject.extra["appVersionName.mac"] as String).substringBefore('-')
 val installerVersion = versionName.takeIf { (it.substringBefore('.').toIntOrNull() ?: 0) >= 1 } ?: "1.0.0"
 
+// The DEV variant (specs/dev-variant.md): its own name, identity and icon.
+val dev = rootProject.extra["ksDev"] as Boolean
+
 compose.desktop {
     application {
         mainClass = "com.ks.streamflix.mac.MainKt"
-        jvmArgs += listOf("-Dstreamflix.version=${rootProject.extra["appVersionName.mac"]}", "-Dapple.awt.application.appearance=system")
+        jvmArgs += listOf("-Dstreamflix.version=${rootProject.extra["appReportedVersion.mac"]}", "-Dstreamflix.variant=${if (dev) "dev" else "prod"}", "-Dapple.awt.application.appearance=system")
         nativeDistributions {
             targetFormats(TargetFormat.Dmg)
-            packageName = "KS StreamFlix"
+            packageName = if (dev) "KS StreamFlix DEV" else "KS StreamFlix"
             packageVersion = installerVersion
             description = "KS StreamFlix, a home media server"
             vendor = "KS-Suite"
@@ -63,9 +66,9 @@ compose.desktop {
             // build/ffmpeg-resources/<os>/ffmpeg: ffmpeg, ffprobe and their libraries.
             appResourcesRootDir.set(layout.buildDirectory.dir("ffmpeg-resources"))
             macOS {
-                bundleID = "com.ks.streamflix"
+                bundleID = if (dev) "com.ks.streamflix.dev" else "com.ks.streamflix"
                 appCategory = "public.app-category.video"
-                iconFile.set(project.file("packaging/icon.icns"))
+                iconFile.set(project.file(if (dev) "packaging/icon-dev.icns" else "packaging/icon.icns"))
             }
         }
         buildTypes.release.proguard { isEnabled.set(false) }

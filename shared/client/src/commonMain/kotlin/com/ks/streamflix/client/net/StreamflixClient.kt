@@ -44,13 +44,13 @@ interface HttpTransport {
 class ApiException(val status: Int, val code: String) : Exception("$status $code")
 
 /** A server address, normalised: `http://host:port` with no slash at the end. */
-fun normaliseServer(input: String): String? {
+fun normaliseServer(input: String, defaultPort: Int = DiscoveryApi.PORT): String? {
     var s = input.trim().trimEnd('/')
     if (s.isEmpty()) return null
     if (!s.startsWith("http://") && !s.startsWith("https://")) s = "http://$s"
     val hostPart = s.substringAfter("://").substringBefore('/')
     if (hostPart.isEmpty()) return null
-    if (':' !in hostPart.substringAfterLast(']')) s = s.replaceFirst(hostPart, "$hostPart:${DiscoveryApi.PORT}")
+    if (':' !in hostPart.substringAfterLast(']')) s = s.replaceFirst(hostPart, "$hostPart:$defaultPort")
     return s
 }
 

@@ -2,6 +2,7 @@ package com.ks.streamflix.client
 
 import androidx.compose.runtime.Composable
 import com.ks.streamflix.api.DeviceProfile
+import com.ks.streamflix.api.DiscoveryApi
 import com.ks.streamflix.client.net.HttpTransport
 import com.ks.streamflix.client.settings.SettingsStore
 
@@ -35,6 +36,8 @@ interface PlatformHost {
     /** The system's preferred languages (BCP 47), for "Same as the system". */
     val preferredLanguages: List<String>
     val appVersion: String
+    /** A DEV build: it uses [DiscoveryApi.DEV_PORT] and connects to DEV servers only. */
+    val isDev: Boolean get() = false
 
     /** Servers answering on the home network within a moment. */
     suspend fun discover(): List<FoundServer>

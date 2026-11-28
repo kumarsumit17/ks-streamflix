@@ -67,6 +67,12 @@ project(":desktop:windows") { pluginManager.withPlugin("org.jetbrains.kotlin.jvm
 // TV_CODE_OFFSET, which also stops the phone build being installed over the TV build.
 val TV_CODE_OFFSET = 1_000_000_000
 
+// ---- DEV and production side by side (specs/dev-variant.md) ----------------------------------------
+// -PksVariant=dev (the release workflow's manual run) builds the DEV variant, which installs next to
+// the production app and shares nothing with it; -PksDevVersion=X.Y.Z-dev+<commit> is its version.
+val devVariant = providers.gradleProperty("ksVariant").orNull == "dev"
+extra["ksDev"] = devVariant
+
 subprojects {
     plugins.withId("com.android.application") {
         val tv = path == ":tv:google-tv"
@@ -86,8 +92,13 @@ subprojects {
                 minSdk = catalog.findVersion("androidMinSdk").get().requiredVersion.toInt()
                 targetSdk = catalog.findVersion("androidTargetSdk").get().requiredVersion.toInt()
                 versionCode = (rootProject.extra["appVersionCode"] as Int) + if (tv) TV_CODE_OFFSET else 0
-                versionName = appVersionNameOf(if (tv) "google-tv" else "android")
+                versionName = rootProject.extra["appReportedVersion.${if (tv) "google-tv" else "android"}"] as String
+                if (devVariant) applicationIdSuffix = ".dev"
+                manifestPlaceholders["appLabel"] = if (devVariant) "KS StreamFlix DEV" else "KS StreamFlix"
+                manifestPlaceholders["tvBanner"] = if (devVariant) "@drawable/tv_banner_dev" else "@drawable/tv_banner"
             }
+            // The DEV icon colours and TV banner; app resources win over :shared:client's.
+            if (devVariant) sourceSets.getByName("main").res.srcDir(rootProject.file("shared/android-dev/res"))
             signingValue("SIGNING_STORE_FILE", "storeFile")?.let { storePath ->
                 signingConfigs.create("release") {
                     storeFile = file(storePath)
@@ -152,7 +163,15 @@ val appVersionCode: Int =
         ?: git("rev-list", "--count", "HEAD")?.toIntOrNull()
         ?: 1
 
-for (platform in listOf("android", "google-tv", "mac", "windows")) extra["appVersionName.$platform"] = appVersionNameOf(platform)
+// appVersionName.<platform> is X.Y.Z (the installers need it); appReportedVersion.<platform> is what
+// the app calls itself: the DEV version in a DEV build.
+for (platform in listOf("android", "google-tv", "mac", "windows")) {
+    val version = appVersionNameOf(platform)
+    extra["appVersionName.$platform"] = version
+    extra["appReportedVersion.$platform"] =
+        if (!devVariant) version
+        else providers.gradleProperty("ksDevVersion").orNull?.takeIf { it.isNotBlank() } ?: "${version.substringBefore('-')}-dev"
+}
 extra["appVersionCode"] = appVersionCode
 
 // ---- Size budgets (specs/quality-budgets.md) ------------------------------------------------------

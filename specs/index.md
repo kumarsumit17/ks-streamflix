@@ -5,6 +5,7 @@ okf_version: "0.2"
 # Product specifications
 
 * [Overview](overview.md) - What KS StreamFlix is for, the platforms it runs on and its tech stack.
+* [DEV builds side by side with production](dev-variant.md) - How a DEV build of KS StreamFlix (-PksVariant=dev) installs and runs next to the production app on every platform without touching it.
 * [App updates](app-updates.md) - How KS StreamFlix finds a newer version of itself on GitHub, shows it in Settings and installs it, using the suite's shared app-update helpers.
 
 # Plans

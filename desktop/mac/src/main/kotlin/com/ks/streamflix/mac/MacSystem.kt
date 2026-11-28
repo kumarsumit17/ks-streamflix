@@ -1,6 +1,7 @@
 package com.ks.streamflix.mac
 
 import com.ks.streamflix.client.DesktopSystem
+import com.ks.streamflix.client.DesktopVariant
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -12,7 +13,8 @@ import java.nio.file.Paths
  */
 class MacSystem(
     private val launcher: String? = DesktopSystem.installedLauncher(),
-    private val agentFile: Path = Paths.get(System.getProperty("user.home"), "Library", "LaunchAgents", "$LABEL.plist"),
+    private val agentFile: Path = Paths.get(System.getProperty("user.home"), "Library", "LaunchAgents", "${DesktopVariant.current.id}.plist"),
+    private val label: String = DesktopVariant.current.id,
 ) : DesktopSystem {
     private var caffeinate: Process? = null
 
@@ -31,7 +33,7 @@ class MacSystem(
 
     private fun write(launcher: String) {
         Files.createDirectories(agentFile.parent)
-        Files.writeString(agentFile, launchAgent(launcher))
+        Files.writeString(agentFile, launchAgent(launcher, label))
     }
 
     @Synchronized
@@ -48,10 +50,8 @@ class MacSystem(
     }
 
     companion object {
-        const val LABEL = "com.ks.streamflix"
-
         /** The LaunchAgent: runs the app's launcher at login, without its window. */
-        fun launchAgent(launcher: String): String {
+        fun launchAgent(launcher: String, label: String): String {
             fun xml(s: String) = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             return """
                 |<?xml version="1.0" encoding="UTF-8"?>
@@ -59,7 +59,7 @@ class MacSystem(
                 |<plist version="1.0">
                 |<dict>
                 |    <key>Label</key>
-                |    <string>$LABEL</string>
+                |    <string>$label</string>
                 |    <key>ProgramArguments</key>
                 |    <array>
                 |        <string>${xml(launcher)}</string>

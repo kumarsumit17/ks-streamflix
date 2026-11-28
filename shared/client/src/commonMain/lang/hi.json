@@ -29,6 +29,7 @@
   "client.error.address": "सर्वर का पता दर्ज करें।",
   "client.error.version": "इस सर्वर के लिए ऐप का दूसरा वर्ज़न चाहिए।",
   "client.error.setupNeeded": "यह सर्वर अभी सेट अप नहीं हुआ है। मालिक का अकाउंट बनाने के लिए इसे ब्राउज़र में खोलें।",
+  "client.error.devOnly": "यह DEV ऐप सिर्फ़ DEV सर्वर से कनेक्ट होता है।",
   "client.error.noPlayer": "कोई प्लेयर यह वीडियो नहीं खोल सका।",
   "client.player.error": "यह वीडियो इस डिवाइस पर नहीं चल सकता।",
   "client.desktop.server": "इस कंप्यूटर का सर्वर",

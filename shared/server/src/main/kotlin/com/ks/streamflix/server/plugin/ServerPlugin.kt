@@ -88,8 +88,11 @@ class PluginContext internal constructor(
 /** The name of the core's sign-in check for `authenticate(...)`. */
 const val SESSION_AUTH = "session"
 
+/** Browsers share cookies between ports of one host, so a DEV build's server names its own. */
+private val COOKIE_SUFFIX = if (System.getProperty("streamflix.variant") == "dev") "_dev" else ""
+
 /** The cookie the browser pages keep the session token in. */
-const val SESSION_COOKIE = "sf_session"
+val SESSION_COOKIE = "sf_session$COOKIE_SUFFIX"
 
 /** The cookie the browser pages keep the language choice in (empty or missing: follow the browser). */
-const val LANG_COOKIE = "sf_lang"
+val LANG_COOKIE = "sf_lang$COOKIE_SUFFIX"

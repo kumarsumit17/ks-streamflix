@@ -119,11 +119,14 @@ class AppViewModel(val host: PlatformHost, plugins: List<ClientPlugin>) : ViewMo
     }
 
     fun connect(address: String) {
-        val server = normaliseServer(address) ?: return _state.update { it.copy(error = "client.error.address") }
+        val port = if (host.isDev) com.ks.streamflix.api.DiscoveryApi.DEV_PORT else com.ks.streamflix.api.DiscoveryApi.PORT
+        val server = normaliseServer(address, port) ?: return _state.update { it.copy(error = "client.error.address") }
         val c = StreamflixClient(host.transport, server)
         work {
             val info = c.info()
             if (info.apiVersion != com.ks.streamflix.api.ApiV1.VERSION) throw ApiException(0, "client.error.version")
+            // A DEV app never reads or changes a production server's data (specs/dev-variant.md).
+            if (host.isDev && !info.dev) throw ApiException(0, "client.error.devOnly")
             if (info.setupNeeded) throw ApiException(0, "client.error.setupNeeded")
             client = c
             settings.putString(SettingKeys.SERVER, server)

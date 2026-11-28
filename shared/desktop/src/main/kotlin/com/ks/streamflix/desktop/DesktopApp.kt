@@ -29,6 +29,7 @@ import androidx.compose.ui.window.isTraySupported
 import androidx.compose.ui.window.rememberTrayState
 import com.ks.streamflix.client.DesktopSystem
 import com.ks.streamflix.client.DesktopSystemPlugin
+import com.ks.streamflix.client.DesktopVariant
 import com.ks.streamflix.client.ProvideLanguage
 import com.ks.streamflix.client.resources.client_desktop_tray_open
 import com.ks.streamflix.client.resources.client_desktop_tray_quit
@@ -82,7 +83,8 @@ import java.nio.file.Path
  */
 fun runDesktopApp(args: Array<String>, dataDir: Path, serverPlugins: List<ServerPlugin>, clientPlugins: List<ClientPlugin>, system: DesktopSystem) {
     val background = DesktopSystem.BACKGROUND_FLAG in args
-    val options = ServerMain.parse(args.filter { it != DesktopSystem.BACKGROUND_FLAG }.toTypedArray(), dataDir)
+    val variant = DesktopVariant.current
+    val options = ServerMain.parse(args.filter { it != DesktopSystem.BACKGROUND_FLAG }.toTypedArray(), dataDir, variant.dev)
     if (options.headless) return ServerMain.runHeadless(options, serverPlugins)
     val (server, port) = ServerMain.start(options, serverPlugins)
     val local = "http://localhost:$port"
@@ -139,7 +141,7 @@ fun runDesktopApp(args: Array<String>, dataDir: Path, serverPlugins: List<Server
                 Tray(
                     icon = TrayIcon,
                     state = trayState,
-                    tooltip = stringResource(Res.string.client_desktop_tray_tooltip),
+                    tooltip = stringResource(Res.string.client_desktop_tray_tooltip) + if (variant.dev) " DEV" else "",
                     onAction = { visible = true },
                     menu = {
                         Item(stringResource(Res.string.client_desktop_tray_open)) { visible = true }
@@ -161,7 +163,7 @@ fun runDesktopApp(args: Array<String>, dataDir: Path, serverPlugins: List<Server
                         }
                     }
                 },
-                title = "KS StreamFlix",
+                title = variant.appName,
                 // The app's own icon (title bar, Windows taskbar), never the framework's default.
                 icon = AppIcon,
                 state = rememberWindowState(size = DpSize(1100.dp, 760.dp)),
@@ -176,13 +178,16 @@ fun runDesktopApp(args: Array<String>, dataDir: Path, serverPlugins: List<Server
 private const val LOGIN_DEFAULT_SET = "desktop.startAtLogin.defaultSet"
 private const val TRAY_HINT_SHOWN = "desktop.trayHintShown"
 
-/** The app icon, as on the installers (packaging/icon.icns, icon.ico): a play mark on a dark rounded square. */
+/** The DEV build's icon colour (as packaging/icon-dev). */
+private val DevOrange = Color(0xFFC2410C)
+
+/** The app icon, as on the installers (packaging/icon.icns, icon.ico): a play mark on a dark rounded square (orange in a DEV build). */
 private object AppIcon : Painter() {
     override val intrinsicSize = Size(256f, 256f)
     override fun DrawScope.onDraw() {
         val w = size.width
         val h = size.height
-        drawRoundRect(Color(0xFF18181B), cornerRadius = androidx.compose.ui.geometry.CornerRadius(w * 0.18f, h * 0.18f))
+        drawRoundRect(if (DesktopVariant.current.dev) DevOrange else Color(0xFF18181B), cornerRadius = androidx.compose.ui.geometry.CornerRadius(w * 0.18f, h * 0.18f))
         drawPath(
             DrawPath().apply {
                 moveTo(w * 0.40f, h * 0.30f)
@@ -199,7 +204,7 @@ private object AppIcon : Painter() {
 private object TrayIcon : Painter() {
     override val intrinsicSize = Size(64f, 64f)
     override fun DrawScope.onDraw() {
-        drawCircle(Color(0xFF71717A))
+        drawCircle(if (DesktopVariant.current.dev) DevOrange else Color(0xFF71717A))
         val w = size.width
         val h = size.height
         drawPath(

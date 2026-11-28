@@ -19,9 +19,9 @@ object Budget {
 }
 
 /** A server on a free local port with fast password hashing, and a small HTTP client for it. */
-class TestServer(val dataDir: Path = Files.createTempDirectory("sf-data"), plugins: List<ServerPlugin> = emptyList()) : AutoCloseable {
+class TestServer(val dataDir: Path = Files.createTempDirectory("sf-data"), plugins: List<ServerPlugin> = emptyList(), dev: Boolean = false) : AutoCloseable {
     val server = StreamflixServer(
-        ServerConfig(dataDir = dataDir, port = 0, host = "127.0.0.1", name = "test", passwordIterations = 1_000),
+        ServerConfig(dataDir = dataDir, port = 0, host = "127.0.0.1", name = "test", passwordIterations = 1_000, dev = dev),
         plugins,
     )
     val port = server.start()

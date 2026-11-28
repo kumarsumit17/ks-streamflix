@@ -34,6 +34,8 @@ data class ServerInfo(
     val apiVersion: Int = ApiV1.VERSION,
     /** True until the owner account has been created. */
     val setupNeeded: Boolean,
+    /** A DEV build's server (specs/dev-variant.md). */
+    val dev: Boolean = false,
 )
 
 @Serializable

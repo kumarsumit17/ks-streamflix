@@ -11,6 +11,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class GitHubUpdaterTest {
@@ -72,6 +73,13 @@ class GitHubUpdaterTest {
         assertTrue(dev.isDevBuild)
         dev.setAutoCheck(false)
         assertFalse(updater("1.0.0", UpdatePlatform.ANDROID, { "" }, settings).autoCheck.value, "the switch is remembered")
+    }
+
+    @Test fun aDevBuildIsNeverOfferedARelease() {
+        val u = updater("1.4.0-dev+abc1234", UpdatePlatform.MACOS_ARM64, { release("9.0.0") })
+        assertTrue(u.isDevBuild)
+        u.check(silent = false)
+        assertIs<UpdateStatus.UpToDate>(u.status.value)
     }
 
     @Test fun downloadsOnlyOverHttps() {
