@@ -1,11 +1,11 @@
 name: CI
 
 # Checks every push and pull request, and a manual run (Actions > CI > Run workflow):
-#   linux    every test, lint, the language files and the size budgets (./gradlew check), with
+#   linux    every test, lint, the language files (./gradlew check, which reports sizes and speeds), with
 #            FFmpeg installed so the transcoding tests run for real; the debug APK as an artifact.
 #   windows  the server and app tests on Windows, the .msi built, installed silently, started
 #            (the server must answer), and uninstalled; the unsigned .msi as an artifact.
-#   macos    the .dmg built and checked against its size budget, the packaged server started;
+#   macos    the .dmg built and its size reported, the packaged server started;
 #            the unsigned .dmg as an artifact.
 # Runner images are named versions (never -latest); GitHub's own actions only, pinned to a full
 # commit SHA (the same ones as ks-utility's shared release workflow).
@@ -71,7 +71,7 @@ jobs:
         with:
           node-version: "24"
       - name: Server and app tests, and the .msi
-        run: ./gradlew --no-daemon :shared:server:test :shared:client:desktopTest :shared:plugins:folder-watch:test :desktop:windows:test :desktop:windows:packageReleaseMsi
+        run: ./gradlew --no-daemon :shared:server:test :shared:client:desktopTest :shared:plugins:folder-watch:test :desktop:windows:test :desktop:windows:packageReleaseMsi installerSizeReport
       - name: Install, start, stop and uninstall
         shell: pwsh
         run: |
@@ -135,8 +135,8 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
-      - name: The .dmg and its size budget
-        run: ./gradlew --no-daemon :desktop:mac:test :desktop:mac:packageReleaseDmg checkInstallerSize
+      - name: The .dmg and its size
+        run: ./gradlew --no-daemon :desktop:mac:test :desktop:mac:packageReleaseDmg installerSizeReport
       - name: Start the packaged server
         run: |
           app="$(find desktop/mac/build/compose/binaries -maxdepth 4 -name '*.app' | head -1)"

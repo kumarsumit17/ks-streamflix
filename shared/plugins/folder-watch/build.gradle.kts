@@ -1,5 +1,3 @@
-import java.util.Properties
-
 // Plugin `folder-watch`: rescans a library soon after files in its folders change.
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -21,6 +19,4 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-    val budgets = Properties().apply { rootProject.file("quality-budgets.properties").inputStream().use(::load) }
-    budgets.stringPropertyNames().forEach { systemProperty("budget.$it", providers.gradleProperty("budget.$it").orNull ?: budgets.getProperty(it)) }
 }

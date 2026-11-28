@@ -51,7 +51,7 @@ jobs:
       tv-module: ":tv:google-tv"
       mac-module: ":desktop:mac"
       windows-module: ":desktop:windows"
-      # Every test, lint, the language files and the size budgets, before the Android build.
+      # Every test, lint and the language files, before the Android build.
       test-tasks: "check"
       desktop-test-tasks: ":shared:server:test :shared:client:desktopTest"
     secrets:

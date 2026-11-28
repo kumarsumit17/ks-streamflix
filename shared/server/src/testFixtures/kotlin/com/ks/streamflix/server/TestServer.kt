@@ -13,9 +13,17 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.random.Random
 
-/** Budgets from quality-budgets.properties, passed by Gradle as system properties. */
-object Budget {
-    fun long(key: String): Long = System.getProperty("budget.$key")?.toLong() ?: error("No budget $key: run through Gradle")
+/**
+ * A measured value, reported by the build's `measurements` task and never failing it
+ * (specs/quality-budgets.md). Without Gradle it is only printed.
+ */
+object Measurement {
+    fun record(name: String, value: String) {
+        println("measured $name: $value")
+        val dir = System.getProperty("measurements.dir") ?: return
+        Files.createDirectories(Path.of(dir))
+        Files.writeString(Path.of(dir, "$name.txt"), value)
+    }
 }
 
 /** A server on a free local port with fast password hashing, and a small HTTP client for it. */

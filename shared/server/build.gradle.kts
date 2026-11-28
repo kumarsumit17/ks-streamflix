@@ -1,5 +1,3 @@
-import java.util.Properties
-
 // The server core: libraries, scanning, database, the owner account, the HTTP API, direct play
 // and the plugin API. Nothing else: every other feature is a plugin (shared/plugins/<id>).
 // Used by the macOS and Windows apps.
@@ -14,7 +12,7 @@ plugins {
 kotlin { jvmToolchain(17) }
 
 // Ktor 3.6's server core pulls in the HTTP client and Kotlin reflection, which this server does
-// not use (its OpenAPI parts are needed by content negotiation, so they stay); leaving them out keeps the apps small (quality budgets).
+// not use (its OpenAPI parts are needed by content negotiation, so they stay); leaving them out keeps the apps small.
 configurations.matching { it.name in setOf("compileClasspath", "runtimeClasspath", "testCompileClasspath", "testRuntimeClasspath", "testFixturesCompileClasspath", "testFixturesRuntimeClasspath") }.configureEach {
     exclude(group = "io.ktor", module = "ktor-client-core")
     exclude(group = "io.ktor", module = "ktor-client-core-jvm")
@@ -50,18 +48,10 @@ sqldelight {
     }
 }
 
-// ---- Quality budgets (specs/quality-budgets.md): the tests read them as system properties ------
-val budgets = Properties().apply {
-    rootProject.file("quality-budgets.properties").inputStream().use(::load)
-}
 tasks.test {
     useJUnitPlatform()
-    // Failures show their message (a budget test says what it measured).
+    // Failures show their message.
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
-    inputs.file(rootProject.file("quality-budgets.properties"))
-    budgets.stringPropertyNames().forEach { key ->
-        systemProperty("budget.$key", providers.gradleProperty("budget.$key").orNull ?: budgets.getProperty(key))
-    }
 }
 
 // ---- Interface text: the API's error texts and ks-utility's shared catalogue --------------------

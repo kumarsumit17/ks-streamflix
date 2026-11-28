@@ -20,5 +20,5 @@ jobs:
     with:
       kind: kotlin
       java: true
-      # Every test, lint, the language files and the size budgets (FFmpeg tests skip without FFmpeg).
+      # Every test, lint and the language files (FFmpeg tests skip without FFmpeg).
       test: ./gradlew --no-daemon check

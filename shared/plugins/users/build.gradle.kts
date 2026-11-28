@@ -1,5 +1,3 @@
-import java.util.Properties
-
 // Plugin `users`: more users, the libraries each one sees, and an age limit from certifications.
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -23,8 +21,6 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-    val budgets = Properties().apply { rootProject.file("quality-budgets.properties").inputStream().use(::load) }
-    budgets.stringPropertyNames().forEach { systemProperty("budget.$it", providers.gradleProperty("budget.$it").orNull ?: budgets.getProperty(it)) }
 }
 
 // Language files, packed at lang/users (the plugin's id) and checked.

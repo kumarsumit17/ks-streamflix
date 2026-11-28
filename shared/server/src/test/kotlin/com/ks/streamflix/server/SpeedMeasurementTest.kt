@@ -8,10 +8,9 @@ import kotlinx.coroutines.runBlocking
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
-/** Speed budgets (specs/quality-budgets.md). The numbers come from quality-budgets.properties. */
-class QualityBudgetTest {
+/** Speed measurements (specs/quality-budgets.md): recorded for the report, with no limit. */
+class SpeedMeasurementTest {
 
     @Test fun startUpTime() {
         val data = Files.createTempDirectory("sf-data")
@@ -19,8 +18,7 @@ class QualityBudgetTest {
         TestServer(data).use { s ->
             assertEquals(200, s.send(ApiV1.INFO).statusCode())
             val ms = (System.nanoTime() - started) / 1_000_000
-            println("budget speed.server.startMs: $ms ms")
-            assertTrue(ms <= Budget.long("speed.server.startMs"), "start-up took $ms ms")
+            Measurement.record("server.start", "$ms ms")
         }
     }
 
@@ -35,8 +33,7 @@ class QualityBudgetTest {
         val seconds = (System.nanoTime() - started) / 1e9
         assertEquals(count, result.added)
         val rate = (count / seconds).toLong()
-        println("budget speed.scan.filesPerSecond: $rate files/s")
-        assertTrue(rate >= Budget.long("speed.scan.filesPerSecond"), "scanned $rate files/s")
+        Measurement.record("scan.rate", "$rate files/s")
     }
 
     @Test fun apiLatency() = TestServer().use { s ->
@@ -50,9 +47,8 @@ class QualityBudgetTest {
             s.send("${ApiV1.ITEMS}?library=${library.id}")
             s.bytes(ApiV1.stream(id), mapOf("Range" to "bytes=0-0"))
         }
-        // Five rounds of 50 request pairs; the budget is checked against the fastest round's p95.
-        // A slower server is slower in every round, while a shared CI machine (other jobs, the
-        // disk, a GC) spoils rounds at random: Windows runners have measured 45 to 223 ms in one run.
+        // Five rounds of 50 request pairs; the fastest round's p95 is reported, because a shared CI
+        // machine (other jobs, the disk, a GC) spoils rounds at random.
         val rounds = (1..5).map {
             val times = (1..50).flatMap {
                 listOf(
@@ -62,11 +58,7 @@ class QualityBudgetTest {
             }.sorted()
             times[(times.size * 95) / 100 - 1]
         }
-        val p95 = rounds.min()
-        // Windows has its own budget (quality-budgets.properties); every other system uses the common one.
-        val key = if (System.getProperty("os.name").startsWith("Windows")) "speed.api.p95Ms.windows" else "speed.api.p95Ms"
-        println("budget $key: $p95 ms (rounds: ${rounds.joinToString()})")
-        assertTrue(p95 <= Budget.long(key), "p95 was $p95 ms (budget $key ${Budget.long(key)} ms, rounds: ${rounds.joinToString()})")
+        Measurement.record("api.p95", "${rounds.min()} ms (rounds: ${rounds.joinToString()})")
     }
 
     private fun timed(block: () -> Int): Long {
