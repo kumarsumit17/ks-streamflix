@@ -1,3 +1,7 @@
+# 2026-11-28
+
+* **Added**: [KS JaiPlayer as the default player](plan-jaiplayer-default.md): plan for playing through KS JaiPlayer by default (fallbacks, the DEV variant, future asks of JaiPlayer); waits for the owner's approval, no code changed.
+
 # 2026-11-27
 
 * **Update**: `ks-utility` moved to `v0.18.4`.

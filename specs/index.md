@@ -17,6 +17,7 @@ okf_version: "0.2"
 * [Casting plan (DLNA and Chromecast)](plan-casting.md) - Playing StreamFlix items on other screens: as a DLNA/UPnP media server for smart TVs, and by handing items to KS Beam for DLNA renderers and Google Cast receivers.
 * [Remote access plan](plan-remote-access.md) - Reaching the home server from outside the home safely: off by default, HTTPS with a certificate, sign-in hardening, and the ways in (port forwarding, a VPN, or a relay), with their trade-offs.
 * [Per-platform optimization plan](plan-per-platform.md) - Approved plan for making each KS StreamFlix build (macOS, Windows, Android phone, Google TV) its own app tuned to its OS, with an audit of each build today and what changes per OS.
+* [KS JaiPlayer as the default player](plan-jaiplayer-default.md) - Plan, waiting for the owner's approval, for StreamFlix to play through KS JaiPlayer by default on every platform, with its fallbacks, the DEV variant, and what StreamFlix will later need from JaiPlayer.
 
 # Policies
 
