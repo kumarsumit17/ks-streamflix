@@ -16,6 +16,7 @@ The KS-Suite [release cycle](https://github.com/kumasumit/ks-suite/blob/dev/spec
 | Icon and TV banner | dark zinc | orange, marked DEV (`shared/android-dev/res`, `packaging/icon-dev.*`) |
 | macOS bundle ID and LaunchAgent label | `com.ks.streamflix` | `com.ks.streamflix.dev` |
 | Windows MSI upgrade code | `b7e3c2d1-5a64-4f0e-9d8b-3c2a1f6e4b57` | `2f9c6a14-8d3b-4c71-a5e2-94b07d1c3e68` |
+| Start at login | on by default | off by default (Settings can turn it on) |
 | Windows `Run` value | KS StreamFlix | KS StreamFlix DEV |
 | Server data folder (database, plugin data, caches) | `…/KS StreamFlix` | `…/KS StreamFlix DEV` (`~/Library/Application Support`, `%APPDATA%`) |
 | Desktop app settings (`java.util.prefs`) | `com/ks/streamflix/client` | `com/ks/streamflix-dev/client` |

@@ -19,6 +19,7 @@ import com.ks.streamflix.client.resources.client_desktop_section
 import com.ks.streamflix.client.resources.client_desktop_start_at_login
 import com.ks.streamflix.client.resources.client_desktop_start_at_login_hint
 import com.ks.streamflix.client.resources.client_desktop_start_at_login_unavailable
+import com.ks.streamflix.client.settings.SettingsStore
 import com.ks.streamflix.client.ui.ChoiceButton
 import org.jetbrains.compose.resources.stringResource
 
@@ -44,6 +45,18 @@ interface DesktopSystem {
         const val BACKGROUND_FLAG = "--background"
     }
 }
+
+/**
+ * Start at login is on by default in production (owner's decision), set once; Settings can turn it
+ * off. A DEV build never turns it on by itself (specs/dev-variant.md).
+ */
+fun applyStartAtLoginDefault(system: DesktopSystem, settings: SettingsStore, variant: DesktopVariant) {
+    if (variant.dev || !system.canStartAtLogin || settings.getString(LOGIN_DEFAULT_SET) != null) return
+    runCatching { system.setStartAtLogin(true) }
+    settings.putString(LOGIN_DEFAULT_SET, "true")
+}
+
+private const val LOGIN_DEFAULT_SET = "desktop.startAtLogin.defaultSet"
 
 /** Settings ▸ On this computer: start at login, and a note that the computer stays awake while someone watches. */
 class DesktopSystemPlugin(private val system: DesktopSystem) : ClientPlugin {

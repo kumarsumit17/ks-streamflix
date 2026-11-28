@@ -55,6 +55,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.ks.streamflix.client.DesktopHost
 import com.ks.streamflix.client.PrefsSettings
+import com.ks.streamflix.client.applyStartAtLoginDefault
 import com.ks.streamflix.client.plugin.ClientPlugin
 import com.ks.streamflix.client.resources.Res
 import com.ks.streamflix.client.resources.client_desktop_addresses
@@ -91,11 +92,7 @@ fun runDesktopApp(args: Array<String>, dataDir: Path, serverPlugins: List<Server
     val settings = PrefsSettings()
     // The first time, the app connects to this computer's own server.
     if (settings.getString(SettingKeys.SERVER) == null) settings.putString(SettingKeys.SERVER, local)
-    // Start at login is on by default (owner's decision), set once; Settings can turn it off.
-    if (system.canStartAtLogin && settings.getString(LOGIN_DEFAULT_SET) == null) {
-        runCatching { system.setStartAtLogin(true) }
-        settings.putString(LOGIN_DEFAULT_SET, "true")
-    }
+    applyStartAtLoginDefault(system, settings, variant)
     // The computer stays awake while someone watches (checked every 20 s).
     val awakeTimer = Timer("keep-awake", true).apply {
         schedule(timerTask { runCatching { system.keepAwake(server.streaming.isActive) } }, 5_000, 20_000)
@@ -175,7 +172,6 @@ fun runDesktopApp(args: Array<String>, dataDir: Path, serverPlugins: List<Server
     }
 }
 
-private const val LOGIN_DEFAULT_SET = "desktop.startAtLogin.defaultSet"
 private const val TRAY_HINT_SHOWN = "desktop.trayHintShown"
 
 /** The DEV build's icon colour (as packaging/icon-dev). */

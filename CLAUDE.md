@@ -34,7 +34,7 @@ A free, open-source home media server with its own apps: the server on macOS and
 
 ## Platform constraints (Android and Google TV apps)
 - **D-pad first.** Every screen must be usable with the remote's arrow, select, and back keys. Restore focus to the last item when returning to a screen. Back from the player returns to the exact row and item.
-- **The desktop server runs until Quit:** closing the window leaves it in the menu bar / notification area; start at login (on by default, installed app only) and staying awake while someone watches are each OS's own (`desktop/mac/MacSystem.kt`, `desktop/windows/WindowsSystem.kt`, behind `DesktopSystem`). See `specs/constraints.md`.
+- **The desktop server runs until Quit:** closing the window leaves it in the menu bar / notification area; start at login (on by default in production, off in DEV; installed app only) and staying awake while someone watches are each OS's own (`desktop/mac/MacSystem.kt`, `desktop/windows/WindowsSystem.kt`, behind `DesktopSystem`). See `specs/constraints.md`.
 - **Lean means lean.** Keep the release APK small (its size is reported, not limited). Ask before adding a dependency. Prefer what's already in Media3, Compose, and Room.
 - **Low-RAM TVs.** Load images at their display size. Never keep a full-resolution bitmap in a row. Cap the decoded-image cache.
 - **10-foot UI.** Overscan-safe margins are 48dp horizontal, 27dp vertical.
