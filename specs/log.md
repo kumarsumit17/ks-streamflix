@@ -1,4 +1,5 @@
 # 2026-11-28
+- progress: JaiPlayer is released first (owner); next, the JaiPlayer default-player plan after 1.12.0. Pull request #1 stays open.
 - progress: CI passes at `7809943`; the session moved from the Warp CLI to the desktop app.
 
 * **Update**: [Recorded measurements](quality-budgets.md): why the installer figures differ.

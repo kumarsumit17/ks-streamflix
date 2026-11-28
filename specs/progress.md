@@ -11,7 +11,7 @@ Updated 2026-11-28. How it is kept: KS-Suite [working method](https://github.com
 
 ## Phase
 
-In the suite's active group. The first DEV build (1.4.1) is made and checked; waiting for the owner's manual test and approval.
+In the suite's active group. Waiting for KS JaiPlayer 1.12.0: by the owner's decision (2026-11-28) JaiPlayer is released first and StreamFlix is then tested with it. DEV build 1.4.1 is made and checked.
 
 ## Releases
 
@@ -30,7 +30,7 @@ In the suite's active group. The first DEV build (1.4.1) is made and checked; wa
 - The macOS DEV app, started with `--background`, set no login item.
 - DEV phone app: finds only the DEV server, refuses the production server, signs in, browses, plays a video; Settings shows `1.4.1-dev+88cc38e` in English and Hindi.
 
-**CI:** passes on Linux, Windows and macOS at `7809943` (push and pull request); that commit and `726fb74` change only a test and docs since the DEV build.
+**CI:** passes at `cbc4e3b` (push and pull request); the commits since the DEV build change only a test and docs.
 
 **Not checked (the owner):** the Pixel 11, the macOS DEV window and tray, Google TV, the Windows `.msi`.
 
@@ -43,7 +43,7 @@ In the suite's active group. The first DEV build (1.4.1) is made and checked; wa
 
 ## Pending
 
-- [KS JaiPlayer as the default player](plan-jaiplayer-default.md): approved, not started.
+- [KS JaiPlayer as the default player](plan-jaiplayer-default.md): approved, not started; next, once JaiPlayer 1.12.0 is released.
 - [Per-platform optimization plan](plan-per-platform.md): steps 1–4 built (step 4 unreleased), step 5 onwards open.
 
 ## Decisions and blockers
@@ -53,4 +53,4 @@ In the suite's active group. The first DEV build (1.4.1) is made and checked; wa
 
 ## Next action
 
-The owner tests the DEV build by hand and approves (or not) the release pull request, naming the platforms. After approval: fast-forward `main`, tag those platforms, publish and verify. Never merge or tag without it.
+Wait for KS JaiPlayer 1.12.0, then build the approved [JaiPlayer default-player plan](plan-jaiplayer-default.md). [Pull request #1](https://github.com/kumasumit/ks-streamflix/pull/1) stays open and unmerged: no merge, tag or release without the owner's approval.
