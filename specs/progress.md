@@ -11,7 +11,7 @@ Updated 2026-11-28. How it is kept: KS-Suite [working method](https://github.com
 
 ## Phase
 
-In the suite's active group. Waiting for KS JaiPlayer 1.12.0: by the owner's decision (2026-11-28) JaiPlayer is released first and StreamFlix is then tested with it. DEV build 1.4.1 is made and checked.
+**Paused** (owner, 2026-11-28) until JaiPlayer is complete and the owner authorizes StreamFlix. DEV build 1.4.1 is made and checked.
 
 ## Releases
 
@@ -43,7 +43,7 @@ In the suite's active group. Waiting for KS JaiPlayer 1.12.0: by the owner's dec
 
 ## Pending
 
-- [KS JaiPlayer as the default player](plan-jaiplayer-default.md): approved, not started; next, once JaiPlayer 1.12.0 is released.
+- [KS JaiPlayer as the default player](plan-jaiplayer-default.md): approved, not started; **on hold** (owner, 2026-11-28).
 - [Per-platform optimization plan](plan-per-platform.md): steps 1–4 built (step 4 unreleased), step 5 onwards open.
 
 ## Decisions and blockers
@@ -53,4 +53,4 @@ In the suite's active group. Waiting for KS JaiPlayer 1.12.0: by the owner's dec
 
 ## Next action
 
-Wait for KS JaiPlayer 1.12.0, then build the approved [JaiPlayer default-player plan](plan-jaiplayer-default.md). [Pull request #1](https://github.com/kumasumit/ks-streamflix/pull/1) stays open and unmerged: no merge, tag or release without the owner's approval.
+Wait for the owner's authorization. Then integrate JaiPlayer's playback module per a specification from Claude Chat; the hand-off [plan](plan-jaiplayer-default.md) is on hold until then. [Pull request #1](https://github.com/kumasumit/ks-streamflix/pull/1) stays open and unmerged: no merge, tag or release without the owner's approval.

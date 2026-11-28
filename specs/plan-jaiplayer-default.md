@@ -7,6 +7,8 @@ tags: [plan, playback, jaiplayer, cross-repo]
 
 # KS JaiPlayer as the default player
 
+**On hold** (owner, 2026-11-28): StreamFlix is paused until JaiPlayer is complete and the owner authorizes it. Then JaiPlayer's playback module is integrated per a specification from Claude Chat; do not build this hand-off plan until then ([Progress](progress.md)).
+
 The owner decided on 2026-11-28 that StreamFlix plays through KS JaiPlayer by default. **Approved by the owner on 2026-11-28. It is built when the owner makes StreamFlix the active app** (KS-Suite [working method](https://github.com/kumasumit/ks-suite/blob/dev/specs/working-method.md)). The work is a feature, so it raises MINOR.
 
 ## Today
