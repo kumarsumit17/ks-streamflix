@@ -25,6 +25,8 @@ The owner's decision of 2026-11-28 replaces the quality-budget rule of 2026-11-2
 
 The `measurements` task prints the values at the end of the tests and size reports, and adds them to the run's summary on GitHub Actions. Each value is the latest one measured in `build/measurements/`; a clean CI machine has only that run's.
 
+**Installer sizes since FFmpeg is bundled** (2026-11-28, CI, MB of 1,048,576 bytes): dmg 83.7 and msi 75.8, against 75.7 and 65.8 in v1.3.1. The growth is the bundled FFmpeg. The older figure 81.0 (dmg) was a build on the owner’s Mac, not CI (CI measured 83.7 on the same commit), and 69 (msi) is v1.3.1’s 65.8 counted in millions of bytes.
+
 ## Stability tests
 
 These are correctness tests and fail the build like any other, with their numbers in the test code (`StabilityTest`): 16 parallel range requests must all return the right bytes, and 5 start, scan, stream and stop cycles must leave no file handle open.

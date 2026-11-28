@@ -1,5 +1,6 @@
 # 2026-11-28
 
+* **Update**: [Recorded measurements](quality-budgets.md): why the installer figures differ.
 * **Update**: [DEV builds side by side](dev-variant.md), [Constraints](constraints.md) and `CLAUDE.md`: a DEV build does not turn start at login on by itself.
 * **Update**: [App updates](app-updates.md): a DEV build's Settings shows its DEV version.
 * **Update**: [Recorded measurements](quality-budgets.md) (was Quality budgets): by the owner's decision sizes and speeds are reported and no longer fail the build; stability tests stay. [Constraints](constraints.md), the [Media server plan](media-server-plan.md), the other plans and `CLAUDE.md` follow.
