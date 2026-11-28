@@ -43,7 +43,7 @@ Dependencies: no new library on desktop (JNA is not used today; where a native c
   - "Start at login" in Settings, through a LaunchAgent plist in `~/Library/LaunchAgents` (no helper app, no new dependency); the app starts hidden to the menu bar.
   - Whether the Dock icon can go away while only the menu-bar item is open is checked in the step (AWT fixes `apple.awt.UIElement` at start-up); if not, a start at login launches with it set.
   - **Stay awake while streaming**: `caffeinate -i -w <pid>` started while at least one stream or HLS session is active and stopped after it; the display may sleep, the Mac does not.
-- **Transcoding with nothing to install**: bundle an **LGPL FFmpeg build** (no GPL parts, so no `libx264`) inside the app, arm64 and Intel, with VideoToolbox for H.264/HEVC encoding and decoding. Homebrew FFmpeg stays usable through `STREAMFLIX_FFMPEG_DIR`. Size budget raised by the owner only if needed (see section 3).
+- **Transcoding with nothing to install**: bundle an **LGPL FFmpeg build** (no GPL parts, so no `libx264`) inside the app, arm64 and Intel, with VideoToolbox for H.264/HEVC encoding and decoding. Homebrew FFmpeg stays usable through `STREAMFLIX_FFMPEG_DIR`. Its size is reported (see section 3).
 - **Look**: a real menu bar (File ▸ Add library, Window, Help), ⌘, opens Settings, ⌘W closes the window (server keeps running), transparent title bar.
 - **Performance and startup**: measure cold start of server + window; AppCDS archive tried, kept only if it saves more than 20%; ProGuard on the release build tried, kept only if all tests pass.
 - **Accessibility**: VoiceOver labels on every card and button.
@@ -66,7 +66,7 @@ Dependencies: no new library on desktop (JNA is not used today; where a native c
 - **Media session** (`media3-session`): lock-screen and notification controls, Bluetooth headset buttons.
 - **Picture-in-picture**: auto-enter on Android 12+ (`setAutoEnterEnabled`), `onUserLeaveHint` on 8–11, play/pause in the PiP window, source-rect hint.
 - **Touch**: double tap left/right seeks 10 s, horizontal drag seeks with a time preview, landscape while playing, predictive back.
-- **Size and start**: R8 already on; add a baseline profile for start-up and the home screen; target cold start under 800 ms on a mid-range phone; APK budget stays 15 MB.
+- **Size and start**: R8 already on; add a baseline profile for start-up and the home screen; target cold start under 800 ms on a mid-range phone; APK size is reported.
 - **Accessibility**: labels on every card, the system caption style (`CaptioningManager`) for subtitles, font scale 200% without clipping, 48 dp targets.
 
 ### 2.4 Google TV (`tv/google-tv/`)
@@ -91,7 +91,7 @@ Dependencies: no new library on desktop (JNA is not used today; where a native c
 ## 3. Owner's decisions (2026-11-25)
 
 1. **Own version per platform** (changed by the owner later on 2026-11-25, with the suite rule [Platform tags](https://github.com/kumasumit/ks-suite/blob/dev/specs/versioning-signing.md)): tags `android-vX.Y.Z`, `google-tv-vX.Y.Z`, `mac-vX.Y.Z`, `windows-vX.Y.Z`; a plain `vX.Y.Z` still releases all four. v1.1.0 (the split) ships plain on ks-utility v0.9.0; v1.2.0 is the plain **bridge release** whose builds already read the release list (ks-utility v0.10.0); the first platform tags come after it. The API version keeps clients and servers of different versions working together.
-2. **FFmpeg: bundled** (LGPL build, VideoToolbox / Media Foundation and hardware encoders, no `libx264`). It adds about 25–35 MB to the dmg and msi; the installer budget (`size.installer.macMb=80`) is raised in that step and the new number reported to the owner. `STREAMFLIX_FFMPEG_DIR` still overrides it.
+2. **FFmpeg: bundled** (LGPL build, VideoToolbox / Media Foundation and hardware encoders, no `libx264`). It adds about 25–35 MB to the dmg and msi; the new installer size is reported to the owner (no budgets since 2026-11-28). `STREAMFLIX_FFMPEG_DIR` still overrides it.
 3. **Start at login: on by default**, hidden to the menu bar or tray; can be turned off in Settings.
 4. **Continue watching on the Google TV home screen: yes** (`androidx.tvprovider`, a new dependency).
 5. **`androidx.media3:media3-session`: approved** with the plan, for the media session on phone and TV.

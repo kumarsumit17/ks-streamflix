@@ -19,6 +19,6 @@ status: approved
 
 **Engines and licences.** ffprobe (owner's FFmpeg), Media3 ExoPlayer (Apache-2.0, already in the APK; gapless needs no extra module). No tag library.
 
-**Budgets.** Scan speed for tags (files per second with ffprobe, run 4 at a time); the APK stays under 15 MB.
+**Measurements.** Scan speed for tags (files per second with ffprobe, run 4 at a time); APK size.
 
 **Open questions for the owner.** Lyrics (`.lrc` files)? Last.fm-style scrobbling (off by default)? Android Auto (needs a MediaBrowserService)?

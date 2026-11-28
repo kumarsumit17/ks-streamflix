@@ -1,5 +1,6 @@
 # 2026-11-28
 
+* **Update**: [Recorded measurements](quality-budgets.md) (was Quality budgets): by the owner's decision sizes and speeds are reported and no longer fail the build; stability tests stay. [Constraints](constraints.md), the [Media server plan](media-server-plan.md), the other plans and `CLAUDE.md` follow.
 * **Update**: [DEV builds side by side](dev-variant.md): a DEV server's browser pages say DEV in the title and header.
 * **Added**: [DEV builds side by side with production](dev-variant.md): the DEV variant, built into the apps.
 * **Update**: `ks-utility` moved to `v0.19.0`; `release.yml` names the production and `DEV_*` signing secrets.

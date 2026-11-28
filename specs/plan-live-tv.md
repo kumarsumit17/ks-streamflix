@@ -19,6 +19,6 @@ status: approved
 
 **Engines and licences.** FFmpeg (owner's), Media3 HLS (in the APK). Guide data is the owner's; no guide service is bundled or contacted by default.
 
-**Budgets.** Channel switch time (request to first frame); recording start accuracy.
+**Measurements.** Channel switch time (request to first frame); recording start accuracy.
 
 **Open questions for the owner.** Which tuner hardware or IPTV source is in the home? Is a guide source available (for India, XMLTV sources are sparse)? Commercial-skip is out of scope.

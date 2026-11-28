@@ -11,7 +11,7 @@ A free, open-source home media server with its own apps: the server on macOS and
 ## Stack
 - Server: Kotlin/JVM 17 with coroutines, Ktor (CIO engine), SQLDelight on SQLite, JSON with `kotlinx.serialization`; layers `domain` / `data` / `http`. FFmpeg (stage 4) is installed by the owner and run as a separate program, never bundled.
 - Apps (stage 2): one Kotlin Multiplatform + Compose Multiplatform module `shared/client` (API client, ViewModel + StateFlow, screens) for all four apps; separate phone and Google TV apps (two APKs and AABs) with Media3/ExoPlayer.
-- **Budgets:** stability, app size and speed are numbers in `quality-budgets.properties`, checked by `./gradlew check` and `checkSize` (`specs/quality-budgets.md`). Never raise one without the owner's OK.
+- **No size or speed budgets** (owner, 2026-11-28): `./gradlew check` and CI report the measured values and never fail on them; include them in each DEV build report. Stability tests are ordinary tests. See `specs/quality-budgets.md`.
 - Package: `com.ks.streamflix`. minSdk 26 · targetSdk latest stable
 - Interface text with an apostrophe uses ’ (U+2019): the language tool escapes `'` for Android, and Compose resources show the backslash.
 
@@ -35,10 +35,10 @@ A free, open-source home media server with its own apps: the server on macOS and
 ## Platform constraints (Android and Google TV apps)
 - **D-pad first.** Every screen must be usable with the remote's arrow, select, and back keys. Restore focus to the last item when returning to a screen. Back from the player returns to the exact row and item.
 - **The desktop server runs until Quit:** closing the window leaves it in the menu bar / notification area; start at login (on by default, installed app only) and staying awake while someone watches are each OS's own (`desktop/mac/MacSystem.kt`, `desktop/windows/WindowsSystem.kt`, behind `DesktopSystem`). See `specs/constraints.md`.
-- **Lean means lean.** Keep the release APK under 15 MB. Ask before adding a dependency. Prefer what's already in Media3, Compose, and Room.
+- **Lean means lean.** Keep the release APK small (its size is reported, not limited). Ask before adding a dependency. Prefer what's already in Media3, Compose, and Room.
 - **Low-RAM TVs.** Load images at their display size. Never keep a full-resolution bitmap in a row. Cap the decoded-image cache.
 - **10-foot UI.** Overscan-safe margins are 48dp horizontal, 27dp vertical.
-- **Separate phone and Google TV apps.** `mobile/android` and `tv/google-tv` are two application modules with the same package name (`com.ks.streamflix`), version and keystore, configured once in the root `build.gradle.kts`; the TV app's versionCode adds 1,000,000,000 (Google Play needs a different code per bundle). Both only add a launcher entry to what `shared/client/src/androidMain` declares. The TV app declares `android.software.leanback` required and `android.hardware.touchscreen` not required, has the banner (320×180), and marks itself with the `com.ks.streamflix.FORM_FACTOR` meta-data (`isTvBuild`): the layout follows the app, not the device. Each app updates to its own build (`UpdatePlatform.GOOGLE_TV` / `ANDROID`). Both APKs stay within `size.apk.maxMb`.
+- **Separate phone and Google TV apps.** `mobile/android` and `tv/google-tv` are two application modules with the same package name (`com.ks.streamflix`), version and keystore, configured once in the root `build.gradle.kts`; the TV app's versionCode adds 1,000,000,000 (Google Play needs a different code per bundle). Both only add a launcher entry to what `shared/client/src/androidMain` declares. The TV app declares `android.software.leanback` required and `android.hardware.touchscreen` not required, has the banner (320×180), and marks itself with the `com.ks.streamflix.FORM_FACTOR` meta-data (`isTvBuild`): the layout follows the app, not the device. Each app updates to its own build (`UpdatePlatform.GOOGLE_TV` / `ANDROID`).
 - Watch progress and favourites live on the server, per user. Any local database in the apps needs a `Migration` plus an exported schema for every schema change.
 
 ## Server constraints
@@ -51,12 +51,12 @@ A free, open-source home media server with its own apps: the server on macOS and
 
 ## Commands
 ```bash
-./gradlew check                                   # tests, lint, language files, all budgets incl. sizes (needs Node 23.6+)
+./gradlew check                                   # tests, lint, language files, size and speed report (needs Node 23.6+)
 ./gradlew :desktop:mac:run --args="--library Films=movies:$HOME/Movies"   # the macOS app: server and window
 ./gradlew :desktop:mac:run --args="--headless"    # the server alone
 ./gradlew :mobile:android:installDebug            # the phone app; an emulator reaches the Mac at 10.0.2.2:8742
 ./gradlew :tv:google-tv:installDebug              # the Google TV app
-./gradlew -Pcompose.desktop.packaging.checkJdkVendor=false :desktop:mac:packageReleaseDmg checkInstallerSize   # .dmg on the owner's Mac (Homebrew JDK)
+./gradlew -Pcompose.desktop.packaging.checkJdkVendor=false :desktop:mac:packageReleaseDmg installerSizeReport  # .dmg on the owner's Mac (Homebrew JDK)
 ```
 The server listens on port 8742 (`--port` to change) and keeps its data in `~/Library/Application Support/KS StreamFlix` (macOS) or `%APPDATA%\KS StreamFlix` (Windows); `--data <dir>` to change. Open `http://localhost:8742/` for the browser pages.
 

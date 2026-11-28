@@ -19,6 +19,6 @@ status: approved
 
 **Engines and licences.** JDK `ImageIO` (and FFmpeg for HEIC). No new library.
 
-**Budgets.** Thumbnail time for a 24-megapixel JPEG; images per second while scrolling a month on the TV emulator.
+**Measurements.** Thumbnail time for a 24-megapixel JPEG; images per second while scrolling a month on the TV emulator.
 
 **Open questions for the owner.** Faces or places (needs a model or a map service: probably not)? Sharing an album link with someone outside the home (depends on [Remote access](plan-remote-access.md))?

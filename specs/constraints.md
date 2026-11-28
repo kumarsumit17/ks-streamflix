@@ -11,7 +11,7 @@ status: draft
 ## Android and Google TV apps
 
 - **D-pad first.** Every screen must be usable with the remote's arrow, select, and back keys. Restore focus to the last item when returning to a screen. Back from the player returns to the exact row and item.
-- **Lean means lean.** Keep the release APK under 15 MB. Ask before adding a dependency. Prefer what's already in Media3, Compose, and Room.
+- **Lean means lean.** Keep the release APK small (its size is [reported](quality-budgets.md), not limited). Ask before adding a dependency. Prefer what's already in Media3, Compose, and Room.
 - **Low-RAM TVs.** Load images at their display size. Never keep a full-resolution bitmap in a row. Cap the decoded-image cache.
 - **10-foot UI.** Overscan-safe margins are 48dp horizontal, 27dp vertical.
 - **Separate phone and Google TV apps** (KS-Suite [platform folders](https://github.com/kumasumit/ks-suite/blob/main/specs/platform-folders.md)): `mobile/android` and `tv/google-tv`, same package name, version and keystore, the TV versionCode plus 1,000,000,000. The TV app requires `android.software.leanback`, does not require `android.hardware.touchscreen`, has a banner (320×180) for the TV home row and the `com.ks.streamflix.FORM_FACTOR` meta-data; the layout follows the app, not the device.
