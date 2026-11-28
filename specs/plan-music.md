@@ -3,12 +3,12 @@ type: Plan
 title: Music plan
 description: Music libraries in KS StreamFlix as plugins: scanning tags, albums and artists, playing on every app, with gapless playback and no new engine.
 tags: [plan, music, audio, plugins]
-status: draft
+status: approved
 ---
 
 # Music plan
 
-> Draft for the owner's approval; nothing is built.
+> Approved by the owner on 2026-11-27; nothing is built yet.
 
 **What it does.** A library kind `music`: folders of audio files (`mp3`, `flac`, `m4a`/`aac`, `ogg`/`opus`, `wav`) shown by artist, album and track, with album art, playlists and "play album / shuffle". Listening history and "continue" reuse the `watch-state` plugin.
 
@@ -19,6 +19,6 @@ status: draft
 
 **Engines and licences.** ffprobe (owner's FFmpeg), Media3 ExoPlayer (Apache-2.0, already in the APK; gapless needs no extra module). No tag library.
 
-**Budgets.** Scan speed for tags (files per second with ffprobe, run 4 at a time); the APK stays under 15 MB.
+**Measurements.** Scan speed for tags (files per second with ffprobe, run 4 at a time); APK size.
 
 **Open questions for the owner.** Lyrics (`.lrc` files)? Last.fm-style scrobbling (off by default)? Android Auto (needs a MediaBrowserService)?

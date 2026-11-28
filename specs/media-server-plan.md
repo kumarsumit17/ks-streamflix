@@ -90,12 +90,12 @@ Only what each stage needs, each justified when it is added ([Dependencies](depe
 
 - **FFmpeg is never bundled.** It runs as a separate program that the owner installs (Homebrew on macOS, a download or `winget` on Windows), the way JaiPlayer needs VLC. The server looks for it on `PATH` and in the usual places, lets the owner set its path, and shows a clear message when it is missing: direct play keeps working without it. Running a separate program keeps StreamFlix MIT whatever licence the owner's FFmpeg build has.
 - **Architecture** (owner: "latest modern architecture"): coroutines throughout; the server in layers (`domain` services, `data` on SQLDelight, `http` routes on Ktor); the apps in one Kotlin Multiplatform module with one-way data flow (ViewModel + `StateFlow`, Compose Multiplatform screens), platform folders holding only entry points and packaging.
-- **Size, speed and stability** are budgets checked by the build ([Quality budgets](quality-budgets.md)).
+- **Size and speed** are measured and reported, never failing the build; stability is tested ([Recorded measurements](quality-budgets.md)).
 - **No Jellyfin API compatibility.** Jellyfin's own clients will not connect to StreamFlix. Copying its API would tie StreamFlix to a large GPL project's design; StreamFlix's API stays small and its own.
 
 ## Roadmap
 
-Each stage is built and tested on `dev` and ends in something that works on its own. Each change is released with the next tag once its tests pass, without waiting for approval ([Constraints](constraints.md), "Build, test, release, no waiting").
+Each stage is built and tested on `dev` and ends in something that works on its own. Releases follow the suite [release cycle](https://github.com/kumasumit/ks-suite/blob/dev/specs/release-cycle.md): DEV build, the owner's manual test, explicit approval.
 
 1. **Server core (first version).** Gradle build (`shared/api`, `shared/server`, `shared/plugins/web`, `desktop/mac`, `desktop/windows`). The core: libraries, scanning and name parsing, SQLite, the owner account, the API (`/api/v1`: server info, sign-in, libraries, items, rescan, stream with byte ranges) and the plugin API. The first plugin, `web`: browser pages for setup, sign-in, browsing and playing. Run with `./gradlew :desktop:mac:run`. Tests: name parser, scanner on a temporary folder, byte ranges, password hashing, the API end to end against a server on a free port. Done when: on the Mac, a folder of films is added, scanned, listed in the browser and plays with seeking; English and Hindi pages pass the language-file check.
 2. **The four apps.** macOS and Windows: the desktop window around the server (start/stop, address, libraries, browse, play through JaiPlayer or the browser). Android and Google TV: find or type the server, sign in, rows per library and "continue watching", detail page, playback with ExoPlayer (direct play), watch progress back to the server, "Open in JaiPlayer" with the stream URL. Tested on the phone and TV emulators and Windows CI ([Testing](https://github.com/kumasumit/ks-suite/blob/main/specs/testing.md)). The APK stays under 15 MB.
@@ -138,14 +138,14 @@ Each stage is built and tested on `dev` and ends in something that works on its 
   - **Phone and Google TV become separate apps** (KS-Suite [platform folders](https://github.com/kumasumit/ks-suite/blob/main/specs/platform-folders.md)'s rule, as KS JaiPlayer did). The suite's rule is that an app first releases its new update checker in a one-APK release, so v1.0.1 stays one APK and, on a TV, already asks for the `-google-tv` file; the split (`mobile/android` and `tv/google-tv` as two apps with the same package name and keystore, the TV versionCode plus 1,000,000,000, the activity and manifest in `shared/client`, the release workflow's `tv-module`) follows in the release after it (v1.1.0, below).
   - Picture subtitles: burning in is now tested with a real PGS track (the test writes one), and the frame of the HLS output shows it.
   - Browsers without HLS (Firefox): each session also serves `stream.mp4`, the init segment and the segments in order as one fragmented MP4 (`?at=<seconds>` starts later); the watch page uses it and reloads it for a seek past what it has. Checked by tests and in Chrome; Firefox itself is not installed on the owner's Mac.
-  - TMDB: an opt-in test against the real TMDB runs with `STREAMFLIX_TMDB_KEY` set; without a key it does nothing.
+  - TMDB: an opt-in test against the real TMDB (with the owner's key) was added here and removed on 2026-11-27 at the owner's request; the plugin's tests run against a stand-in TMDB server.
   - Plans for the larger features, for the owner's approval: [music](plan-music.md), [photos](plan-photos.md), [live TV and recording](plan-live-tv.md), [casting](plan-casting.md), [remote access](plan-remote-access.md).
   - **Open in KS JaiPlayer on Android** needs JaiPlayer's `ACTION_VIEW` filter to accept `http`/`https` stream URLs (today it lists `content` and `file`). Until it does, the button stays hidden, because the app checks that JaiPlayer can open the link. This is a change in ks-jaiplayer.
 - **v1.1.0** (2026-11-25): phone and Google TV are separate apps.
   - `mobile/android` (phone launcher entry) and `tv/google-tv` (Leanback entry, banner, `com.ks.streamflix.FORM_FACTOR` meta-data) are two `android.application` modules configured once in the root `build.gradle.kts`: package name `com.ks.streamflix`, the same version and keystore, the TV versionCode plus 1,000,000,000.
   - The activity, the manifest with its permissions, `queries` and update `FileProvider`, the icon, the language list and the R8 rules moved to `shared/client` (androidMain); `TvSupport.kt` (UiModeManager) is gone: the layout follows the app (`isTvBuild`), not the device.
   - Each app updates to its own file (`UpdatePlatform.GOOGLE_TV` → `-google-tv.apk`, `ANDROID` → the plain APK); copies of v1.0.1 on a TV already ask for the TV file.
-  - The release publishes `ks-streamflix-v<version>.apk`/`.aab` and `-google-tv.apk`/`.aab` (`tv-module`); `checkSize` measures both APKs; CI builds both debug APKs.
+  - The release publishes `ks-streamflix-v<version>.apk`/`.aab` and `-google-tv.apk`/`.aab` (`tv-module`); `checkSize` (now `sizeReport`) measures both APKs; CI builds both debug APKs.
 
 ## Decisions (approved)
 
@@ -155,4 +155,4 @@ Each stage is built and tested on `dev` and ends in something that works on its 
 4. **Transcoding engine:** FFmpeg installed by the owner and run as a separate program, never bundled; from stage 4.
 5. **Desktop playback:** the macOS and Windows apps hand playback to JaiPlayer (or the browser) instead of having their own player, which keeps them small.
 6. **A minimal core with plugins:** every feature outside the core is a compiled-in plugin, so each app includes only what it lists.
-7. **Budgets:** stability, app size and speed are numbers in one file that the build checks ([Quality budgets](quality-budgets.md)).
+7. **Measurements** (changed by the owner on 2026-11-28; until then budgets the build checked): app size and speed are measured and reported, stability is tested ([Recorded measurements](quality-budgets.md)).

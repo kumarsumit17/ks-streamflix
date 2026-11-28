@@ -29,6 +29,7 @@
   "client.error.address": "Enter a server address.",
   "client.error.version": "This server needs a different version of the app.",
   "client.error.setupNeeded": "This server isn’t set up yet. Open it in a browser to create the owner account.",
+  "client.error.devOnly": "This DEV app connects only to a DEV server.",
   "client.error.noPlayer": "No player could open this video.",
   "client.player.error": "This video can’t be played on this device.",
   "client.desktop.server": "This computer’s server",

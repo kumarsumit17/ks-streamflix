@@ -20,7 +20,7 @@ actual fun ProvideLanguage(language: String, content: @Composable () -> Unit) {
 }
 
 /** Settings in java.util.prefs (the macOS defaults database, the Windows registry). */
-class PrefsSettings(node: String = "com/ks/streamflix/client") : SettingsStore {
+class PrefsSettings(node: String = DesktopVariant.current.settingsNode) : SettingsStore {
     private val prefs = Preferences.userRoot().node(node)
     override fun getString(key: String): String? = prefs.get(key, null)
     override fun putString(key: String, value: String?) {
@@ -51,8 +51,9 @@ class DesktopHost(override val appVersion: String, override val settings: Settin
     override val transport: HttpTransport = UrlConnectionTransport()
     override val preferredLanguages: List<String> = listOf(Locale.getDefault().toLanguageTag())
     override val hasPlayer = false
+    override val isDev = DesktopVariant.current.dev
 
-    override suspend fun discover() = discoverServers()
+    override suspend fun discover() = discoverServers(port = DesktopVariant.current.port)
 
     @Composable
     override fun Player(request: PlayRequest, onProgress: (Long, Long) -> Unit, onExit: (Long, Long) -> Unit) = Unit

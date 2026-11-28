@@ -30,6 +30,8 @@ data class ServerConfig(
     val name: String = runCatching { InetAddress.getLocalHost().hostName }.getOrDefault("KS StreamFlix"),
     val version: String = System.getProperty("streamflix.version") ?: "0.0.0",
     val passwordIterations: Int = Passwords.DEFAULT_ITERATIONS,
+    /** A DEV build's server (specs/dev-variant.md). */
+    val dev: Boolean = false,
 ) {
     companion object {
         const val DEFAULT_PORT = 8742
@@ -57,7 +59,7 @@ class StreamflixServer(private val config: ServerConfig, plugins: List<ServerPlu
         auth = AuthService(store, config.passwordIterations)
         libraries = LibraryService(store)
         strings = Strings(listOf("common", "core") + ids)
-        val core = Core(auth, libraries, StreamKeys(config.dataDir.resolve("stream-key")), DetailsService(config.dataDir.resolve("cache/images"))) { ServerInfo(config.name, config.version, setupNeeded = auth.setupNeeded()) }
+        val core = Core(auth, libraries, StreamKeys(config.dataDir.resolve("stream-key")), DetailsService(config.dataDir.resolve("cache/images"))) { ServerInfo(config.name, config.version, setupNeeded = auth.setupNeeded(), dev = config.dev) }
         streaming = core.streaming
         contexts = plugins.map { plugin ->
             PluginContext(core, strings, config.dataDir.resolve("plugins").resolve(plugin.id)).also(plugin::install)

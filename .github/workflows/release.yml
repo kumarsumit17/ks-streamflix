@@ -9,7 +9,8 @@ name: Release
 #                                 Release (full release, latest).
 #   Tag push <platform>-vX.Y.Z    The same for one platform (android, google-tv, mac, windows); its
 #                                 release is not marked latest (each app reads the release list).
-#   Manual run (rehearsal)        Builds and checks everything for the version given; never publishes.
+#   Manual run (rehearsal)        The DEV build (specs/dev-variant.md): the DEV variant, signed with
+#                                 the DEV key, as workflow artifacts; never publishes.
 
 on:
   push:
@@ -36,7 +37,7 @@ concurrency:
 
 jobs:
   release:
-    uses: kumasumit/ks-utility/.github/workflows/kotlin-app-release.yml@v0.10.0
+    uses: kumasumit/ks-utility/.github/workflows/kotlin-app-release.yml@main
     permissions:
       contents: write
       id-token: write
@@ -50,7 +51,16 @@ jobs:
       tv-module: ":tv:google-tv"
       mac-module: ":desktop:mac"
       windows-module: ":desktop:windows"
-      # Every test, lint, the language files and the size budgets, before the Android build.
+      # Every test, lint and the language files, before the Android build.
       test-tasks: "check"
       desktop-test-tasks: ":shared:server:test :shared:client:desktopTest"
-    secrets: inherit
+    secrets:
+      # A tag signs with the suite's key; a manual run (the DEV build) with the DEV key only.
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      DEV_KEYSTORE_BASE64: ${{ secrets.DEV_KEYSTORE_BASE64 }}
+      DEV_KEYSTORE_PASSWORD: ${{ secrets.DEV_KEYSTORE_PASSWORD }}
+      DEV_KEY_ALIAS: ${{ secrets.DEV_KEY_ALIAS }}
+      DEV_KEY_PASSWORD: ${{ secrets.DEV_KEY_PASSWORD }}

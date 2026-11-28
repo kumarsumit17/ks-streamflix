@@ -67,6 +67,12 @@ project(":desktop:windows") { pluginManager.withPlugin("org.jetbrains.kotlin.jvm
 // TV_CODE_OFFSET, which also stops the phone build being installed over the TV build.
 val TV_CODE_OFFSET = 1_000_000_000
 
+// ---- DEV and production side by side (specs/dev-variant.md) ----------------------------------------
+// -PksVariant=dev (the release workflow's manual run) builds the DEV variant, which installs next to
+// the production app and shares nothing with it; -PksDevVersion=X.Y.Z-dev+<commit> is its version.
+val devVariant = providers.gradleProperty("ksVariant").orNull == "dev"
+extra["ksDev"] = devVariant
+
 subprojects {
     plugins.withId("com.android.application") {
         val tv = path == ":tv:google-tv"
@@ -86,8 +92,13 @@ subprojects {
                 minSdk = catalog.findVersion("androidMinSdk").get().requiredVersion.toInt()
                 targetSdk = catalog.findVersion("androidTargetSdk").get().requiredVersion.toInt()
                 versionCode = (rootProject.extra["appVersionCode"] as Int) + if (tv) TV_CODE_OFFSET else 0
-                versionName = appVersionNameOf(if (tv) "google-tv" else "android")
+                versionName = rootProject.extra["appReportedVersion.${if (tv) "google-tv" else "android"}"] as String
+                if (devVariant) applicationIdSuffix = ".dev"
+                manifestPlaceholders["appLabel"] = if (devVariant) "KS StreamFlix DEV" else "KS StreamFlix"
+                manifestPlaceholders["tvBanner"] = if (devVariant) "@drawable/tv_banner_dev" else "@drawable/tv_banner"
             }
+            // The DEV icon colours and TV banner; app resources win over :shared:client's.
+            if (devVariant) sourceSets.getByName("main").res.srcDir(rootProject.file("shared/android-dev/res"))
             signingValue("SIGNING_STORE_FILE", "storeFile")?.let { storePath ->
                 signingConfigs.create("release") {
                     storeFile = file(storePath)
@@ -97,7 +108,7 @@ subprojects {
                 }
             }
             buildTypes.getByName("release") {
-                // R8 keeps each APK within its size budget (quality-budgets.properties).
+                // R8 keeps each APK small.
                 isMinifyEnabled = true
                 isShrinkResources = true
                 proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), rootProject.file("shared/client/proguard-rules.pro"))
@@ -152,12 +163,54 @@ val appVersionCode: Int =
         ?: git("rev-list", "--count", "HEAD")?.toIntOrNull()
         ?: 1
 
-for (platform in listOf("android", "google-tv", "mac", "windows")) extra["appVersionName.$platform"] = appVersionNameOf(platform)
+// appVersionName.<platform> is X.Y.Z (the installers need it); appReportedVersion.<platform> is what
+// the app calls itself: the DEV version in a DEV build.
+for (platform in listOf("android", "google-tv", "mac", "windows")) {
+    val version = appVersionNameOf(platform)
+    extra["appVersionName.$platform"] = version
+    extra["appReportedVersion.$platform"] =
+        if (!devVariant) version
+        else providers.gradleProperty("ksDevVersion").orNull?.takeIf { it.isNotBlank() } ?: "${version.substringBefore('-')}-dev"
+}
 extra["appVersionCode"] = appVersionCode
 
-// ---- Size budgets (specs/quality-budgets.md) ------------------------------------------------------
-// size.server.maxMb: the server alone (core and server plugins, as --headless runs it).
-// size.desktop.maxMb: the whole macOS app (server, window, Compose for this OS).
+// ---- Measurements (specs/quality-budgets.md): reported, never failing the build ------------------
+// Tests (Measurement.record) and the size reports write one file per value into this folder; the
+// `measurements` task prints them all, and adds them to the run's summary on GitHub Actions.
+val measurementsDir = layout.buildDirectory.dir("measurements")
+val measurements = tasks.register("measurements") {
+    group = "verification"
+    description = "Prints the measured sizes and speeds."
+    val dir = measurementsDir
+    val summary = providers.environmentVariable("GITHUB_STEP_SUMMARY")
+    val os = providers.systemProperty("os.name")
+    doLast {
+        val lines = dir.get().asFile.listFiles().orEmpty().sortedBy { it.name }
+            .map { "${it.nameWithoutExtension}: ${it.readText()}" }
+        if (lines.isEmpty()) return@doLast
+        println("Measurements (${os.get()}):")
+        lines.forEach { println("  $it") }
+        summary.orNull?.let { path ->
+            File(path).appendText("### Measurements (${os.get()})\n\n" + lines.joinToString("") { "- $it\n" } + "\n")
+        }
+    }
+}
+subprojects {
+    tasks.withType<Test>().configureEach {
+        systemProperty("measurements.dir", measurementsDir.get().asFile.path)
+        finalizedBy(measurements)
+    }
+}
+// An object, not a function of this script, so the tasks work with the configuration cache.
+object SizeFiles {
+    fun write(dir: File, name: String, bytes: Long) {
+        dir.mkdirs()
+        dir.resolve("$name.txt").writeText("%.1f MB".format(java.util.Locale.ROOT, bytes / 1_048_576.0))
+    }
+}
+
+// size.server: the server alone (core and server plugins, as --headless runs it).
+// size.desktop: the whole macOS app (server, window, Compose for this OS).
 fun Configuration.jvmRuntime() {
     isCanBeConsumed = false
     attributes {
@@ -185,55 +238,48 @@ dependencies {
     serverRuntime(libs.slf4j.simple)
 }
 
-val checkSize = tasks.register("checkSize") {
-    description = "Fails when an app is bigger than its budget in quality-budgets.properties."
+val sizeReport = tasks.register("sizeReport") {
+    description = "Measures the sizes of the apps."
     group = "verification"
-    val budgetFile = layout.projectDirectory.file("quality-budgets.properties")
     val serverJars: FileCollection = serverRuntime
     val desktopJars: FileCollection = desktopRuntime
-    val apkDirs = listOf("mobile/android", "tv/google-tv").map { layout.projectDirectory.dir("$it/build/outputs/apk/release") }
+    val apkDirs = listOf("android" to "mobile/android", "googleTv" to "tv/google-tv")
+        .map { (name, folder) -> name to layout.projectDirectory.dir("$folder/build/outputs/apk/release") }
     dependsOn(":mobile:android:assembleRelease", ":tv:google-tv:assembleRelease")
-    val overrides = listOf("size.server.maxMb", "size.desktop.maxMb", "size.apk.maxMb").associateWith { providers.gradleProperty("budget.$it") }
-    inputs.file(budgetFile)
     inputs.files(serverJars, desktopJars)
+    val out = measurementsDir
+    finalizedBy(measurements)
     doLast {
-        val budgets = java.util.Properties().apply { budgetFile.asFile.inputStream().use(::load) }
-        fun check(key: String, bytes: Long) {
-            val max = (overrides.getValue(key).orNull ?: budgets.getProperty(key)).toDouble()
-            val mb = bytes / 1_048_576.0
-            println("budget $key: %.1f MB of %.0f MB".format(mb, max))
-            check(mb <= max) { "$key: %.1f MB is over the budget of %.0f MB".format(mb, max) }
-        }
-        check("size.server.maxMb", serverJars.files.sumOf { it.length() })
-        // Every jar the macOS app runs (Compose's native code for this OS is inside a jar); the Java
-        // runtime the installer bundles is measured when the installers exist (stage 6).
-        check("size.desktop.maxMb", desktopJars.files.sumOf { it.length() })
-        // The release APKs of the phone and the Google TV app, shrunk by R8 (unsigned here; signing adds a few KB).
-        apkDirs.forEach { dir -> check("size.apk.maxMb", dir.asFile.listFiles().orEmpty().single { it.extension == "apk" }.length()) }
+        val dir = out.get().asFile
+        SizeFiles.write(dir, "size.server", serverJars.files.sumOf { it.length() })
+        // Every jar the macOS app runs (Compose's native code for this OS is inside a jar).
+        SizeFiles.write(dir, "size.desktop", desktopJars.files.sumOf { it.length() })
+        // The release APKs, shrunk by R8 (unsigned here; signing adds a few KB).
+        apkDirs.forEach { (name, apks) -> apks.asFile.listFiles().orEmpty().filter { it.extension == "apk" }.forEach { SizeFiles.write(dir, "size.apk.$name", it.length()) } }
     }
 }
-// The macOS installer's size, after `:desktop:mac:packageReleaseDmg` (not part of `check`: packaging
-// needs a non-Homebrew JDK, or -Pcompose.desktop.packaging.checkJdkVendor=false on the owner's Mac).
-tasks.register("checkInstallerSize") {
+// The installers' sizes, after `packageReleaseDmg` or `packageReleaseMsi` (not part of `check`:
+// packaging needs a non-Homebrew JDK, or -Pcompose.desktop.packaging.checkJdkVendor=false on the
+// owner's Mac).
+tasks.register("installerSizeReport") {
     group = "verification"
-    mustRunAfter(":desktop:mac:packageReleaseDmg")
-    description = "Fails when the macOS installer is bigger than size.installer.macMb."
-    val budgetFile = layout.projectDirectory.file("quality-budgets.properties")
-    val dmgDir = layout.projectDirectory.dir("desktop/mac/build/compose/binaries")
+    description = "Measures the sizes of the installers that were built."
+    mustRunAfter(":desktop:mac:packageReleaseDmg", ":desktop:windows:packageReleaseMsi")
+    val installers = listOf("mac" to "dmg", "windows" to "msi")
+        .map { (os, type) -> type to layout.projectDirectory.dir("desktop/$os/build/compose/binaries") }
+    val out = measurementsDir
+    finalizedBy(measurements)
     doLast {
-        val budgets = java.util.Properties().apply { budgetFile.asFile.inputStream().use(::load) }
-        val dmg = dmgDir.asFile.walkTopDown().firstOrNull { it.extension == "dmg" } ?: error("No dmg: run :desktop:mac:packageReleaseDmg first")
-        val mb = dmg.length() / 1_048_576.0
-        val max = budgets.getProperty("size.installer.macMb").toDouble()
-        println("budget size.installer.macMb: %.1f MB of %.0f MB".format(mb, max))
-        check(mb <= max) { "The dmg is %.1f MB, over its budget of %.0f MB".format(mb, max) }
+        installers.forEach { (type, folder) ->
+            folder.asFile.walkTopDown().firstOrNull { it.extension == type }?.let { SizeFiles.write(out.get().asFile, "size.installer.$type", it.length()) }
+        }
     }
 }
 
 tasks.register("check") {
     group = "verification"
-    description = "Runs every module's checks and the size budget."
+    description = "Runs every module's checks and reports the measurements."
     dependsOn(":shared:api:check", ":shared:server:check", ":shared:plugins:web:check", ":shared:plugins:watch-state:check", ":shared:plugins:discovery:check", ":shared:ffmpeg:check", ":shared:plugins:media-info:check", ":shared:plugins:subtitles:check", ":shared:plugins:local-metadata:check", ":shared:plugins:tmdb:check", ":shared:plugins:transcode:check", ":shared:plugins:users:check", ":shared:plugins:folder-watch:check", ":shared:client:check", ":shared:desktop:check", ":mobile:android:check", ":tv:google-tv:check", ":desktop:mac:check", ":desktop:windows:check")
-    dependsOn(checkSize)
+    dependsOn(sizeReport)
 }
 

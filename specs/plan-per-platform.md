@@ -7,7 +7,7 @@ tags: [plan, platforms, macos, windows, android, google-tv, performance, accessi
 
 # Per-platform optimization plan
 
-**Status: approved by the owner on 2026-11-25** (decisions in section 3). Step 1, the phone/TV split, is built (9c1fdda, for v1.1.0). Built steps are marked in section 4; steps 2 (versioning per platform, v1.2.0) and 3 (the desktop always-on server, v1.3.0) are built.
+**Status: approved by the owner on 2026-11-25** (decisions in section 3). Step 1, the phone/TV split, is built (9c1fdda, for v1.1.0). Built steps are marked in section 4; steps 2 (versioning per platform, v1.2.0) 3 (the desktop always-on server, v1.3.0) and 4 (bundled FFmpeg, v1.4.0) are built.
 
 Owner's rule for every KS-Suite app (2026-11-25, KS-Suite [platform folders](https://github.com/kumasumit/ks-suite/blob/dev/specs/platform-folders.md), "Each platform build is optimized for its OS"): each build is its own app, made the best it can be on its OS, with as few dependencies as possible and nothing the user has to install separately. Modelled on [ks-jaiplayer's plan](https://github.com/kumasumit/ks-jaiplayer/blob/dev/specs/plan-per-platform.md).
 
@@ -43,7 +43,7 @@ Dependencies: no new library on desktop (JNA is not used today; where a native c
   - "Start at login" in Settings, through a LaunchAgent plist in `~/Library/LaunchAgents` (no helper app, no new dependency); the app starts hidden to the menu bar.
   - Whether the Dock icon can go away while only the menu-bar item is open is checked in the step (AWT fixes `apple.awt.UIElement` at start-up); if not, a start at login launches with it set.
   - **Stay awake while streaming**: `caffeinate -i -w <pid>` started while at least one stream or HLS session is active and stopped after it; the display may sleep, the Mac does not.
-- **Transcoding with nothing to install**: bundle an **LGPL FFmpeg build** (no GPL parts, so no `libx264`) inside the app, arm64 and Intel, with VideoToolbox for H.264/HEVC encoding and decoding. Homebrew FFmpeg stays usable through `STREAMFLIX_FFMPEG_DIR`. Size budget raised by the owner only if needed (see section 3).
+- **Transcoding with nothing to install**: bundle an **LGPL FFmpeg build** (no GPL parts, so no `libx264`) inside the app, arm64 and Intel, with VideoToolbox for H.264/HEVC encoding and decoding. Homebrew FFmpeg stays usable through `STREAMFLIX_FFMPEG_DIR`. Its size is reported (see section 3).
 - **Look**: a real menu bar (File ▸ Add library, Window, Help), ⌘, opens Settings, ⌘W closes the window (server keeps running), transparent title bar.
 - **Performance and startup**: measure cold start of server + window; AppCDS archive tried, kept only if it saves more than 20%; ProGuard on the release build tried, kept only if all tests pass.
 - **Accessibility**: VoiceOver labels on every card and button.
@@ -58,7 +58,7 @@ Dependencies: no new library on desktop (JNA is not used today; where a native c
 - **Transcoding with nothing to install**: bundle an LGPL FFmpeg build for x64 with `h264_mf` (Media Foundation, on every Windows), `h264_nvenc`, `h264_qsv` and `h264_amf`; the encoder probe already picks the first that works. `libx264` is not in an LGPL build, so `h264_mf` is the software-free fallback.
 - **Look**: system look and feel for the Swing parts, dark title bar (`DWMWA_USE_IMMERSIVE_DARK_MODE`) when the app is dark, the native folder picker for "Add library".
 - **Packaging**: per-user install by default (no admin prompt), start-menu shortcut, `jdk.accessibility` added to the runtime so Narrator and NVDA see the app.
-- **Checks**: CI already installs, starts and uninstalls the msi; add a check that the tray icon starts and the server survives closing the window. Hand checks by the owner never block a release.
+- **Checks**: CI already installs, starts and uninstalls the msi; add a check that the tray icon starts and the server survives closing the window. The owner's manual test of the DEV build comes before a release ([release cycle](https://github.com/kumasumit/ks-suite/blob/dev/specs/release-cycle.md)).
 
 ### 2.3 Android phone (`mobile/android/`, shared Android code in `shared/client/src/androidMain`)
 
@@ -66,7 +66,7 @@ Dependencies: no new library on desktop (JNA is not used today; where a native c
 - **Media session** (`media3-session`): lock-screen and notification controls, Bluetooth headset buttons.
 - **Picture-in-picture**: auto-enter on Android 12+ (`setAutoEnterEnabled`), `onUserLeaveHint` on 8–11, play/pause in the PiP window, source-rect hint.
 - **Touch**: double tap left/right seeks 10 s, horizontal drag seeks with a time preview, landscape while playing, predictive back.
-- **Size and start**: R8 already on; add a baseline profile for start-up and the home screen; target cold start under 800 ms on a mid-range phone; APK budget stays 15 MB.
+- **Size and start**: R8 already on; add a baseline profile for start-up and the home screen; target cold start under 800 ms on a mid-range phone; APK size is reported.
 - **Accessibility**: labels on every card, the system caption style (`CaptioningManager`) for subtitles, font scale 200% without clipping, 48 dp targets.
 
 ### 2.4 Google TV (`tv/google-tv/`)
@@ -91,21 +91,21 @@ Dependencies: no new library on desktop (JNA is not used today; where a native c
 ## 3. Owner's decisions (2026-11-25)
 
 1. **Own version per platform** (changed by the owner later on 2026-11-25, with the suite rule [Platform tags](https://github.com/kumasumit/ks-suite/blob/dev/specs/versioning-signing.md)): tags `android-vX.Y.Z`, `google-tv-vX.Y.Z`, `mac-vX.Y.Z`, `windows-vX.Y.Z`; a plain `vX.Y.Z` still releases all four. v1.1.0 (the split) ships plain on ks-utility v0.9.0; v1.2.0 is the plain **bridge release** whose builds already read the release list (ks-utility v0.10.0); the first platform tags come after it. The API version keeps clients and servers of different versions working together.
-2. **FFmpeg: bundled** (LGPL build, VideoToolbox / Media Foundation and hardware encoders, no `libx264`). It adds about 25–35 MB to the dmg and msi; the installer budget (`size.installer.macMb=80`) is raised in that step and the new number reported to the owner. `STREAMFLIX_FFMPEG_DIR` still overrides it.
+2. **FFmpeg: bundled** (LGPL build, VideoToolbox / Media Foundation and hardware encoders, no `libx264`). It adds about 25–35 MB to the dmg and msi; the new installer size is reported to the owner (no budgets since 2026-11-28). `STREAMFLIX_FFMPEG_DIR` still overrides it.
 3. **Start at login: on by default**, hidden to the menu bar or tray; can be turned off in Settings.
 4. **Continue watching on the Google TV home screen: yes** (`androidx.tvprovider`, a new dependency).
 5. **`androidx.media3:media3-session`: approved** with the plan, for the media session on phone and TV.
 
 ## 4. Build order and testing
 
-Each step is one or more commits on `dev`, tested on its platform before the next; each step is released with the next tag once its tests pass (no approval asked first), and every release is tried on the emulators first (owner does real-device checks).
+Each step is one or more commits on `dev`, tested on its platform before the next; releases follow the suite [release cycle](https://github.com/kumasumit/ks-suite/blob/dev/specs/release-cycle.md): DEV build, the owner's manual test, explicit approval.
 
 | Step | What | Where | Tested on |
 |---|---|---|---|
 | 1 | **Built** (9c1fdda, released in v1.1.0): phone/TV split | `tv/google-tv`, `mobile/android`, release workflow `tv-module` | Phone and TV emulators, release rehearsal |
 | 2 | **Built** (for v1.2.0): versioning per platform: ks-utility v0.10.0 (release workflow `platform` input, `AppUpdate.evaluateReleases` in the phone, TV and desktop updaters), then v1.2.0 as the plain bridge release | `ks-utility` pin, `.github/workflows/release.yml`, `shared/client` updaters | Unit tests of the update choice; a rehearsal; the emulators' update check finds v1.2.0 |
 | 3 | **Built** (v1.3.0): desktop always-on server: window close, menu bar / tray, start at login, keep awake | `shared/desktop`, `desktop/mac`, `desktop/windows` | This Mac; Windows CI (install, start, close window, server still answers) |
-| 4 | Bundled FFmpeg | packaging in `desktop/mac`, `desktop/windows`; `shared/ffmpeg` locate order | Transcode tests against the bundled binary on CI (all three OSes); dmg/msi size check |
+| 4 | **Built** (v1.4.0): bundled FFmpeg | packaging in `desktop/mac`, `desktop/windows`; `shared/ffmpeg` locate order | Transcode tests against the bundled binary on CI (all three OSes); dmg/msi size check |
 | 5 | Android media stack and session, PiP, keep screen on, touch | `shared/client/src/androidMain`, `mobile/android` | Phone emulator |
 | 6 | Google TV: frame rate, passthrough and HDR in the profile, hold-to-seek, side panel, Watch Next | `tv/google-tv`, `shared/api`, `shared/plugins/transcode` | Every TV emulator 32–100 inch; the owner's TV for passthrough and frame rate |
 | 7 | Look per desktop OS, accessibility pass on all four | each platform, `shared/client` | VoiceOver (Mac), TalkBack (phone, TV), Narrator by the owner |

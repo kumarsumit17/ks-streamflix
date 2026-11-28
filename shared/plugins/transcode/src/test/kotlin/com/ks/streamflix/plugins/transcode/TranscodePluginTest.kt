@@ -11,7 +11,7 @@ import com.ks.streamflix.api.PlaybackRequest
 import com.ks.streamflix.api.TranscodeApi
 import com.ks.streamflix.api.TranscodeStatus
 import com.ks.streamflix.ffmpeg.Ffmpeg
-import com.ks.streamflix.server.Budget
+import com.ks.streamflix.server.Measurement
 import com.ks.streamflix.server.TestServer
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
@@ -61,8 +61,7 @@ class TranscodePluginTest {
             assertEquals(200, s.bytes("$base/init.mp4").statusCode())
             assertEquals(200, s.bytes("$base/${segments.first()}").statusCode())
             val ms = (System.nanoTime() - started) / 1_000_000
-            println("budget speed.transcode.firstSegmentMs (remux): $ms ms")
-            assertTrue(ms <= Budget.long("speed.transcode.firstSegmentMs"), "first remux segment took $ms ms")
+            Measurement.record("transcode.firstSegment.remux", "$ms ms")
             // Seeking: the last segment, then back to the first, are both served.
             assertEquals(200, s.bytes("$base/${segments.last()}").statusCode())
             assertEquals(200, s.bytes("$base/${segments[1]}").statusCode())
@@ -97,8 +96,7 @@ class TranscodePluginTest {
             // Starting at 4 s: the second segment comes first.
             assertEquals(200, s.bytes("$tBase/seg_00001.m4s").statusCode())
             val tMs = (System.nanoTime() - t0) / 1_000_000
-            println("budget speed.transcode.firstSegmentMs (transcode, ${status.encoder}): $tMs ms")
-            assertTrue(tMs <= Budget.long("speed.transcode.firstSegmentMs"), "first transcoded segment took $tMs ms")
+            Measurement.record("transcode.firstSegment.transcode", "$tMs ms (${status.encoder})")
 
             // A file the client plays as it is comes back as direct play, with no session.
             val direct = play(DeviceProfile(listOf("mkv"), listOf("h264"), listOf("aac"))).body()

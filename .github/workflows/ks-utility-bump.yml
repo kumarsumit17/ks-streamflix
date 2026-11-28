@@ -1,0 +1,24 @@
+name: Move to the newest ks-utility
+
+# ks-utility's shared workflow (https://github.com/kumasumit/ks-utility/blob/main/specs/release-workflow.md,
+# "Moving to the newest ks-utility"): checks out dev, moves the ks-utility submodule to the newest tag,
+# runs StreamFlix's tests, and commits "chore: move ks-utility to vX.Y.Z" to dev only when they pass;
+# otherwise it opens an issue.
+on:
+  repository_dispatch:
+    types: [ks-utility-released]
+  schedule:
+    - cron: "17 4 * * *"   # daily, in case a notice was missed
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  bump:
+    permissions: { contents: write, issues: write }
+    uses: kumasumit/ks-utility/.github/workflows/ks-utility-bump.yml@main
+    with:
+      kind: kotlin
+      java: true
+      # Every test, lint and the language files (FFmpeg tests skip without FFmpeg).
+      test: ./gradlew --no-daemon check

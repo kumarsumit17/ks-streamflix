@@ -14,8 +14,9 @@
 
     <!-- A home server speaks plain HTTP on the local network. -->
     <application
-        android:label="KS StreamFlix"
-        android:icon="@drawable/ic_launcher"
+        android:label="${appLabel}"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:localeConfig="@xml/locales_config"
         android:theme="@android:style/Theme.Material.NoActionBar"
         android:usesCleartextTraffic="true"

@@ -1,5 +1,6 @@
 package com.ks.streamflix.server
 
+import com.ks.streamflix.api.DiscoveryApi
 import com.ks.streamflix.api.LibraryKind
 import com.ks.streamflix.server.plugin.ServerPlugin
 import kotlinx.coroutines.runBlocking
@@ -14,8 +15,9 @@ import kotlin.system.exitProcess
 object ServerMain {
     class Options(val config: ServerConfig, val libraries: List<Triple<String, LibraryKind, String>>, val headless: Boolean)
 
-    fun parse(args: Array<String>, defaultDataDir: Path): Options {
+    fun parse(args: Array<String>, defaultDataDir: Path, dev: Boolean = false): Options {
         var config = ServerConfig(dataDir = defaultDataDir)
+        if (dev) config = config.copy(dev = true, port = DiscoveryApi.DEV_PORT, name = "${config.name} DEV")
         var headless = false
         val libraries = mutableListOf<Triple<String, LibraryKind, String>>()
         val it = args.iterator()

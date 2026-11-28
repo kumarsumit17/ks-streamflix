@@ -29,6 +29,7 @@ import androidx.compose.ui.window.isTraySupported
 import androidx.compose.ui.window.rememberTrayState
 import com.ks.streamflix.client.DesktopSystem
 import com.ks.streamflix.client.DesktopSystemPlugin
+import com.ks.streamflix.client.DesktopVariant
 import com.ks.streamflix.client.ProvideLanguage
 import com.ks.streamflix.client.resources.client_desktop_tray_open
 import com.ks.streamflix.client.resources.client_desktop_tray_quit
@@ -54,6 +55,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.ks.streamflix.client.DesktopHost
 import com.ks.streamflix.client.PrefsSettings
+import com.ks.streamflix.client.applyStartAtLoginDefault
 import com.ks.streamflix.client.plugin.ClientPlugin
 import com.ks.streamflix.client.resources.Res
 import com.ks.streamflix.client.resources.client_desktop_addresses
@@ -82,18 +84,15 @@ import java.nio.file.Path
  */
 fun runDesktopApp(args: Array<String>, dataDir: Path, serverPlugins: List<ServerPlugin>, clientPlugins: List<ClientPlugin>, system: DesktopSystem) {
     val background = DesktopSystem.BACKGROUND_FLAG in args
-    val options = ServerMain.parse(args.filter { it != DesktopSystem.BACKGROUND_FLAG }.toTypedArray(), dataDir)
+    val variant = DesktopVariant.current
+    val options = ServerMain.parse(args.filter { it != DesktopSystem.BACKGROUND_FLAG }.toTypedArray(), dataDir, variant.dev)
     if (options.headless) return ServerMain.runHeadless(options, serverPlugins)
     val (server, port) = ServerMain.start(options, serverPlugins)
     val local = "http://localhost:$port"
     val settings = PrefsSettings()
     // The first time, the app connects to this computer's own server.
     if (settings.getString(SettingKeys.SERVER) == null) settings.putString(SettingKeys.SERVER, local)
-    // Start at login is on by default (owner's decision), set once; Settings can turn it off.
-    if (system.canStartAtLogin && settings.getString(LOGIN_DEFAULT_SET) == null) {
-        runCatching { system.setStartAtLogin(true) }
-        settings.putString(LOGIN_DEFAULT_SET, "true")
-    }
+    applyStartAtLoginDefault(system, settings, variant)
     // The computer stays awake while someone watches (checked every 20 s).
     val awakeTimer = Timer("keep-awake", true).apply {
         schedule(timerTask { runCatching { system.keepAwake(server.streaming.isActive) } }, 5_000, 20_000)
@@ -106,7 +105,7 @@ fun runDesktopApp(args: Array<String>, dataDir: Path, serverPlugins: List<Server
         server.close()
     }
     // App updates (the server is part of this app, so it updates with it).
-    val updates = com.ks.streamflix.client.desktopUpdater(settings, options.config.version) { stopServer(); kotlin.system.exitProcess(0) }
+    val updates = com.ks.streamflix.client.desktopUpdater(settings, options.config.version) { stopServer() }
     val plugins = clientPlugins + DesktopSystemPlugin(system) + listOfNotNull(updates?.let { com.ks.streamflix.client.plugin.AppUpdatePlugin(it) })
     val vm = AppViewModel(DesktopHost(options.config.version, settings), plugins)
     val addresses = lanAddresses().map { "http://$it:$port" }.ifEmpty { listOf(local) }
@@ -139,7 +138,7 @@ fun runDesktopApp(args: Array<String>, dataDir: Path, serverPlugins: List<Server
                 Tray(
                     icon = TrayIcon,
                     state = trayState,
-                    tooltip = stringResource(Res.string.client_desktop_tray_tooltip),
+                    tooltip = stringResource(Res.string.client_desktop_tray_tooltip) + if (variant.dev) " DEV" else "",
                     onAction = { visible = true },
                     menu = {
                         Item(stringResource(Res.string.client_desktop_tray_open)) { visible = true }
@@ -161,7 +160,9 @@ fun runDesktopApp(args: Array<String>, dataDir: Path, serverPlugins: List<Server
                         }
                     }
                 },
-                title = "KS StreamFlix",
+                title = variant.appName,
+                // The app's own icon (title bar, Windows taskbar), never the framework's default.
+                icon = AppIcon,
                 state = rememberWindowState(size = DpSize(1100.dp, 760.dp)),
                 onPreviewKeyEvent = { e -> e.type == KeyEventType.KeyDown && e.key == Key.Escape && vm.back() },
             ) {
@@ -171,14 +172,35 @@ fun runDesktopApp(args: Array<String>, dataDir: Path, serverPlugins: List<Server
     }
 }
 
-private const val LOGIN_DEFAULT_SET = "desktop.startAtLogin.defaultSet"
 private const val TRAY_HINT_SHOWN = "desktop.trayHintShown"
+
+/** The DEV build's icon colour (as packaging/icon-dev). */
+private val DevOrange = Color(0xFFC2410C)
+
+/** The app icon, as on the installers (packaging/icon.icns, icon.ico): a play mark on a dark rounded square (orange in a DEV build). */
+private object AppIcon : Painter() {
+    override val intrinsicSize = Size(256f, 256f)
+    override fun DrawScope.onDraw() {
+        val w = size.width
+        val h = size.height
+        drawRoundRect(if (DesktopVariant.current.dev) DevOrange else Color(0xFF18181B), cornerRadius = androidx.compose.ui.geometry.CornerRadius(w * 0.18f, h * 0.18f))
+        drawPath(
+            DrawPath().apply {
+                moveTo(w * 0.40f, h * 0.30f)
+                lineTo(w * 0.70f, h * 0.50f)
+                lineTo(w * 0.40f, h * 0.70f)
+                close()
+            },
+            Color(0xFFFAFAFA),
+        )
+    }
+}
 
 /** The menu-bar / notification-area icon: a play mark in a circle, drawn (no image file). */
 private object TrayIcon : Painter() {
     override val intrinsicSize = Size(64f, 64f)
     override fun DrawScope.onDraw() {
-        drawCircle(Color(0xFF71717A))
+        drawCircle(if (DesktopVariant.current.dev) DevOrange else Color(0xFF71717A))
         val w = size.width
         val h = size.height
         drawPath(

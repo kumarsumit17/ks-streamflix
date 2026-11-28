@@ -215,7 +215,7 @@ class TranscodePlugin(
         // FFmpeg's playlist of the old run is replaced; the segments it finished stay valid.
         Files.deleteIfExists(session.dir.resolve("ffmpeg.m3u8"))
         val encoder = if (session.plan.copyVideo) "copy" else ffmpeg.h264Encoder
-        val args = Decision.ffmpegArgs(session.plan, session.input.toString(), index, session.starts[index], session.dir.toString(), encoder)
+        val args = Decision.ffmpegArgs(session.plan, session.input.toString(), index, session.starts[index], com.ks.streamflix.ffmpeg.Ffmpeg.path(session.dir.toString()), encoder)
         session.runStart = index
         session.process = ffmpeg.start(args, session.dir.resolve("ffmpeg.log").toFile())
             ?: throw DomainException("transcode.error.failed", DomainException.Kind.CONFLICT)

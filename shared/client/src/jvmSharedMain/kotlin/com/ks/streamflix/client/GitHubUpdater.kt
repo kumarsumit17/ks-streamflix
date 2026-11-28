@@ -58,7 +58,7 @@ class GitHubUpdater(
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
 ) : AppUpdater {
     private val repo = requireNotNull(GitHubRepo.parse(repo)) { "Not owner/name: $repo" }
-    override val isDevBuild = AppUpdate.parseVersion(currentVersion) == null || AppUpdate.isDevVersion(currentVersion)
+    override val shownVersion = currentVersion.takeUnless { AppUpdate.isDevVersion(it) }
     private val _status = MutableStateFlow<UpdateStatus>(UpdateStatus.Idle)
     override val status: StateFlow<UpdateStatus> = _status
     private val _auto = MutableStateFlow(settings.getString(AUTO) != "false")

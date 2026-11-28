@@ -1,5 +1,3 @@
-import java.util.Properties
-
 // Plugin `transcode`: direct play, remux or transcode to HLS with the owner's FFmpeg, decided from what the client can play.
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -23,7 +21,4 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-    // Budgets (quality-budgets.properties) for the real-FFmpeg test.
-    val budgets = Properties().apply { rootProject.file("quality-budgets.properties").inputStream().use(::load) }
-    budgets.stringPropertyNames().forEach { systemProperty("budget.$it", providers.gradleProperty("budget.$it").orNull ?: budgets.getProperty(it)) }
 }

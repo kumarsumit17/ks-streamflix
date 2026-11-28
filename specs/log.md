@@ -1,5 +1,36 @@
+# 2026-11-28
+- progress and [JaiPlayer plan](plan-jaiplayer-default.md): StreamFlix paused (owner); the hand-off plan is on hold; next, JaiPlayer's playback module once authorized.
+- progress: JaiPlayer is released first (owner); next, the JaiPlayer default-player plan after 1.12.0. Pull request #1 stays open.
+- progress: CI passes at `7809943`; the session moved from the Warp CLI to the desktop app.
+
+* **Update**: [Recorded measurements](quality-budgets.md): why the installer figures differ.
+* **Update**: [DEV builds side by side](dev-variant.md), [Constraints](constraints.md) and `CLAUDE.md`: a DEV build does not turn start at login on by itself.
+* **Update**: [App updates](app-updates.md): a DEV build's Settings shows its DEV version.
+* **Update**: [Recorded measurements](quality-budgets.md) (was Quality budgets): by the owner's decision sizes and speeds are reported and no longer fail the build; stability tests stay. [Constraints](constraints.md), the [Media server plan](media-server-plan.md), the other plans and `CLAUDE.md` follow.
+* **Update**: [DEV builds side by side](dev-variant.md): a DEV server's browser pages say DEV in the title and header.
+* **Added**: [DEV builds side by side with production](dev-variant.md): the DEV variant, built into the apps.
+* **Update**: `ks-utility` moved to `v0.19.0`; `release.yml` names the production and `DEV_*` signing secrets.
+* **Update**: [Per-platform optimization plan](plan-per-platform.md): releases follow the suite release cycle.
+* **Added**: [Progress](progress.md): the checkpoint the suite working method requires.
+* **Update**: [Constraints](constraints.md), [Media server plan](media-server-plan.md) and `CLAUDE.md`: releases follow the suite release cycle (DEV build, the owner's manual test, explicit approval), replacing "build, test, release, no waiting".
+* **Added**: [KS JaiPlayer as the default player](plan-jaiplayer-default.md): plan for playing through KS JaiPlayer by default (fallbacks, the DEV variant, future asks of JaiPlayer); waits for the owner's approval, no code changed.
+* **Update**: The owner approved [KS JaiPlayer as the default player](plan-jaiplayer-default.md); it is built when StreamFlix becomes the active app.
+
 # 2026-11-27
 
+* **Update**: `ks-utility` moved to `v0.18.4`.
+* **Update**: `ks-utility` moved to `v0.18.3`.
+* **Update**: `ks-utility` moved to `v0.18.1`.
+* **Update**: `ks-utility` moved to `v0.18.0`; `release.yml` and `ks-utility-bump.yml` call ks-utility's shared workflows `@main`, which always equals its newest release, so only the code pin moves; no `KS_WORKFLOWS_TOKEN` (owner's decision).
+* **Update**: `ks-utility` moved from `v0.16.0` to `v0.17.0`; `release.yml` and `ks-utility-bump.yml` call it `@v0.17.0`.
+* **Update**: `ks-utility` moved from `v0.15.0` to `v0.16.0` (ks-suite-check also checks the shared-workflow refs); `release.yml` and `ks-utility-bump.yml` call ks-utility `@v0.16.0`, and the bump passes `KS_WORKFLOWS_TOKEN` so automatic moves also update those calls.
+* **Update**: The release workflow is ks-utility's `@v0.15.0` (with ks-suite-check), `.github/workflows/ks-utility-bump.yml` moves ks-utility to its newest tag by itself, and the desktop updater installs through `DesktopInstaller` ([App updates](app-updates.md)).
+* **Update**: `ks-utility` moved from `v0.14.0` to `v0.15.0` (DesktopInstaller, ks-suite-check, the bump workflow).
+* **Update**: App icons (suite rule): the phone and Google TV apps have an adaptive launcher icon with a monochrome layer and a round icon (`mipmap-anydpi-v26`); the desktop window shows the app icon instead of the framework's default. The TV banner, the menu-bar/tray icon and the dmg/msi icons were already the app's own.
+* **Update**: FFmpeg is bundled in the desktop apps (v1.4.0; [Constraints](constraints.md), [Per-platform optimization plan](plan-per-platform.md) step 4): FFmpeg 9.1 from its official source, LGPL only; the dmg grows 75.6 → 81.0 MB and its budget is 85 MB ([Quality budgets](quality-budgets.md)).
+* **Update**: [Quality budgets](quality-budgets.md): the API p95 counts the fastest of five rounds (shared Windows runners measured 45–223 ms in one run); the budgets are unchanged.
+* **Update**: The owner approved the [music](plan-music.md), [photos](plan-photos.md), [live TV](plan-live-tv.md), [casting](plan-casting.md) and [remote access](plan-remote-access.md) plans; the open questions in live TV, casting and remote access are asked when each build starts.
+* **Update**: The opt-in test against the real TMDB (it needed the owner's API key) is removed, at the owner's request; the TMDB plugin is still tested against a stand-in server ([Media server plan](media-server-plan.md)). Users still enter their own TMDB key for the plugin.
 * **Update**: TV focus fixes (v1.3.1): the home screen's first focus goes to the first card on screen once every row has loaded, never moves by itself after that, and comes back to the card in the row it was opened from; Settings focuses the chosen language, also after choosing one. `HomeSection` gained `items` and a focus target in `Content`.
 
 # 2026-11-26

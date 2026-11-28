@@ -15,6 +15,7 @@ import android.media.MediaCodecList
 import android.media.MediaFormat
 import android.view.WindowManager
 import com.ks.streamflix.api.DeviceProfile
+import com.ks.streamflix.api.DiscoveryApi
 import com.ks.streamflix.client.net.HttpTransport
 import com.ks.streamflix.client.settings.SettingsStore
 import java.util.Locale
@@ -69,8 +70,9 @@ class AndroidHost(private val context: Context, override val isTv: Boolean, over
     override val transport: HttpTransport = UrlConnectionTransport()
     override val preferredLanguages: List<String> = LocaleList.getDefault().toLanguageTags().split(',')
     override val hasPlayer = true
+    override val isDev = context.packageName.endsWith(".dev")
 
-    override suspend fun discover() = discoverServers()
+    override suspend fun discover() = discoverServers(port = if (isDev) DiscoveryApi.DEV_PORT else DiscoveryApi.PORT)
 
     @Composable
     override fun Player(request: PlayRequest, onProgress: (Long, Long) -> Unit, onExit: (Long, Long) -> Unit) =

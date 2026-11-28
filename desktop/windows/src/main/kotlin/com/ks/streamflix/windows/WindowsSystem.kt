@@ -1,6 +1,7 @@
 package com.ks.streamflix.windows
 
 import com.ks.streamflix.client.DesktopSystem
+import com.ks.streamflix.client.DesktopVariant
 import java.util.Base64
 import java.util.concurrent.TimeUnit
 
@@ -11,7 +12,7 @@ import java.util.concurrent.TimeUnit
  */
 class WindowsSystem(
     private val launcher: String? = DesktopSystem.installedLauncher(),
-    private val valueName: String = VALUE_NAME,
+    private val valueName: String = DesktopVariant.current.appName,
 ) : DesktopSystem {
     private var awake: Process? = null
 
@@ -55,7 +56,6 @@ class WindowsSystem(
 
     companion object {
         const val RUN_KEY = """HKCU\Software\Microsoft\Windows\CurrentVersion\Run"""
-        const val VALUE_NAME = "KS StreamFlix"
 
         /**
          * One argument for a Windows program's command line. Java wraps an argument with spaces in

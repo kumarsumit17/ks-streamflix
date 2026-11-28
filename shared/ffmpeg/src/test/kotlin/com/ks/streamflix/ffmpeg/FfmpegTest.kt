@@ -36,6 +36,20 @@ class FfmpegTest {
         if (!File("/opt/homebrew/bin/ffprobe").exists() && !File("/usr/local/bin/ffprobe").exists() && !File("/usr/bin/ffprobe").exists()) assertNull(none.ffprobe)
     }
 
+    @Test fun theOverrideComesFirstThenTheBundledCopyThenPath() {
+        fun folder(name: String, executable: Boolean = true) = Files.createTempDirectory(name).toFile().also { d ->
+            listOf("ffmpeg", "ffprobe").forEach { File(d, it).apply { writeText("#!/bin/sh\n"); setExecutable(executable) } }
+        }
+        val override = folder("override")
+        val bundled = folder("bundled", executable = false) // as an installer that drops the execute bit leaves it
+        val onPath = folder("path")
+        assertEquals(File(override, "ffmpeg"), Ffmpeg.locate(mapOf("STREAMFLIX_FFMPEG_DIR" to override.path, "PATH" to onPath.path), windows = false, bundled = bundled.path).ffmpeg)
+        val found = Ffmpeg.locate(mapOf("PATH" to onPath.path), windows = false, bundled = bundled.path)
+        assertEquals(File(bundled, "ffmpeg"), found.ffmpeg, "the bundled copy beats PATH, and gets its execute bit back")
+        assertEquals(File(bundled, "ffprobe"), found.ffprobe)
+        assertEquals(File(onPath, "ffmpeg"), Ffmpeg.locate(mapOf("PATH" to onPath.path), windows = false, bundled = null).ffmpeg)
+    }
+
     /** Runs only where FFmpeg is installed (the owner's Mac, CI with FFmpeg). */
     @Test fun realProbeWhenInstalled() {
         val ff = Ffmpeg.locate()

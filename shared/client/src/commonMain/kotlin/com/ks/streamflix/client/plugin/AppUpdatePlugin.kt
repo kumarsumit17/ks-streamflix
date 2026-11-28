@@ -28,7 +28,7 @@ import com.ks.streamflix.client.resources.common_app_update_install_failed
 import com.ks.streamflix.client.resources.common_app_update_no_installer
 import com.ks.streamflix.client.resources.common_app_update_open_failed
 import com.ks.streamflix.client.resources.common_app_update_opened_android
-import com.ks.streamflix.client.resources.common_app_update_opened_mac
+import com.ks.streamflix.client.resources.common_app_update_opened_mac_closes
 import com.ks.streamflix.client.resources.common_app_update_opened_windows
 import com.ks.streamflix.client.resources.common_app_update_section
 import com.ks.streamflix.client.resources.common_app_update_unreadable
@@ -58,7 +58,8 @@ sealed interface UpdateStatus {
 /** The app's own updates from its GitHub releases (ks-utility's app-update rules); one per platform. */
 interface AppUpdater {
     val currentVersion: String
-    val isDevBuild: Boolean
+    /** The version Settings shows (a DEV build's is `X.Y.Z-dev+commit`); null for a build from source. */
+    val shownVersion: String?
     val status: StateFlow<UpdateStatus>
     val autoCheck: StateFlow<Boolean>
     fun setAutoCheck(enabled: Boolean)
@@ -83,7 +84,8 @@ private fun Section(u: AppUpdater) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(Res.string.common_app_update_section), style = MaterialTheme.typography.titleMedium)
-        Text(if (u.isDevBuild) stringResource(Res.string.common_app_update_dev) else stringResource(Res.string.common_app_update_current, u.currentVersion), color = muted)
+        val version = u.shownVersion
+        Text(if (version == null) stringResource(Res.string.common_app_update_dev) else stringResource(Res.string.common_app_update_current, version), color = muted)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ChoiceButton(stringResource(Res.string.common_app_update_auto), auto) { u.setAutoCheck(!auto) }
         }
@@ -97,7 +99,7 @@ private fun Section(u: AppUpdater) {
             UpdateStatus.NeedsPermission -> stringResource(Res.string.common_app_update_allow_install)
             is UpdateStatus.Downloading -> stringResource(Res.string.common_app_update_downloading, s.version)
             is UpdateStatus.Opened -> when (s.on) {
-                OpenedOn.Mac -> stringResource(Res.string.common_app_update_opened_mac, "KS StreamFlix")
+                OpenedOn.Mac -> stringResource(Res.string.common_app_update_opened_mac_closes, "KS StreamFlix")
                 OpenedOn.Windows -> stringResource(Res.string.common_app_update_opened_windows)
                 OpenedOn.Android -> stringResource(Res.string.common_app_update_opened_android)
             }

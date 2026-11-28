@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.util.Properties
 
 // The apps' shared code: the API client, state (ViewModel + StateFlow), the client plugin API and
 // the Compose Multiplatform screens, used by macOS, Windows, Android and Google TV. Platform
@@ -125,9 +124,4 @@ compose.resources {
         sourceSetName = "commonMain",
         directoryProvider = languageResources.map { langResources.get() },
     )
-}
-
-tasks.withType<Test>().configureEach {
-    val budgets = Properties().apply { rootProject.file("quality-budgets.properties").inputStream().use(::load) }
-    budgets.stringPropertyNames().forEach { systemProperty("budget.$it", budgets.getProperty(it)) }
 }

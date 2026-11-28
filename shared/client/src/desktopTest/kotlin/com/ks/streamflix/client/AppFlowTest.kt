@@ -124,7 +124,12 @@ class AppFlowTest {
         vm.openItem(film)
         waitFor("details loaded") { runBlocking { vm.client!!.details(film.id).plot } == "Hills, quietly." }
         // A forced track is chosen by itself, and the player gets it with the video.
-        Thread.sleep(300)
+        // The tracks load on their own: wait until the plugin would hand one to the player.
+        val client = vm.client!!
+        waitFor("subtitle track chosen") {
+            val request = PlayRequest(client.streamUrl(film.id), client.authHeaders, film.title, 0)
+            runBlocking { vm.plugins.playDecorators.single()(client, film, request) }.subtitle != null
+        }
         vm.play(film)
         waitFor("player") { vm.state.value.screen is Screen.Playing }
         val sub = (vm.state.value.screen as Screen.Playing).request.subtitle!!

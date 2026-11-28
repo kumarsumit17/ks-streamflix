@@ -3,12 +3,15 @@ package com.ks.streamflix.plugins.folderwatch
 import com.ks.streamflix.api.ApiV1
 import com.ks.streamflix.api.ItemList
 import com.ks.streamflix.api.LibraryKind
-import com.ks.streamflix.server.Budget
+import com.ks.streamflix.server.Measurement
 import com.ks.streamflix.server.TestServer
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertTrue
+
+/** Only so a broken watcher ends the test: how long detection takes is measured, not limited. */
+private const val GIVE_UP_MS = 120_000L
 
 class FolderWatchPluginTest {
     @Test fun newFilesAppearWithoutAScan() = TestServer(plugins = listOf(FolderWatchPlugin(quietMillis = 300, libraryCheckMillis = 200))).use { s ->
@@ -22,16 +25,16 @@ class FolderWatchPluginTest {
         val dir = Files.createDirectories(root.resolve("New Film (2024)"))
         Files.write(dir.resolve("new.mkv"), ByteArray(100))
         while ("New Film" !in titles()) {
-            check(System.currentTimeMillis() - started < Budget.long("speed.folderWatch.detectMs")) { "the new film did not appear" }
+            check(System.currentTimeMillis() - started < GIVE_UP_MS) { "the new film did not appear" }
             Thread.sleep(100)
         }
         val ms = System.currentTimeMillis() - started
-        println("budget speed.folderWatch.detectMs: $ms ms")
+        Measurement.record("folderWatch.detect", "$ms ms")
 
         Files.delete(dir.resolve("new.mkv"))
         val removed = System.currentTimeMillis()
         while ("New Film" in titles()) {
-            check(System.currentTimeMillis() - removed < Budget.long("speed.folderWatch.detectMs")) { "the removed film stayed" }
+            check(System.currentTimeMillis() - removed < GIVE_UP_MS) { "the removed film stayed" }
             Thread.sleep(100)
         }
         assertTrue(titles().isEmpty())

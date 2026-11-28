@@ -11,7 +11,7 @@ A free, open-source home media server with its own apps: the server on macOS and
 ## Stack
 - Server: Kotlin/JVM 17 with coroutines, Ktor (CIO engine), SQLDelight on SQLite, JSON with `kotlinx.serialization`; layers `domain` / `data` / `http`. FFmpeg (stage 4) is installed by the owner and run as a separate program, never bundled.
 - Apps (stage 2): one Kotlin Multiplatform + Compose Multiplatform module `shared/client` (API client, ViewModel + StateFlow, screens) for all four apps; separate phone and Google TV apps (two APKs and AABs) with Media3/ExoPlayer.
-- **Budgets:** stability, app size and speed are numbers in `quality-budgets.properties`, checked by `./gradlew check` and `checkSize` (`specs/quality-budgets.md`). Never raise one without the owner's OK.
+- **No size or speed budgets** (owner, 2026-11-28): `./gradlew check` and CI report the measured values and never fail on them; include them in each DEV build report. Stability tests are ordinary tests. See `specs/quality-budgets.md`.
 - Package: `com.ks.streamflix`. minSdk 26 · targetSdk latest stable
 - Interface text with an apostrophe uses ’ (U+2019): the language tool escapes `'` for Android, and Compose resources show the backslash.
 
@@ -21,7 +21,7 @@ A free, open-source home media server with its own apps: the server on macOS and
 | `:shared:api` | `shared/api` | API wire models (`/api/v1`), Kotlin Multiplatform (JVM, Android), used by every app; `shared/api/lang` holds the API's error texts for the server and the apps |
 | `:shared:server` | `shared/server` | Server core only: libraries, scanner, name parser, database, owner account, HTTP API, direct play, plugin API |
 | `:shared:plugins:<id>` | `shared/plugins/<id>` | One server plugin each: `web` (browser pages), `watch-state` (progress, own database), `discovery` (UDP), `local-metadata` (posters, `.nfo`), `tmdb` (online details, off by default), `media-info` (ffprobe), `subtitles` (WebVTT), `transcode` (direct play / remux / transcode to HLS), `users` (users, libraries per user, age limits), `folder-watch` (rescan on changes) |
-| `:shared:ffmpeg` | `shared/ffmpeg` | Not a plugin: finds and runs the owner's FFmpeg for the plugins that need it |
+| `:shared:ffmpeg` | `shared/ffmpeg` | Not a plugin: finds and runs FFmpeg (the bundled copy first) for the plugins that need it |
 | `:shared:client` | `shared/client` | The apps: API client, `AppViewModel` (StateFlow), client plugins (`watch-state`, `jaiplayer`, `metadata`, `media-info`, `subtitles`, `transcode`), Compose Multiplatform screens, language files; `jvmSharedMain` (HTTP and discovery on java.net), `androidMain` (Media3 player, and everything both Android apps run: the activity, the manifest with permissions and the update provider, R8 rules), `desktopMain` |
 | `:shared:desktop` | `shared/desktop` | The macOS and Windows app: the server plus its window |
 | `:desktop:mac` | `desktop/mac` | macOS entry point: picks the plugins |
@@ -34,11 +34,11 @@ A free, open-source home media server with its own apps: the server on macOS and
 
 ## Platform constraints (Android and Google TV apps)
 - **D-pad first.** Every screen must be usable with the remote's arrow, select, and back keys. Restore focus to the last item when returning to a screen. Back from the player returns to the exact row and item.
-- **The desktop server runs until Quit:** closing the window leaves it in the menu bar / notification area; start at login (on by default, installed app only) and staying awake while someone watches are each OS's own (`desktop/mac/MacSystem.kt`, `desktop/windows/WindowsSystem.kt`, behind `DesktopSystem`). See `specs/constraints.md`.
-- **Lean means lean.** Keep the release APK under 15 MB. Ask before adding a dependency. Prefer what's already in Media3, Compose, and Room.
+- **The desktop server runs until Quit:** closing the window leaves it in the menu bar / notification area; start at login (on by default in production, off in DEV; installed app only) and staying awake while someone watches are each OS's own (`desktop/mac/MacSystem.kt`, `desktop/windows/WindowsSystem.kt`, behind `DesktopSystem`). See `specs/constraints.md`.
+- **Lean means lean.** Keep the release APK small (its size is reported, not limited). Ask before adding a dependency. Prefer what's already in Media3, Compose, and Room.
 - **Low-RAM TVs.** Load images at their display size. Never keep a full-resolution bitmap in a row. Cap the decoded-image cache.
 - **10-foot UI.** Overscan-safe margins are 48dp horizontal, 27dp vertical.
-- **Separate phone and Google TV apps.** `mobile/android` and `tv/google-tv` are two application modules with the same package name (`com.ks.streamflix`), version and keystore, configured once in the root `build.gradle.kts`; the TV app's versionCode adds 1,000,000,000 (Google Play needs a different code per bundle). Both only add a launcher entry to what `shared/client/src/androidMain` declares. The TV app declares `android.software.leanback` required and `android.hardware.touchscreen` not required, has the banner (320×180), and marks itself with the `com.ks.streamflix.FORM_FACTOR` meta-data (`isTvBuild`): the layout follows the app, not the device. Each app updates to its own build (`UpdatePlatform.GOOGLE_TV` / `ANDROID`). Both APKs stay within `size.apk.maxMb`.
+- **Separate phone and Google TV apps.** `mobile/android` and `tv/google-tv` are two application modules with the same package name (`com.ks.streamflix`), version and keystore, configured once in the root `build.gradle.kts`; the TV app's versionCode adds 1,000,000,000 (Google Play needs a different code per bundle). Both only add a launcher entry to what `shared/client/src/androidMain` declares. The TV app declares `android.software.leanback` required and `android.hardware.touchscreen` not required, has the banner (320×180), and marks itself with the `com.ks.streamflix.FORM_FACTOR` meta-data (`isTvBuild`): the layout follows the app, not the device. Each app updates to its own build (`UpdatePlatform.GOOGLE_TV` / `ANDROID`).
 - Watch progress and favourites live on the server, per user. Any local database in the apps needs a `Migration` plus an exported schema for every schema change.
 
 ## Server constraints
@@ -46,23 +46,23 @@ A free, open-source home media server with its own apps: the server on macOS and
 - Passwords only as PBKDF2 hashes; session tokens from `SecureRandom`. No telemetry: the server never contacts anything the owner has not switched on.
 - Never follow a file path from a request: files are served by item id only, and only files inside a library folder.
 - Every route that serves an item checks the access rules (`call.visibleItem(core, id)` or `core.access`); a hidden item answers "not found".
-- Desktop needs no FFmpeg until stage 4; show a clear message if it is missing later, never crash.
+- **The desktop apps bundle FFmpeg** (LGPL only, built from the pinned official source by `gradle/bundled-ffmpeg.gradle.kts`: VideoToolbox on macOS; Media Foundation, NVENC and AMF on Windows; no libx264). `Ffmpeg.locate` takes `STREAMFLIX_FFMPEG_DIR` first, then the bundled copy, then `PATH`. Without FFmpeg the server still runs; never crash. The `BundledFfmpegTest` in each desktop module checks the bundled build.
 - An "Open in JaiPlayer" option sends an explicit `ACTION_VIEW` intent to `com.ks.jaiplayer`. It falls back to the built-in ExoPlayer when JaiPlayer isn't installed.
 
 ## Commands
 ```bash
-./gradlew check                                   # tests, lint, language files, all budgets incl. sizes (needs Node 23.6+)
+./gradlew check                                   # tests, lint, language files, size and speed report (needs Node 23.6+)
 ./gradlew :desktop:mac:run --args="--library Films=movies:$HOME/Movies"   # the macOS app: server and window
 ./gradlew :desktop:mac:run --args="--headless"    # the server alone
 ./gradlew :mobile:android:installDebug            # the phone app; an emulator reaches the Mac at 10.0.2.2:8742
 ./gradlew :tv:google-tv:installDebug              # the Google TV app
-./gradlew -Pcompose.desktop.packaging.checkJdkVendor=false :desktop:mac:packageReleaseDmg checkInstallerSize   # .dmg on the owner's Mac (Homebrew JDK)
+./gradlew -Pcompose.desktop.packaging.checkJdkVendor=false :desktop:mac:packageReleaseDmg installerSizeReport  # .dmg on the owner's Mac (Homebrew JDK)
 ```
 The server listens on port 8742 (`--port` to change) and keeps its data in `~/Library/Application Support/KS StreamFlix` (macOS) or `%APPDATA%\KS StreamFlix` (Windows); `--data <dir>` to change. Open `http://localhost:8742/` for the browser pages.
 
-**Build, test, release, no waiting** (owner's suite rule, 2026-11-26, KS-Suite [release cycle](https://github.com/kumasumit/ks-suite/blob/dev/specs/release-cycle.md)): every feature or fix is built, tested on the emulators or CI, pushed to `dev` and released with the next tag (dev → main fast-forward → tag), with no approval asked before the tag. A feature raises MINOR, a fix raises PATCH. Never commit or release while a test fails. The owner's real-device checks come later, never block a release, and what they find goes into the next version.
+**Releases follow the suite cycle** (KS-Suite [release cycle](https://github.com/kumasumit/ks-suite/blob/dev/specs/release-cycle.md)): work on `dev`, automated tests, a DEV build, the owner's manual test, then a production release only with the owner's explicit approval for that app and platform. A feature raises MINOR, a fix raises PATCH. Never commit or release while a test fails.
 Releases: a plain `vX.Y.Z` tag releases all four builds; `android-vX.Y.Z`, `google-tv-vX.Y.Z`, `mac-vX.Y.Z` or `windows-vX.Y.Z` releases only that build (from after v1.2.0, the bridge release), and a rehearsal can pick one with `-f platform=…`. A build's version is the higher of its own latest tag and the latest plain tag (KS-Suite versioning rule).
-Compose's packaging refuses Homebrew's JDK unless `-Pcompose.desktop.packaging.checkJdkVendor=false` is passed (only on the command line; CI uses Temurin). The `.msi` builds only on Windows: CI (`.github/workflows/ci.yml`) builds, installs, starts and uninstalls it. Before every release the release build is tried on the phone and Google TV emulators and the Mac (KS-Suite release-cycle step 1); the owner does the real-device checks. `STREAMFLIX_TMDB_KEY=… ./gradlew :shared:plugins:tmdb:test` runs the real-TMDB test. FFmpeg (Homebrew's on the owner's Mac) is found in `STREAMFLIX_FFMPEG_DIR`, `PATH` or the usual places; tests that need it skip without it.
+Compose's packaging refuses Homebrew's JDK unless `-Pcompose.desktop.packaging.checkJdkVendor=false` is passed (only on the command line; CI uses Temurin). The `.msi` builds only on Windows: CI (`.github/workflows/ci.yml`) builds, installs, starts and uninstalls it. FFmpeg (Homebrew's on the owner's Mac) is found in `STREAMFLIX_FFMPEG_DIR`, `PATH` or the usual places; tests that need it skip without it.
 
 Emulators (from the KS-Suite workspace; suite spec `specs/testing.md`): `../scripts/emulators.sh create` once, then `../scripts/emulators.sh start tv` boots the Android TV AVD (`ks-tv-36`, API 36). Then:
 ```bash

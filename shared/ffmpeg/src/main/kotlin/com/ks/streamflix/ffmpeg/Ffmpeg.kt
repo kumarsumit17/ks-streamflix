@@ -79,30 +79,50 @@ class Ffmpeg(val ffprobe: File?, val ffmpeg: File?) {
     }
 
     /**
-     * The H.264 encoder to use: the first hardware encoder that works on this computer (VideoToolbox
-     * on macOS; NVENC, Quick Sync or AMF on Windows and Linux), else `libx264`. Each candidate is
-     * tried on one small frame, because FFmpeg lists encoders the hardware may not have.
+     * The H.264 encoder to use: the first that works on this computer (VideoToolbox on macOS;
+     * NVENC, Quick Sync or AMF, then Media Foundation on Windows), else `libx264` (an FFmpeg
+     * installed by hand; the bundled LGPL build has no libx264). Each candidate encodes five blank
+     * frames, read from stdin as raw video, because FFmpeg lists encoders the hardware may not have.
      */
     val h264Encoder: String by lazy {
         val exe = ffmpeg ?: return@lazy "libx264"
         val listed = run(listOf(exe.path, "-hide_banner", "-encoders"), 20).orEmpty()
         val mac = System.getProperty("os.name").startsWith("Mac")
-        val candidates = if (mac) listOf("h264_videotoolbox") else listOf("h264_nvenc", "h264_qsv", "h264_amf")
-        candidates.firstOrNull { enc ->
-            enc in listed && run(listOf(exe.path, "-hide_banner", "-v", "error", "-f", "lavfi", "-i", "color=c=black:s=256x144:r=25",
-                "-frames:v", "5", "-c:v", enc, "-f", "null", "-"), 20) != null
-        } ?: "libx264"
+        val candidates = if (mac) listOf("h264_videotoolbox") else listOf("h264_nvenc", "h264_qsv", "h264_amf", "h264_mf")
+        candidates.firstOrNull { enc -> enc in listed && encodes(exe, enc) } ?: "libx264"
     }
+
+    /** Whether [encoder] encodes five blank 256×144 frames (no lavfi, which the bundled build leaves out). */
+    private fun encodes(exe: File, encoder: String): Boolean = runCatching {
+        val frame = ByteArray(256 * 144 * 3 / 2) // yuv420p
+        val p = ProcessBuilder(listOf(exe.path, "-hide_banner", "-v", "error", "-f", "rawvideo", "-pix_fmt", "yuv420p", "-s", "256x144", "-r", "25",
+            "-i", "-", "-frames:v", "5", "-c:v", encoder, "-f", "null", "-"))
+            .redirectOutput(ProcessBuilder.Redirect.DISCARD).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+        runCatching { p.outputStream.use { out -> repeat(5) { out.write(frame) } } }
+        p.waitFor(20, java.util.concurrent.TimeUnit.SECONDS) && p.exitValue() == 0
+    }.getOrDefault(false)
 
     companion object {
         /**
-         * Finds FFmpeg: the folder in `STREAMFLIX_FFMPEG_DIR`, then `PATH`, then the usual places
+         * A path as FFmpeg should get it: with forward slashes, which it takes on Windows too. Its HLS
+         * muxer finds the folder for `init.mp4` from the playlist's path, and `C:\a\b` confuses that.
+         */
+        fun path(p: String): String = p.replace('\\', '/')
+
+        /**
+         * Finds FFmpeg: the folder in `STREAMFLIX_FFMPEG_DIR` (to use another build), then the copy
+         * bundled in the app ([bundled], the app's resources), then `PATH`, then the usual places
          * (Homebrew on macOS; `ffmpeg\bin` folders and winget's links on Windows).
          */
-        fun locate(env: Map<String, String> = System.getenv(), windows: Boolean = System.getProperty("os.name").startsWith("Windows")): Ffmpeg {
+        fun locate(
+            env: Map<String, String> = System.getenv(),
+            windows: Boolean = System.getProperty("os.name").startsWith("Windows"),
+            bundled: String? = System.getProperty("compose.application.resources.dir")?.let { File(it, "ffmpeg").path },
+        ): Ffmpeg {
             val exe = if (windows) ".exe" else ""
             val dirs = buildList {
                 env["STREAMFLIX_FFMPEG_DIR"]?.let(::add)
+                bundled?.let(::add)
                 env["PATH"]?.split(File.pathSeparatorChar)?.let(::addAll)
                 if (windows) {
                     listOfNotNull(env["ProgramFiles"], "C:\\").forEach { add("$it\\ffmpeg\\bin") }
@@ -111,6 +131,8 @@ class Ffmpeg(val ffprobe: File?, val ffmpeg: File?) {
                     addAll(listOf("/opt/homebrew/bin", "/usr/local/bin", "/usr/bin"))
                 }
             }
+            // A bundled program that lost its execute bit (an installer that does not keep it) gets it back.
+            bundled?.let { b -> listOf("ffmpeg", "ffprobe").map { File(b, it + exe) }.filter { it.isFile && !it.canExecute() }.forEach { it.setExecutable(true, false) } }
             fun find(name: String) = dirs.asSequence().map { File(it, name + exe) }.firstOrNull { it.isFile && it.canExecute() }
             return Ffmpeg(find("ffprobe"), find("ffmpeg"))
         }

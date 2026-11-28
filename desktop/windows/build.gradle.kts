@@ -36,34 +36,44 @@ dependencies {
     implementation(project(":shared:plugins:folder-watch"))
     runtimeOnly(libs.slf4j.simple)
     testImplementation(kotlin("test"))
+    testImplementation(testFixtures(project(":shared:ffmpeg")))
 }
 
 tasks.test { useJUnitPlatform() }
+
+// FFmpeg (LGPL), built from its source and bundled in the app (gradle/bundled-ffmpeg.gradle.kts).
+apply(from = rootProject.file("gradle/bundled-ffmpeg.gradle.kts"))
 
 // The MSI version needs MAJOR >= 1; untagged development builds package as 1.0.0.
 val versionName = (rootProject.extra["appVersionName.windows"] as String).substringBefore('-')
 val installerVersion = versionName.takeIf { (it.substringBefore('.').toIntOrNull() ?: 0) >= 1 } ?: "1.0.0"
 
+// The DEV variant (specs/dev-variant.md): its own name, identity and icon.
+val dev = rootProject.extra["ksDev"] as Boolean
+
 compose.desktop {
     application {
         mainClass = "com.ks.streamflix.windows.MainKt"
-        jvmArgs += listOf("-Dstreamflix.version=${rootProject.extra["appVersionName.windows"]}")
+        jvmArgs += listOf("-Dstreamflix.version=${rootProject.extra["appReportedVersion.windows"]}", "-Dstreamflix.variant=${if (dev) "dev" else "prod"}")
         nativeDistributions {
             targetFormats(TargetFormat.Msi)
-            packageName = "KS StreamFlix"
+            packageName = if (dev) "KS StreamFlix DEV" else "KS StreamFlix"
             packageVersion = installerVersion
             description = "KS StreamFlix, a home media server"
             vendor = "KS-Suite"
             // The Java modules the server and its window use (checked with suggestRuntimeModules).
             modules(*desktopModules.toTypedArray())
+            // build/ffmpeg-resources/<os>/ffmpeg: ffmpeg, ffprobe and their libraries.
+            appResourcesRootDir.set(layout.buildDirectory.dir("ffmpeg-resources"))
             windows {
                 menu = true
                 menuGroup = "KS-Suite"
                 shortcut = true
                 dirChooser = true
-                iconFile.set(project.file("packaging/icon.ico"))
-                // Fixed for the life of the app, so new versions upgrade the installed one.
-                upgradeUuid = "b7e3c2d1-5a64-4f0e-9d8b-3c2a1f6e4b57"
+                iconFile.set(project.file(if (dev) "packaging/icon-dev.ico" else "packaging/icon.ico"))
+                // Fixed for the life of the app, so new versions upgrade the installed one. DEV has its
+                // own, so installing or removing it never touches the production app.
+                upgradeUuid = if (dev) "2f9c6a14-8d3b-4c71-a5e2-94b07d1c3e68" else "b7e3c2d1-5a64-4f0e-9d8b-3c2a1f6e4b57"
             }
         }
         buildTypes.release.proguard { isEnabled.set(false) }

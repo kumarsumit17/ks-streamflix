@@ -36,30 +36,39 @@ dependencies {
     implementation(project(":shared:plugins:folder-watch"))
     runtimeOnly(libs.slf4j.simple)
     testImplementation(kotlin("test"))
+    testImplementation(testFixtures(project(":shared:ffmpeg")))
 }
 
 tasks.test { useJUnitPlatform() }
+
+// FFmpeg (LGPL), built from its source and bundled in the app (gradle/bundled-ffmpeg.gradle.kts).
+apply(from = rootProject.file("gradle/bundled-ffmpeg.gradle.kts"))
 
 // jpackage needs MAJOR >= 1; untagged development builds package as 1.0.0.
 val versionName = (rootProject.extra["appVersionName.mac"] as String).substringBefore('-')
 val installerVersion = versionName.takeIf { (it.substringBefore('.').toIntOrNull() ?: 0) >= 1 } ?: "1.0.0"
 
+// The DEV variant (specs/dev-variant.md): its own name, identity and icon.
+val dev = rootProject.extra["ksDev"] as Boolean
+
 compose.desktop {
     application {
         mainClass = "com.ks.streamflix.mac.MainKt"
-        jvmArgs += listOf("-Dstreamflix.version=${rootProject.extra["appVersionName.mac"]}", "-Dapple.awt.application.appearance=system")
+        jvmArgs += listOf("-Dstreamflix.version=${rootProject.extra["appReportedVersion.mac"]}", "-Dstreamflix.variant=${if (dev) "dev" else "prod"}", "-Dapple.awt.application.appearance=system")
         nativeDistributions {
             targetFormats(TargetFormat.Dmg)
-            packageName = "KS StreamFlix"
+            packageName = if (dev) "KS StreamFlix DEV" else "KS StreamFlix"
             packageVersion = installerVersion
             description = "KS StreamFlix, a home media server"
             vendor = "KS-Suite"
             // The Java modules the server and its window use (checked with suggestRuntimeModules).
             modules(*desktopModules.toTypedArray())
+            // build/ffmpeg-resources/<os>/ffmpeg: ffmpeg, ffprobe and their libraries.
+            appResourcesRootDir.set(layout.buildDirectory.dir("ffmpeg-resources"))
             macOS {
-                bundleID = "com.ks.streamflix"
+                bundleID = if (dev) "com.ks.streamflix.dev" else "com.ks.streamflix"
                 appCategory = "public.app-category.video"
-                iconFile.set(project.file("packaging/icon.icns"))
+                iconFile.set(project.file(if (dev) "packaging/icon-dev.icns" else "packaging/icon.icns"))
             }
         }
         buildTypes.release.proguard { isEnabled.set(false) }

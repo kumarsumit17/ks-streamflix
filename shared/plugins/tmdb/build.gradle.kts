@@ -20,8 +20,6 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-    // The real-TMDB test runs only with the owner's key; the key is never written anywhere.
-    providers.environmentVariable("STREAMFLIX_TMDB_KEY").orNull?.let { environment("STREAMFLIX_TMDB_KEY", it) }
 }
 
 // Language files, packed at lang/tmdb (the plugin's id) and checked.
