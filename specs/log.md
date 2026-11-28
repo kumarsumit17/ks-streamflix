@@ -1,6 +1,7 @@
 # 2026-11-28
 
 * **Added**: [KS JaiPlayer as the default player](plan-jaiplayer-default.md): plan for playing through KS JaiPlayer by default (fallbacks, the DEV variant, future asks of JaiPlayer); waits for the owner's approval, no code changed.
+* **Update**: The owner approved [KS JaiPlayer as the default player](plan-jaiplayer-default.md); it is built when StreamFlix becomes the active app.
 
 # 2026-11-27
 

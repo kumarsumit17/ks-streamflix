@@ -1,13 +1,13 @@
 ---
 type: Plan
 title: KS JaiPlayer as the default player
-description: Plan, waiting for the owner's approval, for StreamFlix to play through KS JaiPlayer by default on every platform, with its fallbacks, the DEV variant, and what StreamFlix will later need from JaiPlayer.
+description: Approved plan for StreamFlix to play through KS JaiPlayer by default on every platform, with its fallbacks, the DEV variant, and what StreamFlix will later need from JaiPlayer.
 tags: [plan, playback, jaiplayer, cross-repo]
 ---
 
 # KS JaiPlayer as the default player
 
-The owner decided on 2026-11-28 that StreamFlix plays through KS JaiPlayer by default. **This is a plan only. No code changes until the owner approves it and makes StreamFlix the active app** (KS-Suite [working method](https://github.com/kumasumit/ks-suite/blob/dev/specs/working-method.md)). The work is a feature, so it raises MINOR.
+The owner decided on 2026-11-28 that StreamFlix plays through KS JaiPlayer by default. **Approved by the owner on 2026-11-28. It is built when the owner makes StreamFlix the active app** (KS-Suite [working method](https://github.com/kumasumit/ks-suite/blob/dev/specs/working-method.md)). The work is a feature, so it raises MINOR.
 
 ## Today
 
