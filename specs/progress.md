@@ -30,6 +30,8 @@ In the suite's active group. The first DEV build (1.4.1) is made and checked; wa
 - The macOS DEV app, started with `--background`, set no login item.
 - DEV phone app: finds only the DEV server, refuses the production server, signs in, browses, plays a video; Settings shows `1.4.1-dev+88cc38e` in English and Hindi.
 
+**CI:** passes on Linux, Windows and macOS at `7809943` (push and pull request); that commit and `726fb74` change only a test and docs since the DEV build.
+
 **Not checked (the owner):** the Pixel 11, the macOS DEV window and tray, Google TV, the Windows `.msi`.
 
 ## Adopted from ks-utility v0.19.0 (2026-11-28)

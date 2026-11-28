@@ -1,4 +1,5 @@
 # 2026-11-28
+- progress: CI passes at `7809943`; the session moved from the Warp CLI to the desktop app.
 
 * **Update**: [Recorded measurements](quality-budgets.md): why the installer figures differ.
 * **Update**: [DEV builds side by side](dev-variant.md), [Constraints](constraints.md) and `CLAUDE.md`: a DEV build does not turn start at login on by itself.
